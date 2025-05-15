@@ -74,7 +74,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         String allowedOrigins = env.getProperty("cors.allowed-origins");
-        List<String> origins = allowedOrigins != null ? Arrays.asList(allowedOrigins.split(",")) : List.of("http://localhost:3000", "https://xamxamboutik.shop");
+        List<String> origins = allowedOrigins != null ? Arrays.asList(allowedOrigins.split(",")) : List.of(
+                "http://localhost:3000",
+                "https://xamxamboutik.shop",
+                "https://darou-salam.xamxamboutik.shop"
+        );
         cfg.setAllowedOrigins(origins);
         cfg.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"

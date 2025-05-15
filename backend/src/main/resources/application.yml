@@ -88,4 +88,4 @@ management:
         include: health,info,metrics
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://xamxamboutik.shop}
+  allowed-origins: http://localhost:3000,https://xamxamboutik.shop,https://darou-salam.xamxamboutik.shop
