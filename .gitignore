@@ -1,0 +1,21 @@
+# Fichiers générés par macOS
+   .DS_Store
+
+   # Fichiers de l'IDE (IntelliJ IDEA)
+   .idea/
+   *.iml
+
+   # Backend
+   backend/target/
+   backend/.mvn/
+   backend/mvnw
+   backend/mvnw.cmd
+
+   # Frontend
+   frontend/node_modules/
+   frontend/build/
+   frontend/.env.local
+
+   # Fichiers locaux sur le VPS
+   nginx/
+   docker-compose.yml
