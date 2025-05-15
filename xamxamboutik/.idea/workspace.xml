@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2de604d6-e72a-49aa-8eae-d92eecb5c48b" name="Changes" comment="Merge remote-tracking branch 'source-frontend/dev' into dev&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
-      <change beforePath="$PROJECT_DIR$/../backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/Dockerfile" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -264,7 +263,7 @@
       <workItem from="1746899981164" duration="1093000" />
       <workItem from="1746992388416" duration="32349000" />
       <workItem from="1747073148568" duration="10611000" />
-      <workItem from="1747136037910" duration="8130000" />
+      <workItem from="1747136037910" duration="8891000" />
     </task>
     <task id="LOCAL-00001" summary="Merge remote-tracking branch 'source-frontend/dev' into dev&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
       <option name="closed" value="true" />
