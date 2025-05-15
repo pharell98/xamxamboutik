@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import sn.boutique.xamxamboutik.security.jwt.JwtTokenFilter;
 import sn.boutique.xamxamboutik.security.service.CustomUserDetailsService;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -35,6 +37,7 @@ public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final Environment env;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -70,10 +73,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "https://xamxamboutik.shop"
-        ));
+        String allowedOrigins = env.getProperty("cors.allowed-origins");
+        List<String> origins = allowedOrigins != null ? Arrays.asList(allowedOrigins.split(",")) : List.of("http://localhost:3000", "https://xamxamboutik.shop");
+        cfg.setAllowedOrigins(origins);
         cfg.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
@@ -106,12 +108,12 @@ public class SecurityConfig {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                  {
-                    "success": false,
-                    "message": "Vous n'êtes pas connecté ou votre token est invalide",
-                    "errorCode": "UNAUTHORIZED"
-                  }
-                  """);
+                     {
+                       "success": false,
+                       "message": "Vous n'êtes pas connecté ou votre token est invalide",
+                       "errorCode": "UNAUTHORIZED"
+                     }
+                     """);
     }
 
     private void customForbiddenResponse(HttpServletResponse response)
@@ -119,11 +121,11 @@ public class SecurityConfig {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                  {
-                    "success": false,
-                    "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
-                    "errorCode": "ACCESS_DENIED"
-                  }
-                  """);
+                     {
+                       "success": false,
+                       "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
+                       "errorCode": "ACCESS_DENIED"
+                     }
+                     """);
     }
 }
