@@ -1,4 +1,3 @@
-// src/services/auth.service.js
 import axios from 'axios';
 import localForage from 'localforage';
 
@@ -10,8 +9,6 @@ export const authService = {
       login: username,
       password
     });
-
-    console.log('Réponse du login:', response.data);
 
     const { access_token, refresh_token } = response.data;
 
@@ -43,7 +40,6 @@ export const authService = {
       await localForage.setItem('accessToken', access_token);
     }
     if (refresh_token) {
-      // IMPORTANT : on stocke le NOUVEAU refresh token
       await localForage.setItem('refreshToken', refresh_token);
     }
 
