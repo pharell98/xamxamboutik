@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  spring-boot-client1:
+    image: darou-salam/xamxamboutik-backend:latest
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-bitter-smoke-a2e2aaf0-pooler.eu-central-1.aws.neon.tech/darou-salam?user=darou-salam_owner&password=npg_ae8gRHzitnI6&sslmode=require
+      JWT_SECRET: votre-secret-jwt
+      CLOUDINARY_CLOUD_NAME: dee53ktfk
+      CLOUDINARY_API_KEY: 687276561974881
+      CLOUDINARY_API_SECRET: kIlGE9oEoSakLjJqD4dVNk5A6BU
+    ports:
+      - "8080:8080"
+
+  react-darou-salam:
+    image: darou-salam/xamxamboutik-frontend:darou-salam
+    ports:
+      - "80:80"
+    depends_on:
+      - spring-boot-client1
