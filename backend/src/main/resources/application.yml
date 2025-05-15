@@ -15,14 +15,12 @@ spring:
     database: postgresql
     show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: update  # Génère automatiquement les tables
     properties:
       hibernate:
         format_sql: true
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
+    enabled: false  # Désactiver Flyway temporairement
   servlet:
     multipart:
       enabled: true
