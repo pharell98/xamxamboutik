@@ -26,11 +26,22 @@ export const StompProvider = ({ children }) => {
   const [userData, setUserData] = useState([]);
 
   useEffect(() => {
+    if (!process.env.REACT_APP_WS_URL) {
+      console.error('REACT_APP_WS_URL is not defined in .env');
+      return;
+    }
+
     const client = new Client({
       brokerURL: process.env.REACT_APP_WS_URL,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000
+      heartbeatOutgoing: 4000,
+      debug: (str) => {
+        console.log('STOMP Debug:', str);
+      },
+      onWebSocketError: (error) => {
+        console.error('WebSocket Error:', error);
+      }
     });
 
     client.onConnect = () => {
@@ -58,7 +69,6 @@ export const StompProvider = ({ children }) => {
     };
   }, []);
 
-  // Gestion des souscriptions dans un seul useEffect
   useEffect(() => {
     if (stompClient && connected && stompClient.active) {
       console.log('Souscription aux topics STOMP');
