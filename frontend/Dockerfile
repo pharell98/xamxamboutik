@@ -4,8 +4,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
-ARG ENV_FILE
-COPY ${ENV_FILE} .env
 RUN npm run build
 
 # Étape 2 : Servir avec Nginx
@@ -16,7 +14,3 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stderr /var/log/nginx/error.log
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-
-FROM ubuntu:latest
-LABEL authors="bobo"
-ENTRYPOINT ["top", "-b"]
