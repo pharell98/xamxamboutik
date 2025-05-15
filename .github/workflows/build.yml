@@ -24,14 +24,8 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-backend:latest
 
-      - name: Build and push React image for client1
+      - name: Build and push React image
         run: |
           cd frontend
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:client1 --build-arg ENV_FILE=.env.client1 .
-          docker push ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:client1
-
-      - name: Build and push React image for client2
-        run: |
-          cd frontend
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:client2 --build-arg ENV_FILE=.env.client2 .
-          docker push ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:client2
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:latest --build-arg ENV_FILE=.env .
+          docker push ${{ secrets.DOCKER_USERNAME }}/xamxamboutik-frontend:latest

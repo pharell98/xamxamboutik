@@ -71,7 +71,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of(
-                "https://darou-salam.xamxamboutik.shop"
+                "http://localhost:3000",
+                "https://xamxamboutik.shop"
         ));
         cfg.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
@@ -105,12 +106,12 @@ public class SecurityConfig {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                {
-                  "success": false,
-                  "message": "Vous n'êtes pas connecté ou votre token est invalide",
-                  "errorCode": "UNAUTHORIZED"
-                }
-                """);
+                  {
+                    "success": false,
+                    "message": "Vous n'êtes pas connecté ou votre token est invalide",
+                    "errorCode": "UNAUTHORIZED"
+                  }
+                  """);
     }
 
     private void customForbiddenResponse(HttpServletResponse response)
@@ -118,11 +119,11 @@ public class SecurityConfig {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write("""
-                {
-                  "success": false,
-                  "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
-                  "errorCode": "ACCESS_DENIED"
-                }
-                """);
+                  {
+                    "success": false,
+                    "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
+                    "errorCode": "ACCESS_DENIED"
+                  }
+                  """);
     }
 }

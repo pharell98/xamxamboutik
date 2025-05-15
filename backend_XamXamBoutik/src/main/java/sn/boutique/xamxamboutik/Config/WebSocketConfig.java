@@ -16,7 +16,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry
                 .addEndpoint("/ws")
                 .setAllowedOrigins(
-                        "https://darou-salam.xamxamboutik.shop",
+                        "http://localhost:3000",
+                        "https://xamxamboutik.shop"
                 );
     }
 
