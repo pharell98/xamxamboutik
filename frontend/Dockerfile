@@ -17,7 +17,7 @@ RUN echo "window._env_ = {" > /usr/share/nginx/html/config.js && \
     echo "};" >> /usr/share/nginx/html/config.js
 
 # Remplacer les variables d'environnement dans config.js au démarrage
-CMD ["/bin/sh", "-c", "envsubst '\\\${REACT_APP_API_BASE_URL} \\\${REACT_APP_WS_URL} \\\${PUBLIC_URL}' < /usr/share/nginx/html/config.js > /usr/share/nginx/html/config.js.tmp && mv /usr/share/nginx/html/config.js.tmp /usr/share/nginx/html/config.js && nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "envsubst '$REACT_APP_API_BASE_URL $REACT_APP_WS_URL $PUBLIC_URL' < /usr/share/nginx/html/config.js > /usr/share/nginx/html/config.js.tmp && mv /usr/share/nginx/html/config.js.tmp /usr/share/nginx/html/config.js && nginx -g 'daemon off;'"]
 
 RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
     ln -sf /dev/stderr /var/log/nginx/error.log
