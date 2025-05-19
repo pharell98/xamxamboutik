@@ -4,7 +4,7 @@ import localForage from 'localforage';
 import { authService } from './auth.service';
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL
+  baseURL: window._env_?.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_BASE_URL
 });
 
 // ---------------- Intercepteur REQUEST ----------------
@@ -48,7 +48,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Si le token a déjà été rafraîchi et qu'on est tjs en 401 => on redirige
+    // Si le token a déjà été rafraîchi et qu'on est toujours en 401 => on redirige
     if (error.response?.status === 401 && originalRequest._retry) {
       await localForage.removeItem('accessToken');
       await localForage.removeItem('refreshToken');
