@@ -3,3 +3,5 @@ build
 .git
 *.md
 !.env.darousalam
+!.env.hadia
+!entrypoint.sh
