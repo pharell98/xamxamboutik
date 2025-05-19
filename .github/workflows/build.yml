@@ -32,9 +32,9 @@ jobs:
           script: |
             cd /var/www/xamxamboutik
             docker login -u sowbobo98 -p ${{ secrets.DOCKER_PASSWORD }}
-            docker-compose -f docker-compose.yml pull
-            docker-compose -f docker-compose.yml up -d
-            docker-compose -f docker-compose-hadia.yml pull
-            docker-compose -f docker-compose-hadia.yml up -d
+            docker-compose -f docker-compose-darou.yml -p darou pull
+            docker-compose -f docker-compose-darou.yml -p darou up -d --force-recreate
+            docker-compose -f docker-compose-hadia.yml -p hadia pull
+            docker-compose -f docker-compose-hadia.yml -p hadia up -d --force-recreate
             sudo nginx -t
             sudo systemctl reload nginx
