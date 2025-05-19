@@ -19,10 +19,22 @@ jobs:
         run: |
           cd backend
           docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-backend:latest --push .
-      - name: Build and push React image
+      - name: Build and push React image for darou-salam
         run: |
           cd frontend
-          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-frontend:latest --push .
+          docker buildx build --platform linux/amd64 \
+            --build-arg REACT_APP_API_BASE_URL=https://darou-salam.xamxamboutik.shop/api/v1 \
+            --build-arg REACT_APP_WS_URL=wss://darou-salam.xamxamboutik.shop/api/v1/ws \
+            --build-arg PUBLIC_URL=/ \
+            -t sowbobo98/xamxamboutik-frontend-darou:latest --push .
+      - name: Build and push React image for hadia
+        run: |
+          cd frontend
+          docker buildx build --platform linux/amd64 \
+            --build-arg REACT_APP_API_BASE_URL=https://hadia.xamxamboutik.shop/api/v1 \
+            --build-arg REACT_APP_WS_URL=wss://hadia.xamxamboutik.shop/api/v1/ws \
+            --build-arg PUBLIC_URL=/ \
+            -t sowbobo98/xamxamboutik-frontend-hadia:latest --push .
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
