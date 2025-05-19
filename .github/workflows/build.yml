@@ -19,18 +19,10 @@ jobs:
         run: |
           cd backend
           docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-backend:latest --push .
-      - name: Build and push React image for darou-salam
+      - name: Build and push React image
         run: |
           cd frontend
-          docker buildx build --platform linux/amd64 \
-            --build-arg ENV_FILE=.env.darousalam \
-            -t sowbobo98/xamxamboutik-frontend-darou:latest --push .
-      - name: Build and push React image for hadia
-        run: |
-          cd frontend
-          docker buildx build --platform linux/amd64 \
-            --build-arg ENV_FILE=.env.hadia \
-            -t sowbobo98/xamxamboutik-frontend-hadia:latest --push .
+          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-frontend:latest --push .
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
