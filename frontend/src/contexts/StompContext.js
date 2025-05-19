@@ -26,9 +26,9 @@ export const StompProvider = ({ children }) => {
   const [userData, setUserData] = useState([]);
 
   useEffect(() => {
-    console.log('WebSocket URL:', process.env.REACT_APP_WS_URL);
+    console.log('WebSocket URL:', window._env_.REACT_APP_WS_URL);
     const client = new Client({
-      brokerURL: process.env.REACT_APP_WS_URL,
+      brokerURL: window._env_.REACT_APP_WS_URL,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000
@@ -59,7 +59,6 @@ export const StompProvider = ({ children }) => {
     };
   }, []);
 
-  // Gestion des souscriptions dans un seul useEffect
   useEffect(() => {
     if (stompClient && connected && stompClient.active) {
       console.log('Souscription aux topics STOMP');
