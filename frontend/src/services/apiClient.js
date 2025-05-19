@@ -3,6 +3,8 @@ import axios from 'axios';
 import localForage from 'localforage';
 import { authService } from './auth.service';
 
+console.log('window._env_:', window._env_);
+console.log('process.env:', process.env);
 const apiClient = axios.create({
   baseURL:
     window._env_?.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_BASE_URL

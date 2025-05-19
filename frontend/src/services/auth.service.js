@@ -1,10 +1,14 @@
 import axios from 'axios';
 import localForage from 'localforage';
 
-const API_URL = process.env.REACT_APP_API_BASE_URL + '/auth';
+console.log('window._env_:', window._env_);
+const API_URL =
+  (window._env_?.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_BASE_URL) +
+  '/auth';
 
 export const authService = {
   login: async (username, password) => {
+    console.log('Tentative de connexion à:', API_URL);
     const response = await axios.post(`${API_URL}/login`, {
       login: username,
       password

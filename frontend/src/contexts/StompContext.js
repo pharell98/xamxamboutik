@@ -26,16 +26,26 @@ export const StompProvider = ({ children }) => {
   const [userData, setUserData] = useState([]);
 
   useEffect(() => {
-    console.log('WebSocket URL:', window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL);
+    console.log('window._env_:', window._env_);
+    console.log(
+      'WebSocket URL:',
+      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL
+    );
+    const brokerURL =
+      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
+    if (!brokerURL) {
+      console.error('Erreur : brokerURL non défini. Vérifiez env-config.js.');
+      return;
+    }
     const client = new Client({
-      brokerURL: window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL,
+      brokerURL,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000
     });
 
     client.onConnect = () => {
-      console.log('Connexion STOMP établie pour:', window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL);
+      console.log('Connexion STOMP établie pour:', brokerURL);
       setConnected(true);
       setIsReconnecting(false);
     };
@@ -55,7 +65,7 @@ export const StompProvider = ({ children }) => {
 
     return () => {
       console.log('Nettoyage: désactivation du client STOMP');
-      BLEclient.deactivate();
+      stompClient?.deactivate();
     };
   }, []);
 
