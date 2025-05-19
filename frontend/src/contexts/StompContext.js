@@ -26,9 +26,9 @@ export const StompProvider = ({ children }) => {
   const [userData, setUserData] = useState([]);
 
   useEffect(() => {
-    console.log('WebSocket URL:', window._env_.REACT_APP_WS_URL);
+    console.log('WebSocket URL:', process.env.REACT_APP_WS_URL);
     const client = new Client({
-      brokerURL: window._env_.REACT_APP_WS_URL,
+      brokerURL: process.env.REACT_APP_WS_URL,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000
