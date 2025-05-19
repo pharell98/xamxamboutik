@@ -22,7 +22,7 @@ jobs:
       - name: Build and push React image
         run: |
           cd frontend
-          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-frontend:latest --build-arg ENV_FILE=.env.darousalam --push .
+          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-frontend:latest --push .
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -32,7 +32,9 @@ jobs:
           script: |
             cd /var/www/xamxamboutik
             docker login -u sowbobo98 -p ${{ secrets.DOCKER_PASSWORD }}
-            docker-compose pull
-            docker-compose up -d
+            docker-compose -f docker-compose-darou-salam.yml pull
+            docker-compose -f docker-compose-darou-salam.yml up -d
+            docker-compose -f docker-compose-hadia.yml pull
+            docker-compose -f docker-compose-hadia.yml up -d
             sudo nginx -t
             sudo systemctl reload nginx

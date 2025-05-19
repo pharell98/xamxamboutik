@@ -77,7 +77,8 @@ public class SecurityConfig {
         List<String> origins = allowedOrigins != null ? Arrays.asList(allowedOrigins.split(",")) : List.of(
                 "http://localhost:3000",
                 "https://xamxamboutik.shop",
-                "https://darou-salam.xamxamboutik.shop"
+                "https://darou-salam.xamxamboutik.shop",
+                "https://hadia.xamxamboutik.shop"
         );
         cfg.setAllowedOrigins(origins);
         cfg.setAllowedMethods(List.of(
