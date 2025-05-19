@@ -3,13 +3,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
-# Les variables d'environnement seront fournies par docker-compose
-ARG REACT_APP_API_BASE_URL
-ARG REACT_APP_WS_URL
-ARG PUBLIC_URL
-ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
-ENV REACT_APP_WS_URL=$REACT_APP_WS_URL
-ENV PUBLIC_URL=$PUBLIC_URL
+# Copier le fichier .env spécifique au client
+ARG ENV_FILE
+COPY ${ENV_FILE} .env
+# Diagnostic : Afficher le contenu de .env
+RUN cat .env
 RUN npm run build
 
 FROM nginx:alpine
