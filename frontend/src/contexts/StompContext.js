@@ -27,8 +27,12 @@ export const StompProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('window._env_:', window._env_);
-    console.log('WebSocket URL:', window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL);
-    const brokerURL = window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
+    console.log(
+      'WebSocket URL:',
+      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL
+    );
+    const brokerURL =
+      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
     if (!brokerURL) {
       console.error('Erreur : brokerURL non défini. Vérifiez env-config.js.');
       return;
@@ -49,7 +53,7 @@ export const StompProvider = ({ children }) => {
       }
     });
 
-    client.onConnect = (frame) => {
+    client.onConnect = frame => {
       console.log('Connexion STOMP établie pour:', brokerURL, 'Frame:', frame);
       setConnected(true);
       setIsReconnecting(false);
@@ -77,11 +81,17 @@ export const StompProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (!stompClient || !connected || !stompClient.active) {
+    if (
+      !stompClient ||
+      !connected ||
+      !stompClient.active ||
+      !stompClient.connected
+    ) {
       console.log('Souscription STOMP ignorée: client non prêt', {
         stompClient: !!stompClient,
         connected,
-        active: stompClient?.active
+        active: stompClient?.active,
+        stompConnected: stompClient?.connected
       });
       return;
     }
@@ -89,49 +99,45 @@ export const StompProvider = ({ children }) => {
     console.log('Souscription aux topics STOMP');
     let subscriptions = [];
 
-    try {
-      subscriptions.push(
-        stompClient.subscribe('/topic/updates', message => {
+    const subscribeWithErrorHandling = (topic, callback) => {
+      try {
+        const subscription = stompClient.subscribe(topic, message => {
           const parsed = parseMessageBody(message.body);
-          setData(prevData => [...prevData, parsed]);
-        })
-      );
-      subscriptions.push(
-        stompClient.subscribe('/topic/ventes', message => {
-          const parsed = parseMessageBody(message.body);
-          setVenteData(prevData => [...prevData, parsed]);
-          setData(prevData => [...prevData, parsed]);
-        })
-      );
-      subscriptions.push(
-        stompClient.subscribe('/topic/barcode', message => {
-          const parsed = parseMessageBody(message.body);
-          setData(prevData => [...prevData, parsed]);
-        })
-      );
-      subscriptions.push(
-        stompClient.subscribe('/topic/approvisionnements', message => {
-          const parsed = parseMessageBody(message.body);
-          setApprovisionnementData(prevData => [...prevData, parsed]);
-          setData(prevData => [...prevData, parsed]);
-        })
-      );
-      subscriptions.push(
-        stompClient.subscribe('/topic/users', message => {
-          const parsed = parseMessageBody(message.body);
-          setUserData(prevData => [...prevData, parsed]);
-          setData(prevData => [...prevData, parsed]);
-        })
-      );
-    } catch (error) {
-      console.error('Erreur lors de la souscription aux topics STOMP:', error);
-    }
+          callback(parsed);
+        });
+        subscriptions.push(subscription);
+      } catch (error) {
+        console.error(
+          `Erreur lors de la souscription au topic ${topic}:`,
+          error
+        );
+      }
+    };
+
+    subscribeWithErrorHandling('/topic/updates', parsed => {
+      setData(prevData => [...prevData, parsed]);
+    });
+    subscribeWithErrorHandling('/topic/ventes', parsed => {
+      setVenteData(prevData => [...prevData, parsed]);
+      setData(prevData => [...prevData, parsed]);
+    });
+    subscribeWithErrorHandling('/topic/barcode', parsed => {
+      setData(prevData => [...prevData, parsed]);
+    });
+    subscribeWithErrorHandling('/topic/approvisionnements', parsed => {
+      setApprovisionnementData(prevData => [...prevData, parsed]);
+      setData(prevData => [...prevData, parsed]);
+    });
+    subscribeWithErrorHandling('/topic/users', parsed => {
+      setUserData(prevData => [...prevData, parsed]);
+      setData(prevData => [...prevData, parsed]);
+    });
 
     return () => {
       console.log('Désabonnement des topics STOMP');
       subscriptions.forEach(sub => {
         try {
-          sub.unsubscribe();
+          sub?.unsubscribe();
         } catch (error) {
           console.error('Erreur lors du désabonnement:', error);
         }
