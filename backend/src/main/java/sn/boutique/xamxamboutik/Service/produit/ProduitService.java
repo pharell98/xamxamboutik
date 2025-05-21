@@ -48,6 +48,15 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     }
 
     @Override
+    @Transactional
+    public void deleteById(Long id) {
+        Produit produit = getRepository().findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + id + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND));
+        getRepository().deleteById(id);
+        notifyUpdate(produit, "DELETE");
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Page<ProduitProjection> findAllProjection(Pageable pg) {
         requireNonNull(pg, "Les paramètres de pagination sont requis.");
@@ -80,7 +89,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         Produit saved = produitRepository.save(produit);
         handleImageUpload(saved, file, dto.getImageURL());
         handleInitialStock(saved, dto);
-        notifyUpdate();
+        notifyUpdate(saved, "CREATE");
         return saved;
     }
 
@@ -94,7 +103,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
         Produit saved = produitRepository.save(produit);
         handleImageUpload(saved, file, dto.getImageURL());
-        notifyUpdate();
+        notifyUpdate(saved, "CREATE");
         return saved;
     }
 
@@ -111,7 +120,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
         handleImageUpdate(existing, file, dto.getImageURL());
         Produit updated = produitRepository.save(existing);
-        notifyUpdate();
+        notifyUpdate(updated, "UPDATE");
         return updated;
     }
 
@@ -128,7 +137,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
             throw new BaseCustomException("Le produit '" + produit.getLibelle() + "' existe déjà.", "DUPLICATE_ENTITY");
         }
         Produit updated = produitRepository.save(produit);
-        notifyUpdate();
+        notifyUpdate(updated, "UPDATE");
         return updated;
     }
 
@@ -151,7 +160,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         produitRepository.restore(id);
         Produit restored = produitRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + id + " non trouvé après restauration.", ErrorCodes.ENTITY_NOT_FOUND));
-        notifyUpdate();
+        notifyUpdate(restored, "RESTORE");
         return restored;
     }
 
@@ -200,7 +209,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         approvisionnementService.createApprovisionnementVirtuel(produit, quantite, prix);
 
         Produit updated = produitRepository.save(produit);
-        notifyUpdate();
+        notifyUpdate(updated, "UPDATE_STOCK");
         return updated;
     }
 
@@ -290,8 +299,16 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
     }
 
-    private void notifyUpdate() {
-        messagingTemplate.convertAndSend("/topic/updates", "update");
+    private void notifyUpdate(Produit produit, String action) {
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("action", action);
+            message.put("productId", produit.getId());
+            message.put("libelle", produit.getLibelle());
+            messagingTemplate.convertAndSend("/topic/updates", message);
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de la notification WebSocket pour le produit {}: {}", produit.getId(), e.getMessage());
+        }
     }
 
     private String extractPublicId(String url) {

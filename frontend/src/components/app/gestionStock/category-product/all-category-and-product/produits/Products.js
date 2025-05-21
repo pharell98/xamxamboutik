@@ -13,6 +13,7 @@ import { getProductsFiltersConfig } from './productsFiltersConfig';
 import { getProductsColumns } from './productsColumnsConfig';
 import { useToast } from 'components/common/Toast';
 import Loading from '../../../../../common/Loading';
+import { debounce } from 'lodash';
 
 const Products = ({ onEdit, isEditing }) => {
   const [refresh, setRefresh] = useState(0);
@@ -21,12 +22,16 @@ const Products = ({ onEdit, isEditing }) => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { stompClient, connected } = useStompClient();
+  const { data } = useStompClient();
   const { addToast } = useToast();
 
   const [categoryOptions, setCategoryOptions] = useState([
     { value: '', label: 'Toutes les catégories' }
   ]);
+
+  const debouncedSetRefresh = debounce(() => {
+    setRefresh(prev => prev + 1);
+  }, 500);
 
   useEffect(() => {
     const fetchCategoriesForFilter = async () => {
@@ -56,6 +61,14 @@ const Products = ({ onEdit, isEditing }) => {
     fetchCategoriesForFilter();
   }, [addToast]);
 
+  useEffect(() => {
+    const lastUpdate = data[data.length - 1];
+    if (lastUpdate?.action) {
+      console.log('Mise à jour produit reçue:', lastUpdate);
+      debouncedSetRefresh();
+    }
+  }, [data]);
+
   const handleFiltersChange = useCallback((name, value) => {
     setFilters(prev => ({
       ...prev,
@@ -77,16 +90,6 @@ const Products = ({ onEdit, isEditing }) => {
       return () => clearTimeout(timer);
     }
   }, [searchTerm]);
-
-  useEffect(() => {
-    if (stompClient && connected) {
-      const subscription = stompClient.subscribe('/topic/updates', message => {
-        console.log('Message reçu sur /topic/updates :', message.body);
-        setRefresh(prev => prev + 1);
-      });
-      return () => subscription.unsubscribe();
-    }
-  }, [stompClient, connected]);
 
   const openDeleteModal = useCallback(product => {
     setProductToDelete(product);
@@ -210,14 +213,9 @@ const Products = ({ onEdit, isEditing }) => {
             endpoint
           }
         );
-        const serverMessage =
-          error.response?.data?.message ||
-          `Une erreur est survenue lors de la récupération des produits: ${
-            error.message || 'Erreur inconnue'
-          }`;
         addToast({
           title: 'Erreur',
-          message: serverMessage,
+          message: 'Impossible de charger les produits. Veuillez réessayer.',
           type: 'error'
         });
         return { data: [], pageCount: 0 };
