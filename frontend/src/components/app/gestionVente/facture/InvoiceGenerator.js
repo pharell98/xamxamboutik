@@ -3,7 +3,6 @@ import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import apiServiceSettings from '../../../../services/api.service.settings';
-import defaultLogo from 'assets/img/illustrations/falcon.png';
 
 // Charger une image comme data URL
 const loadImage = url => {
@@ -33,51 +32,58 @@ const InvoiceGenerator = {
   ) => {
     const doc = new jsPDF();
 
-    // Récupérer les paramètres
+    // Récupérer les paramètres depuis le backend
     let settings;
     try {
       settings = await apiServiceSettings.getSettings();
+      if (!settings) {
+        throw new Error('Aucune donnée de paramètres reçue');
+      }
     } catch (error) {
       console.error('Erreur lors de la récupération des paramètres:', error);
-      settings = { shopName: 'xamxamboutik', logo: null };
+      settings = {};
     }
 
-    // Informations de l'entreprise
+    // Informations de l'entreprise (uniquement depuis l'API)
     const company = {
-      name: settings.shopName || 'xamxamboutik',
-      address: settings.street || companyInfo.address || 'Ouakam',
-      city: settings.country || companyInfo.city || 'Sénégal',
-      region: settings.region || companyInfo.region || 'Dakar',
-      department:
-        settings.department || companyInfo.department || 'Keur Massar',
-      neighborhood:
-        settings.neighborhood || companyInfo.neighborhood || 'Alioune Ndiaye',
-      phone: settings.phone || companyInfo.phone || '+221777930609',
-      email: settings.email || companyInfo.email || 'sowpharell98@gmail.com',
-      website: settings.websiteUrl || companyInfo.website || '',
-      ...companyInfo
+      name: settings.shopName || '',
+      address: settings.street || '',
+      city: settings.country || '',
+      region: settings.region || '',
+      department: settings.department || '',
+      neighborhood: settings.neighborhood || '',
+      phone: settings.phone || '',
+      email: settings.email || '',
+      website: settings.websiteUrl || ''
     };
 
     // Charger le logo
-    let logoDataUrl = defaultLogo;
+    let logoDataUrl = null;
     if (settings.logo) {
       try {
         logoDataUrl = await loadImage(settings.logo);
       } catch (error) {
         console.error('Erreur lors du chargement du logo:', error);
       }
-    } else {
-      console.warn("Aucun logo configuré, utilisation de l'image par défaut");
     }
 
     // Fonction pour dessiner l'en-tête
     const drawHeader = () => {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      try {
-        doc.addImage(logoDataUrl, 'PNG', 15, 10, 30, 12);
-      } catch (error) {
-        console.error("Erreur lors de l'ajout de l'image au PDF:", error);
+
+      // Afficher le logo ou un placeholder si absent
+      if (logoDataUrl) {
+        try {
+          doc.addImage(logoDataUrl, 'PNG', 15, 10, 30, 12);
+        } catch (error) {
+          console.error("Erreur lors de l'ajout de l'image au PDF:", error);
+          doc.setDrawColor(0, 0, 0);
+          doc.roundedRect(15, 10, 30, 12, 3, 3, 'S');
+          doc.setFontSize(10);
+          doc.text('Logo', 30, 18, { align: 'center' });
+        }
+      } else {
         doc.setDrawColor(0, 0, 0);
         doc.roundedRect(15, 10, 30, 12, 3, 3, 'S');
         doc.setFontSize(10);
@@ -129,8 +135,8 @@ const InvoiceGenerator = {
       doc.text('Facturé à:', 15, 55);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.text(customerInfo.fullName || 'Nom/Service', 15, 62);
-      doc.text(customerInfo.phoneNumber || 'Non fourni', 15, 68);
+      doc.text(customerInfo.fullName || '', 15, 62);
+      doc.text(customerInfo.phoneNumber || '', 15, 68);
     };
 
     // Fonction pour dessiner le tableau des informations de paiement
@@ -181,14 +187,10 @@ const InvoiceGenerator = {
       });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text(
-        `Contactez-nous: ${company.phone} | ${company.email}${
-          company.website ? ` | ${company.website}` : ''
-        }`,
-        105,
-        finalY + 32,
-        { align: 'center' }
-      );
+      const contactText = `Contactez-nous: ${company.phone} | ${company.email}${
+        company.website ? ` | ${company.website}` : ''
+      }`;
+      doc.text(contactText, 105, finalY + 32, { align: 'center' });
     };
 
     // Dessiner la première page

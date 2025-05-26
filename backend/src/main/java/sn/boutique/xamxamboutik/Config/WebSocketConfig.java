@@ -1,4 +1,4 @@
-package sn.boutique.xamxamboutik.config;
+package sn.boutique.xamxamboutik.Config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -13,10 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry
                 .addEndpoint("/ws")
                 .setAllowedOrigins(
-                        "http://localhost:3000",
-                        "https://xamxamboutik.shop",
-                        "https://darou-salam.xamxamboutik.shop",
-                        "https://hadia.xamxamboutik.shop"
+                        "http://localhost:3000"
                 );
     }
     @Override

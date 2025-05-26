@@ -1,40 +1,47 @@
 server:
-  port: ${PORT:8080}
+  port: 8080
   servlet:
     context-path: /api/v1
 
 spring:
+  # Configuration de l'application
   application:
-    name: xamxamboutik-api
+    name: gestion-stock-api
+
+  # Configuration de la base de données
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/darou_salam_db
+    username: darousalam
+    password: passer
     driver-class-name: org.postgresql.Driver
+
+  # Configuration JPA/Hibernate
   jpa:
     database: postgresql
     show-sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
-  flyway:
-    enabled: false  # Désactiver Flyway temporairement
+
+  # Configuration multipart pour les fichiers
   servlet:
     multipart:
       enabled: true
       max-file-size: 2MB
       max-request-size: 2MB
 
+# Configuration de la sécurité JWT
 security:
   jwt:
-    secret-key: ${JWT_SECRET}
+    secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     access-token:
-      validity: 3600
+      validity: 3600  # 1 heures en secondes
     refresh-token:
-      validity: 70000
+      validity: 70000  # Environ 19.4 heures en secondes
 
+# Configuration des logs
 logging:
   level:
     root: INFO
@@ -43,14 +50,11 @@ logging:
         security: DEBUG
         web: DEBUG
         data: DEBUG
-        boot: DEBUG
-        boot.web: DEBUG
-      hibernate: DEBUG
-      flyway: DEBUG
     sn:
       boutique:
-        xamxamboutik: DEBUG
+        backend_darou_salam: DEBUG
 
+# Configuration OpenAPI/Swagger
 springdoc:
   api-docs:
     enabled: true
@@ -70,22 +74,24 @@ springdoc:
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
 
-cloudinary:
-  cloud_name: ${CLOUDINARY_CLOUD_NAME}
-  api_key: ${CLOUDINARY_API_KEY}
-  api_secret: ${CLOUDINARY_API_SECRET}
+# Configuration des CORS (optionnel, à ajuster selon vos besoins)
+cors:
+  allowed-origins: "*"
+  allowed-methods: "*"
+  allowed-headers: "*"
+  exposed-headers: "Authorization"
+  allow-credentials: true
+  max-age: 3600
 
+# Configuration du serveur (paramètres additionnels)
 server.error:
   include-message: always
   include-binding-errors: always
   include-stacktrace: never
   include-exception: false
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-
-cors:
-  allowed-origins: http://localhost:3000,https://xamxamboutik.shop,https://darou-salam.xamxamboutik.shop,https://hadia.xamxamboutik.shop
+cloudinary:
+  cloud_name: "dee53ktfk"
+  api_key: "687276561974881"
+  api_secret: "kIlGE9oEoSakLjJqD4dVNk5A6BU"
+  # Remplacez par votre API Secret
