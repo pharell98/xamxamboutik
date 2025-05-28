@@ -129,7 +129,12 @@ public class VenteService implements IVenteService {
             soldItems.add(item);
         }
         message.put("soldItems", soldItems);
-        messagingTemplate.convertAndSend("/topic/ventes", message);
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/ventes", message);
+            System.out.println("Message STOMP envoyé à /topic/ventes pour vente ID: " + vente.getId());
+        } else {
+            System.out.println("SimpMessagingTemplate non disponible, message STOMP non envoyé pour vente ID: " + vente.getId());
+        }
     }
 
     @Override

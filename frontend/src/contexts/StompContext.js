@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef
-} from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import PropTypes from 'prop-types';
 
@@ -23,134 +17,168 @@ const parseMessageBody = body => {
 };
 
 export const StompProvider = ({ children }) => {
-  const [stompClient, setStompClient] = useState(null);
   const [connected, setConnected] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [data, setData] = useState([]);
   const [approvisionnementData, setApprovisionnementData] = useState([]);
   const [venteData, setVenteData] = useState([]);
   const [userData, setUserData] = useState([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const stompClientRef = useRef(null);
   const subscriptionsRef = useRef([]);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
-    console.log('window._env_:', window._env_);
-    console.log('WebSocket URL:', process.env.REACT_APP_WS_URL);
-    const brokerURL = process.env.REACT_APP_WS_URL;
+    const brokerURL =
+      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
     if (!brokerURL) {
-      console.error('Erreur : brokerURL non défini. Vérifiez .env.');
+      console.error('Erreur : brokerURL non défini. Vérifiez env-config.js.');
       return;
     }
 
-    console.log('Tentative de connexion au WebSocket:', brokerURL);
     const client = new Client({
       brokerURL,
-      reconnectDelay: 10000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
+      reconnectDelay: 5000, // Délai de reconnexion
+      heartbeatIncoming: 10000, // Augmenté pour éviter les déconnexions dues à l'inactivité
+      heartbeatOutgoing: 10000, // Augmenté pour maintenir la connexion active
       onWebSocketError: error => {
         console.error('Erreur WebSocket:', error);
         setConnected(false);
         setIsReconnecting(true);
+        setIsSubscribed(false);
       },
       onWebSocketClose: event => {
-        console.log('WebSocket fermé:', event);
         setConnected(false);
         setIsReconnecting(true);
+        setIsSubscribed(false);
       }
     });
 
-    const subscribeToTopics = client => {
-      if (!client || !client.active) {
-        console.error(
-          'Client STOMP non initialisé ou non actif, abonnement annulé'
-        );
-        return;
+    const subscribeToTopics = () => {
+      if (isSubscribed) {
+        return true;
       }
-      subscribeWithErrorHandling(client, '/topic/updates', parsed => {
-        console.log('Mise à jour reçue:', parsed);
+
+      // Désabonner uniquement si la connexion est active
+      if (stompClientRef.current && stompClientRef.current.connected) {
+        subscriptionsRef.current.forEach(sub => {
+          try {
+            sub?.unsubscribe();
+          } catch (error) {
+            console.warn('Erreur lors de la désinscription:', error);
+          }
+        });
+      }
+      subscriptionsRef.current = [];
+
+      subscribeWithErrorHandling('/topic/updates', parsed => {
         setData(prevData => [...prevData, parsed]);
       });
-      subscribeWithErrorHandling(client, '/topic/ventes', parsed => {
+      subscribeWithErrorHandling('/topic/ventes', parsed => {
         setVenteData(prevData => [...prevData, parsed]);
         setData(prevData => [...prevData, parsed]);
       });
-      subscribeWithErrorHandling(client, '/topic/barcode', parsed => {
+      subscribeWithErrorHandling('/topic/barcode', parsed => {
         setData(prevData => [...prevData, parsed]);
       });
-      subscribeWithErrorHandling(
-        client,
-        '/topic/approvisionnements',
-        parsed => {
-          setApprovisionnementData(prevData => [...prevData, parsed]);
-          setData(prevData => [...prevData, parsed]);
-        }
-      );
-      subscribeWithErrorHandling(client, '/topic/users', parsed => {
+      subscribeWithErrorHandling('/topic/approvisionnements', parsed => {
+        setApprovisionnementData(prevData => [...prevData, parsed]);
+        setData(prevData => [...prevData, parsed]);
+      });
+      subscribeWithErrorHandling('/topic/users', parsed => {
         setUserData(prevData => [...prevData, parsed]);
         setData(prevData => [...prevData, parsed]);
       });
-    };
+      subscribeWithErrorHandling('/topic/settings', parsed => {
+        setData(prevData => [...prevData, parsed]);
+      });
+      subscribeWithErrorHandling('/topic/categories', parsed => {
+        setData(prevData => [...prevData, parsed]);
+      });
+      subscribeWithErrorHandling('/topic/retours', parsed => {
+        setData(prevData => [...prevData, parsed]);
+      });
 
-    const subscribeWithErrorHandling = (client, topic, callback) => {
-      if (!client || !client.active) {
-        console.error(
-          `Client STOMP non initialisé ou non actif pour le topic ${topic}`
-        );
-        return;
-      }
-      try {
-        console.log('Client avant abonnement:', client);
-        const subscription = client.subscribe(topic, message => {
-          const parsed = parseMessageBody(message.body);
-          callback(parsed);
-        });
-        subscriptionsRef.current.push(subscription);
-        console.log(`Souscription réussie au topic ${topic}`);
-      } catch (error) {
-        console.error(
-          `Erreur lors de la souscription au topic ${topic}:`,
-          error
-        );
-      }
+      setIsSubscribed(true);
+      return true;
     };
 
     client.onConnect = frame => {
-      console.log('Connexion STOMP établie:', { brokerURL, frame });
       setConnected(true);
       setIsReconnecting(false);
-      subscriptionsRef.current.forEach(sub => sub?.unsubscribe());
-      subscriptionsRef.current = [];
-      subscribeToTopics(client);
+
+      // S'assurer que les souscriptions sont effectuées après un délai
+      timeoutRef.current = setTimeout(() => {
+        subscribeToTopics();
+      }, 1000);
     };
 
     client.onDisconnect = () => {
-      console.log('Déconnexion STOMP détectée');
       setConnected(false);
       setIsReconnecting(true);
+      setIsSubscribed(false);
     };
 
     client.onStompError = error => {
       console.error('Erreur STOMP:', error);
       setConnected(false);
       setIsReconnecting(true);
+      setIsSubscribed(false);
     };
 
     client.activate();
-    setStompClient(client);
+    stompClientRef.current = client;
+
+    // Ajouter un écouteur pour fermer la connexion uniquement à la fermeture complète de l'application
+    const handleBeforeUnload = () => {
+      if (stompClientRef.current && stompClientRef.current.connected) {
+        subscriptionsRef.current.forEach(sub => {
+          try {
+            sub?.unsubscribe();
+          } catch (error) {
+            console.warn('Erreur lors de la désinscription:', error);
+          }
+        });
+        stompClientRef.current.deactivate();
+        stompClientRef.current = null;
+      }
+      subscriptionsRef.current = [];
+      setIsSubscribed(false);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      console.log('Nettoyage: désactivation du client STOMP');
-      subscriptionsRef.current.forEach(sub => sub?.unsubscribe());
-      subscriptionsRef.current = [];
-      client.deactivate();
-      setStompClient(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // Ne pas désactiver la connexion ici, sauf si nécessaire
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+
+  const subscribeWithErrorHandling = (topic, callback) => {
+    if (!stompClientRef.current) {
+      console.error(`Client STOMP non défini pour le topic ${topic}`);
+      return;
+    }
+    try {
+      const subscription = stompClientRef.current.subscribe(topic, message => {
+        const parsed = parseMessageBody(message.body);
+        callback(parsed);
+      });
+      subscriptionsRef.current.push(subscription);
+    } catch (error) {
+      console.error(`Erreur lors de la souscription au topic ${topic}:`, error);
+      setIsSubscribed(false);
+    }
+  };
 
   return (
     <StompContext.Provider
       value={{
-        stompClient,
+        stompClient: stompClientRef.current,
         connected,
         isReconnecting,
         data,

@@ -305,7 +305,12 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
             message.put("action", action);
             message.put("productId", produit.getId());
             message.put("libelle", produit.getLibelle());
-            messagingTemplate.convertAndSend("/topic/updates", message);
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/updates", message);
+                log.info("Message STOMP envoyé à /topic/updates pour produit ID: {}", produit.getId());
+            } else {
+                log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour produit ID: {}", produit.getId());
+            }
         } catch (Exception e) {
             log.error("Échec de l'envoi de la notification WebSocket pour le produit {}: {}", produit.getId(), e.getMessage());
         }

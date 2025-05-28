@@ -55,8 +55,12 @@ public class ParametrageService extends AbstractBaseService<Parametrage> {
         log.info("Paramétrage enregistré avec ID: {}", saved.getId());
         handleImageUpload(saved, file, dto.getImageURL());
         // Publish STOMP message
-        messagingTemplate.convertAndSend("/topic/settings", parametrageMapper.toResponseWebDTO(saved));
-        log.info("Message STOMP envoyé à /topic/settings pour paramétrage ID: {}", saved.getId());
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/settings", parametrageMapper.toResponseWebDTO(saved));
+            log.info("Message STOMP envoyé à /topic/settings pour paramétrage ID: {}", saved.getId());
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour paramétrage ID: {}", saved.getId());
+        }
         return saved;
     }
 
@@ -74,8 +78,12 @@ public class ParametrageService extends AbstractBaseService<Parametrage> {
         Parametrage updated = parametrageRepository.save(existing);
         log.info("Paramétrage mis à jour avec succès: {}", updated.getId());
         // Publish STOMP message
-        messagingTemplate.convertAndSend("/topic/settings", parametrageMapper.toResponseWebDTO(updated));
-        log.info("Message STOMP envoyé à /topic/settings pour paramétrage ID: {}", updated.getId());
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/settings", parametrageMapper.toResponseWebDTO(updated));
+            log.info("Message STOMP envoyé à /topic/settings pour paramétrage ID: {}", updated.getId());
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour paramétrage ID: {}", updated.getId());
+        }
         return updated;
     }
 
