@@ -269,6 +269,11 @@ public class ApprovisionnementService implements IApprovisionnementService {
      * Envoie une notification WebSocket pour signaler une mise à jour des approvisionnements.
      */
     private void notifyUpdate() {
-        messagingTemplate.convertAndSend("/topic/approvisionnements", "update");
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/approvisionnements", "update");
+            log.info("Message STOMP envoyé à /topic/approvisionnements");
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour /topic/approvisionnements");
+        }
     }
 }

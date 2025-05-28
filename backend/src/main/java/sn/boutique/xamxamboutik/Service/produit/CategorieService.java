@@ -147,6 +147,11 @@ public class CategorieService extends AbstractBaseService<Categorie> {
     }
 
     private void notifyUpdate() {
-        messagingTemplate.convertAndSend("/topic/categories", "update");
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/categories", "update");
+            log.info("Message STOMP envoyé à /topic/categories");
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour /topic/categories");
+        }
     }
 }

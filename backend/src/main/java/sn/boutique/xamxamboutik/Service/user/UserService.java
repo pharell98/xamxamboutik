@@ -154,14 +154,24 @@ public class UserService extends AbstractBaseService<Utilisateur> implements IUs
         message.put("nom", utilisateur.getNom());
         message.put("login", utilisateur.getLogin());
         message.put("role", utilisateur.getRole());
-        messagingTemplate.convertAndSend("/topic/users", message);
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/users", message);
+            log.info("Message STOMP envoyé à /topic/users pour utilisateur ID: {}", utilisateur.getId());
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour utilisateur ID: {}", utilisateur.getId());
+        }
     }
 
     private void notifyUpdate(String action, Long userId) {
         Map<String, Object> message = new HashMap<>();
         message.put("type", action);
         message.put("userId", userId);
-        messagingTemplate.convertAndSend("/topic/users", message);
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend("/topic/users", message);
+            log.info("Message STOMP envoyé à /topic/users pour utilisateur ID: {}", userId);
+        } else {
+            log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour utilisateur ID: {}", userId);
+        }
     }
 
     private Pageable sorted(Pageable pageable) {

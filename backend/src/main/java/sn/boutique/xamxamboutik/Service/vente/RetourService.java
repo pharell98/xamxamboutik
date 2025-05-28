@@ -96,7 +96,12 @@ public class RetourService implements IRetourService {
 
             retourProduitRepository.save(retourProduit);
             logger.info("Remboursement créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
-            messagingTemplate.convertAndSend("/topic/retours", "remboursement");
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/retours", "remboursement");
+                logger.info("Message STOMP envoyé à /topic/retours pour remboursement, detailVenteId: {}", dto.getDetailVenteId());
+            } else {
+                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour remboursement, detailVenteId: {}", dto.getDetailVenteId());
+            }
             return retourProduit;
         } catch (BaseCustomException e) {
             logger.error("Erreur gérée lors du remboursement pour detailVenteId: {}. Message: {}", dto.getDetailVenteId(), e.getMessage());
@@ -164,7 +169,12 @@ public class RetourService implements IRetourService {
 
             retourProduitRepository.save(retourProduit);
             logger.info("Échange créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
-            messagingTemplate.convertAndSend("/topic/retours", "echange");
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/retours", "echange");
+                logger.info("Message STOMP envoyé à /topic/retours pour échange, detailVenteId: {}", dto.getDetailVenteId());
+            } else {
+                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour échange, detailVenteId: {}", dto.getDetailVenteId());
+            }
             return retourProduit;
         } catch (Exception e) {
             logger.error("Erreur lors de la création de l'échange pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
@@ -235,7 +245,12 @@ public class RetourService implements IRetourService {
 
             retourProduitRepository.save(retourProduit);
             logger.info("Annulation créée avec succès pour detailVenteId: {}", dto.getDetailVenteId());
-            messagingTemplate.convertAndSend("/topic/retours", "annulation");
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/retours", "annulation");
+                logger.info("Message STOMP envoyé à /topic/retours pour annulation, detailVenteId: {}", dto.getDetailVenteId());
+            } else {
+                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour annulation, detailVenteId: {}", dto.getDetailVenteId());
+            }
             return retourProduit;
         } catch (Exception e) {
             logger.error("Erreur lors de la création de l'annulation pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
