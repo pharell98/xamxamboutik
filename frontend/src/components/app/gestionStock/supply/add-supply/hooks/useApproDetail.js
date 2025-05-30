@@ -519,8 +519,6 @@ export function useApproDetail({ control }) {
       montantTotal: totalAmount
     };
 
-    console.log('DTO envoyé au backend :', dto);
-
     const formData = new FormData();
     const jsonBlob = new Blob([JSON.stringify(dto)], {
       type: 'application/json'
@@ -538,8 +536,7 @@ export function useApproDetail({ control }) {
     });
 
     for (let pair of formData.entries()) {
-      console.log(pair[0] + ' : ', pair[1]);
-    }
+      }
 
     try {
       await submitApprovisionnement(formData);

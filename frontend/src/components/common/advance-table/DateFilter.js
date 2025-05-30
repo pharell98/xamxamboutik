@@ -70,7 +70,6 @@ const DateFilter = ({
   const [date, setDate] = useState(value ? new Date(value) : null);
 
   useEffect(() => {
-    console.log('[DateFilter] Rendering:', { name, value, minDate, maxDate });
     if (date) {
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth() + 1).padStart(2, '0');

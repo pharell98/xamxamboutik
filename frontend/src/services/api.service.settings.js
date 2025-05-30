@@ -19,11 +19,6 @@ const apiServiceSettings = {
     try {
       // Vérifier la présence du champ file
       const file = formData.get('file');
-      console.log(
-        '[apiServiceSettings] Image envoyée:',
-        file ? file.name : 'Aucune image'
-      );
-
       const method = isEditMode ? 'put' : 'post';
       const url = isEditMode ? `${SETTINGS_ENDPOINT}/${id}` : SETTINGS_ENDPOINT;
       const response = await apiClient[method](url, formData, {

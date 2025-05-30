@@ -86,32 +86,24 @@ const apiServiceV1 = {
 
   saveProduct: async (formData, isEditMode = false, id = null) => {
     try {
-      console.log('[apiServiceV1] Debug: Vérif URL image...');
       const rawProduit = formData.get('produit');
       if (rawProduit) {
         const text = rawProduit.text ? await rawProduit.text() : rawProduit;
         let produitObj;
         try {
           produitObj = JSON.parse(text);
-          console.log(
-            '[apiServiceV1] imageURL =',
-            produitObj.imageURL || 'Aucune URL'
-          );
-        } catch (parseErr) {
+          } catch (parseErr) {
           console.warn('[apiServiceV1] parse JSON produit error:', parseErr);
         }
       }
 
-      console.log('[apiServiceV1] Contenu du formData avant envoi:');
       for (const [key, value] of formData.entries()) {
-        console.log(`→ Champ "${key}":`, value);
-      }
+        }
 
       const method = isEditMode ? 'put' : 'post';
       const url = isEditMode ? `${PRODUCT_ENDPOINT}/${id}` : PRODUCT_ENDPOINT;
       const response = await apiClient[method](url, formData);
 
-      console.log('[apiServiceV1] Réponse serveur:', response.data);
       return response.data;
     } catch (error) {
       console.error('[apiServiceV1] Erreur saveProduct:', error);
@@ -138,12 +130,6 @@ const apiServiceV1 = {
           image: null
         };
 
-        console.log(
-          `[bulkImportProducts] Produit ${index + 1} envoyé au backend:`,
-          preparedProduct,
-          `imageURL: ${preparedProduct.imageURL}, useImageURL: ${preparedProduct.useImageURL}`
-        );
-
         return preparedProduct;
       });
 
@@ -151,7 +137,6 @@ const apiServiceV1 = {
         `${PRODUCT_ENDPOINT}/import/excel`,
         preparedProducts
       );
-      console.log('[bulkImportProducts] Réponse serveur:', response.data);
       return response.data;
     } catch (error) {
       console.error('[apiServiceV1] Erreur bulkImportProducts:', error);

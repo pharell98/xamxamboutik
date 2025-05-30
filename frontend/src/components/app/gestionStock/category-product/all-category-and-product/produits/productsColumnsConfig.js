@@ -165,7 +165,6 @@ export const getProductsColumns = (onEdit, openDeleteModal, onRestore) => [
     meta: { cellProps: { className: 'text-center' } },
     cell: ({ row }) => {
       const { original } = row;
-      console.log(`Produit ${original.libelle} - deleted: ${original.deleted}`);
       return (
         <div className={`py-2 ${cellWrapperClass(original.deleted)}`}>
           <CardDropdown>

@@ -64,7 +64,6 @@ const Products = ({ onEdit, isEditing }) => {
   useEffect(() => {
     const lastUpdate = data[data.length - 1];
     if (lastUpdate?.action) {
-      console.log('Mise à jour produit reçue:', lastUpdate);
       debouncedSetRefresh();
     }
   }, [data]);

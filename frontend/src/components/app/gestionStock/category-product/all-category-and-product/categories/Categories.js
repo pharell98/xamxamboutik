@@ -19,8 +19,10 @@ const Categories = ({ onEdit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [subscriptionId] = useState(`categories-${Date.now()}`); // ID unique pour la souscription
 
-  const { stompClient, connected } = useStompClient();
+  const { stompClient, connected, subscribe, unsubscribe, isConnected } =
+    useStompClient();
   const { addToast } = useToast();
 
   const handleFiltersChange = useCallback((name, value) => {
@@ -33,7 +35,7 @@ const Categories = ({ onEdit }) => {
   }, []);
 
   const handleSearch = useCallback(term => {
-    setSearchTerm(term.toLowerCase()); // Normalize search term to lowercase
+    setSearchTerm(term.toLowerCase());
     setRefresh(prev => prev + 1);
   }, []);
 
@@ -140,13 +142,59 @@ const Categories = ({ onEdit }) => {
   );
 
   useEffect(() => {
-    if (stompClient && connected) {
-      const subscription = stompClient.subscribe('/topic/categories', () => {
-        setRefresh(prev => prev + 1);
-      });
-      return () => subscription.unsubscribe();
+    if (!stompClient || !connected) {
+      return;
     }
-  }, [stompClient, connected]);
+
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    const attemptSubscription = () => {
+      if (retryCount >= maxRetries) {
+        console.error(
+          `Échec de la souscription à /topic/categories après ${maxRetries} tentatives.`
+        );
+        addToast({
+          title: 'Erreur WebSocket',
+          message:
+            "Impossible de s'abonner aux mises à jour des catégories après plusieurs tentatives.",
+          type: 'error'
+        });
+        return;
+      }
+
+      if (isConnected()) {
+        const subscribed = subscribe(
+          '/topic/categories',
+          () => {
+            setRefresh(prev => prev + 1);
+          },
+          subscriptionId
+        );
+        if (!subscribed) {
+          retryCount++;
+          setTimeout(attemptSubscription, 1000);
+        }
+      } else {
+        retryCount++;
+        setTimeout(attemptSubscription, 1000);
+      }
+    };
+
+    attemptSubscription();
+
+    return () => {
+      unsubscribe(subscriptionId);
+    };
+  }, [
+    stompClient,
+    connected,
+    subscribe,
+    unsubscribe,
+    isConnected,
+    addToast,
+    subscriptionId
+  ]);
 
   const columns = getCategoriesColumns(
     onEdit,
