@@ -8,6 +8,7 @@ import apiServiceV1 from 'services/api.service.v1';
 import { useStompClient } from 'contexts/StompContext';
 import BulkActionsAndSearchBar from 'components/common/advance-table/BulkActionsAndSearchBar';
 import SubtleBadge from 'components/common/SubtleBadge';
+import { useToast } from 'components/common/Toast';
 import * as preApproService from 'services/preApproService';
 import CriticalStockHeader from './CriticalStockHeader';
 
@@ -83,7 +84,10 @@ const RuptureStock = () => {
   const [refresh, setRefresh] = useState(0);
   const [filters, setFilters] = useState({ state: 'all' });
   const [rowSelection, setRowSelection] = useState({});
-  const { stompClient, connected } = useStompClient();
+  const { stompClient, connected, subscribe, unsubscribe, isConnected } =
+    useStompClient();
+  const { addToast } = useToast();
+  const [subscriptionId] = useState(`ruptureStock-${Date.now()}`); // ID unique pour la souscription
 
   const handleFiltersChange = useCallback((name, value) => {
     setFilters(prev => ({
@@ -94,13 +98,59 @@ const RuptureStock = () => {
   }, []);
 
   useEffect(() => {
-    if (stompClient && connected) {
-      const subscription = stompClient.subscribe('/topic/ruptureStock', () =>
-        setRefresh(prev => prev + 1)
-      );
-      return () => subscription.unsubscribe();
+    if (!stompClient || !connected) {
+      return;
     }
-  }, [stompClient, connected]);
+
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    const attemptSubscription = () => {
+      if (retryCount >= maxRetries) {
+        console.error(
+          `Échec de la souscription à /topic/ruptureStock après ${maxRetries} tentatives.`
+        );
+        addToast({
+          title: 'Erreur WebSocket',
+          message:
+            "Impossible de s'abonner aux mises à jour des stocks après plusieurs tentatives.",
+          type: 'error'
+        });
+        return;
+      }
+
+      if (isConnected()) {
+        const subscribed = subscribe(
+          '/topic/ruptureStock',
+          () => {
+            setRefresh(prev => prev + 1);
+          },
+          subscriptionId
+        );
+        if (!subscribed) {
+          retryCount++;
+          setTimeout(attemptSubscription, 1000);
+        }
+      } else {
+        retryCount++;
+        setTimeout(attemptSubscription, 1000);
+      }
+    };
+
+    attemptSubscription();
+
+    return () => {
+      unsubscribe(subscriptionId);
+    };
+  }, [
+    stompClient,
+    connected,
+    subscribe,
+    unsubscribe,
+    isConnected,
+    addToast,
+    subscriptionId
+  ]);
 
   const fetchRuptureStock = useCallback(async (pageIndex, pageSize) => {
     const response = await apiServiceV1.getRuptureStockProducts(

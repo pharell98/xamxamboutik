@@ -16,10 +16,6 @@ const BulkActionsAndSearchBar = ({
   minDate = null,
   maxDate = null
 }) => {
-  console.log('[BulkActionsAndSearchBar] filtersConfig:', filtersConfig);
-  console.log('[BulkActionsAndSearchBar] filtersValues:', filtersValues);
-  console.log('[BulkActionsAndSearchBar] dateRange:', { minDate, maxDate });
-
   return (
     <Row className="mb-3 align-items-center">
       <Col md={8} className="d-flex flex-wrap">
@@ -28,12 +24,6 @@ const BulkActionsAndSearchBar = ({
             filtersValues[f.name] !== undefined
               ? filtersValues[f.name]
               : f.defaultValue || '';
-          console.log(
-            '[BulkActionsAndSearchBar] Rendering filter:',
-            f.name,
-            'Value:',
-            filterValue
-          );
           return f.type === 'date' ? (
             <DateFilter
               key={`${f.name}-${i}`}

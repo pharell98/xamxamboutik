@@ -24,8 +24,6 @@ export const useApprovisionnement = () => {
 
     try {
       // Petit log pour voir le contenu dans la console (remarque : console.log n'affiche pas toujours le FormData)
-      console.log('Données multipart envoyées au backend :', formData);
-
       // Envoi du FormData à l'API via apiServiceV1
       const response = await apiServiceV1.createApprovisionnement(formData);
       return response;

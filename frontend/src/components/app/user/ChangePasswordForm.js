@@ -27,11 +27,6 @@ const ChangePasswordForm = ({ user = null }) => {
     }
     try {
       // Log du mot de passe saisi pour débogage
-      console.log('Mot de passe saisi pour modification:', {
-        newPassword: data.newPassword,
-        passwordLength: data.newPassword.length,
-        passwordChars: data.newPassword.split('').map(c => c.charCodeAt(0))
-      });
       await userServiceV1.updatePassword(user.id, data.newPassword);
       addToast({
         title: 'Succès',

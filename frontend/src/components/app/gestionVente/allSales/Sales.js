@@ -30,10 +30,8 @@ const Sales = ({ onEdit }) => {
 
   useEffect(() => {
     const fetchDateRange = async () => {
-      console.log('[Sales] Fetching sales date range...');
       try {
         const response = await dashboardService.getSalesDateRange();
-        console.log('[Sales] Sales date range fetched:', response.data);
         setDateRange({
           firstSaleDate: response.data.firstSaleDate
             ? new Date(response.data.firstSaleDate)
@@ -57,16 +55,9 @@ const Sales = ({ onEdit }) => {
   const fetchSales = useCallback(
     async (pageIndex, pageSize) => {
       const page = pageIndex + 1;
-      console.log(
-        `[Sales] Fetching sales - Period: ${filters.period}, Specific Date: ${filters.specificDate}, Page: ${page}, Size: ${pageSize}, Search Term: ${searchTerm}`
-      );
       try {
         let responseData;
         if (filters.specificDate && filters.specificDate.trim()) {
-          console.log(
-            '[Sales] Fetching sales by specific date:',
-            filters.specificDate
-          );
           responseData = await venteServiceV1.getSalesByDate(
             filters.specificDate,
             page,
@@ -81,7 +72,6 @@ const Sales = ({ onEdit }) => {
               '': 'all',
               daily: 'today'
             }[filters.period] || 'today';
-          console.log('[Sales] Fetching sales by period:', periodEndpoint);
           responseData = await venteServiceV1.getSalesByPeriod(
             periodEndpoint,
             page,
@@ -91,43 +81,30 @@ const Sales = ({ onEdit }) => {
 
         const resultPage = responseData?.data;
         let items = resultPage?.content || [];
-        console.log('[Sales] Raw sales data fetched:', items);
         setTotalAmount(resultPage?.totalAmount || 0);
 
         if (filters.specificDate && items.length === 0) {
-          console.log(
-            '[Sales] No sales found for specific date, returning empty state'
-          );
           return { data: [{ empty: true }], pageCount: 1 };
         }
 
         if (!filters.specificDate && searchTerm.trim()) {
           const term = searchTerm.toLowerCase();
-          console.log('[Sales] Filtering sales by search term:', term);
           items = items.filter(
             sale =>
               (sale.libelleProduit || '').toLowerCase().includes(term) ||
               (sale.categorieProduit || '').toLowerCase().includes(term)
           );
-          console.log('[Sales] Filtered sales:', items);
-        }
+          }
 
         // Ajouter une clé unique pour éviter la duplication
         items = items.map(item => ({
           ...item,
           uniqueKey: `${item.detailVenteId}-${item.venteId}` // Clé unique combinant detailVenteId et venteId
         }));
-        console.log('[Sales] Sales data with unique keys:', items);
-
         // Supprimer les doublons basés sur uniqueKey
         const uniqueItems = Array.from(
           new Map(items.map(item => [item.uniqueKey, item])).values()
         );
-        console.log(
-          '[Sales] Unique sales data after deduplication:',
-          uniqueItems
-        );
-
         return { data: uniqueItems, pageCount: resultPage?.totalPages || 1 };
       } catch (error) {
         console.error('[Sales] Error fetching sales:', error);
@@ -145,19 +122,16 @@ const Sales = ({ onEdit }) => {
   );
 
   const handleFiltersChange = useCallback((name, value) => {
-    console.log(`[Sales] Filter changed - Name: ${name}, Value: ${value}`);
     setFilters(prev => ({ ...prev, [name]: value }));
     table.setPageIndex(0);
     setRefresh(prev => prev + 1);
   }, []);
 
   const handleSearch = useCallback(term => {
-    console.log('[Sales] Search term updated:', term);
     setSearchTerm(term);
   }, []);
 
   const handleActionSuccess = () => {
-    console.log('[Sales] Action successful, refreshing sales list');
     setShowActionForm(false);
     setSelectedSale(null);
     setSelectedAction(null);
@@ -165,7 +139,6 @@ const Sales = ({ onEdit }) => {
   };
 
   const handleActionCancel = () => {
-    console.log('[Sales] Action cancelled');
     setShowActionForm(false);
     setSelectedSale(null);
     setSelectedAction(null);
@@ -196,8 +169,6 @@ const Sales = ({ onEdit }) => {
     refreshKey: refresh,
     rowKey: 'uniqueKey' // Utilisation de la clé unique pour éviter la duplication
   });
-
-  console.log('[Sales] Current table data:', table.data);
 
   return (
     <Row className="g-3">

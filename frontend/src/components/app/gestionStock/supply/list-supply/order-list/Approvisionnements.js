@@ -17,7 +17,6 @@ const Approvisionnements = ({ onOrderSelect, refresh }) => {
   // Callback pour gérer l'action "Détail"
   const handleDetail = useCallback(
     approvisionnement => {
-      console.log("Détail de l'approvisionnement :", approvisionnement);
       addToast({
         title: 'Détail',
         message: `Affichage du détail pour l'approvisionnement ${approvisionnement.codeAppro}.`,

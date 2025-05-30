@@ -105,18 +105,14 @@ const ProductForm = ({
       setLoadingSuggestions(true);
 
       try {
-        console.log('[fetchSuggestions] Sending request with query=', query);
         const data = await apiServiceV1.getApprovisionnementSuggestions(query);
 
-        console.log('[fetchSuggestions] Raw response:', data);
         // IMPORTANT : ajuster selon votre JSON
         // Si c'est data?.data?.content, faites :
         //   const items = data?.data?.content || [];
         // Si c'est data?.content, faites :
         //   const items = data?.content || [];
         const items = data?.data?.content || [];
-        console.log('[fetchSuggestions] items:', items);
-
         setSuggestions(items);
         setShowSuggestionList(items.length > 0);
       } catch (error) {

@@ -84,7 +84,6 @@ const Users = ({ onEdit, isEditing }) => {
       const subscriptionUsers = stompClient.subscribe(
         '/topic/users',
         message => {
-          console.log('Message received on /topic/users:', message.body);
           setRefresh(prev => prev + 1);
           addToast({
             title: 'Mise à jour utilisateur',
@@ -96,7 +95,6 @@ const Users = ({ onEdit, isEditing }) => {
       const subscriptionUpdates = stompClient.subscribe(
         '/topic/updates',
         message => {
-          console.log('Message received on /topic/updates:', message.body);
           setRefresh(prev => prev + 1);
         }
       );
@@ -186,7 +184,6 @@ const Users = ({ onEdit, isEditing }) => {
         // Filter by role
         if (filters.role && filters.role !== '') {
           endpoint = `/users/role/${filters.role}`;
-          console.log(`[fetchUsers] API Call: ${endpoint}`);
           response = await userServiceV1.getAllUsers(
             pageIndex,
             pageSize,
@@ -196,7 +193,6 @@ const Users = ({ onEdit, isEditing }) => {
           const filteredData = response.data.content.filter(
             user => user.role === filters.role
           );
-          console.log('[fetchUsers] Filtered Data (role):', filteredData);
           return {
             data: filteredData,
             pageCount: Math.ceil(filteredData.length / pageSize) || 1
@@ -205,7 +201,6 @@ const Users = ({ onEdit, isEditing }) => {
         // Deleted users
         else if (filters.state === 'deleted') {
           endpoint = '/users/deleted';
-          console.log(`[fetchUsers] API Call: ${endpoint}`);
           response = await userServiceV1.getDeletedUsers(pageIndex, pageSize);
         }
         // Search by term (assuming backend supports search by nom or login)
@@ -217,9 +212,6 @@ const Users = ({ onEdit, isEditing }) => {
             );
           }
           endpoint = '/users/search';
-          console.log(
-            `[fetchUsers] API Call: ${endpoint} with query=${searchTerm}`
-          );
           response = await userServiceV1.getAllUsers(
             pageIndex,
             pageSize,
@@ -231,7 +223,6 @@ const Users = ({ onEdit, isEditing }) => {
               user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
               user.login.toLowerCase().includes(searchTerm.toLowerCase())
           );
-          console.log('[fetchUsers] Filtered Data (search):', filteredData);
           return {
             data: filteredData,
             pageCount: Math.ceil(filteredData.length / pageSize) || 1
@@ -240,7 +231,6 @@ const Users = ({ onEdit, isEditing }) => {
         // Default: all active users
         else {
           endpoint = '/users';
-          console.log(`[fetchUsers] API Call: ${endpoint}`);
           response = await userServiceV1.getAllUsers(
             pageIndex,
             pageSize,
@@ -251,7 +241,6 @@ const Users = ({ onEdit, isEditing }) => {
         const result = response.data || {};
         const data = result.content || [];
         const pageCount = result.totalPages || 0;
-        console.log('[fetchUsers] Data:', data, 'PageCount:', pageCount);
         return { data, pageCount };
       } catch (error) {
         console.error('[Users] Error fetching users:', {
@@ -295,7 +284,7 @@ const Users = ({ onEdit, isEditing }) => {
     refreshKey: refresh
   });
 
-  console.log('[Users] Table Data:', table.data); // Log pour déboguer les données passées à AdvanceTable
+  // Log pour déboguer les données passées à AdvanceTable
 
   return (
     <>

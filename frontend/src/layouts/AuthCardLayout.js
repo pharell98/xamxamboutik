@@ -42,7 +42,7 @@ const AuthCardLayout = ({ children }) => {
                         className="link-light mb-4 font-sans-serif fw-bolder fs-5 d-inline-block"
                         to="/"
                       >
-                        Établissement Thioye Services
+                        Darou Salam Boutique Multiservice
                       </div>
                     </div>
                   </div>

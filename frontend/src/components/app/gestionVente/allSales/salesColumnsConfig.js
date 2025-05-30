@@ -19,9 +19,6 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-center text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) {
-          console.log(
-            '[salesColumnsConfig] Rendering empty state for image column'
-          );
           return (
             <div className="text-center w-100">
               Aucune vente effectuée pour cette date
@@ -195,9 +192,6 @@ export const getSalesColumns = (
         const sale = row.original;
         const hasValidDetailVenteId = sale.detailVenteId != null;
         const isVendu = sale.status === 'VENDU';
-        console.log(
-          `[salesColumnsConfig] Rendering actions for sale - DetailVenteId: ${sale.detailVenteId}, Status: ${sale.status}, HasValidDetailVenteId: ${hasValidDetailVenteId}, IsVendu: ${isVendu}`
-        );
         return (
           <div className="py-2 d-flex justify-content-center gap-2 align-items-center">
             {hasValidDetailVenteId && isVendu ? (
@@ -218,10 +212,6 @@ export const getSalesColumns = (
                   <Dropdown.Header>Remboursements</Dropdown.Header>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: remboursementBonEtat for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -235,10 +225,6 @@ export const getSalesColumns = (
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: remboursementDefectueux for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -253,10 +239,6 @@ export const getSalesColumns = (
                   <Dropdown.Header>Échanges</Dropdown.Header>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: echangeDefectueux for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -270,10 +252,6 @@ export const getSalesColumns = (
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: echangeChangementPreference for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -287,10 +265,6 @@ export const getSalesColumns = (
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: echangeAjustementPrix for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -305,10 +279,6 @@ export const getSalesColumns = (
                   <Dropdown.Header>Annulations</Dropdown.Header>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: annulationApresLivraison for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -322,10 +292,6 @@ export const getSalesColumns = (
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: annulationPartielle for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,
@@ -339,10 +305,6 @@ export const getSalesColumns = (
                   </Dropdown.Item>
                   <Dropdown.Item
                     onClick={() => {
-                      console.log(
-                        '[salesColumnsConfig] Selected action: annulationNonConformite for DetailVenteId:',
-                        sale.detailVenteId
-                      );
                       setSelectedSale({
                         detailVenteId: sale.detailVenteId,
                         quantiteVendu: sale.quantiteVendu,

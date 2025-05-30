@@ -103,20 +103,9 @@ const BeneficeCard = ({ revenueData, notifications }) => {
       // Récupération de la plage de dates des ventes
       try {
         const dateRangeResult = await dashboardService.getSalesDateRange();
-        console.log('Réponse getSalesDateRange:', dateRangeResult);
         if (dateRangeResult.success && dateRangeResult.data) {
           const firstSaleDate = new Date(dateRangeResult.data.firstSaleDate);
           const lastSaleDate = new Date(dateRangeResult.data.lastSaleDate);
-          console.log(
-            'firstSaleDate:',
-            firstSaleDate,
-            'lastSaleDate:',
-            lastSaleDate,
-            'firstSaleDate valid:',
-            !isNaN(firstSaleDate.getTime()),
-            'lastSaleDate valid:',
-            !isNaN(lastSaleDate.getTime())
-          );
           if (
             !isNaN(firstSaleDate.getTime()) &&
             !isNaN(lastSaleDate.getTime())
@@ -211,7 +200,6 @@ const BeneficeCard = ({ revenueData, notifications }) => {
               <DatePicker
                 selected={startDate}
                 onChange={date => {
-                  console.log('Date de début sélectionnée:', date);
                   setStartDate(date);
                   // Si la date de fin est antérieure à la nouvelle date de début, la réinitialiser
                   if (endDate && date && endDate < date) {
@@ -234,7 +222,6 @@ const BeneficeCard = ({ revenueData, notifications }) => {
               <DatePicker
                 selected={endDate}
                 onChange={date => {
-                  console.log('Date de fin sélectionnée:', date);
                   setEndDate(date);
                 }}
                 placeholderText="Date de fin"

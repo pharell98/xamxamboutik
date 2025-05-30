@@ -9,11 +9,9 @@ const CameraScanner = ({ onScan }) => {
 
   useEffect(() => {
     if (isInitializedRef.current) {
-      console.log('Quagga est déjà initialisé, pas de réinitialisation.');
       return;
     }
 
-    console.log('Initialisation de Quagga...');
     Quagga.init(
       {
         inputStream: {
@@ -49,7 +47,6 @@ const CameraScanner = ({ onScan }) => {
           console.error("Échec de l'initialisation de Quagga:", err);
           return;
         }
-        console.log('Quagga initialisé avec succès. Démarrage de la caméra...');
         Quagga.start();
         isInitializedRef.current = true;
       }
@@ -57,25 +54,18 @@ const CameraScanner = ({ onScan }) => {
 
     Quagga.onProcessed(result => {
       if (result && result.boxes && result.boxes.length > 0) {
-        console.log('Traitement en cours, détection de boîtes:', result.boxes);
-      }
+        }
     });
 
     Quagga.onDetected(result => {
       if (isProcessingRef.current) {
-        console.log(
-          'Scan en cours, ignoring detection:',
-          result.codeResult.code
-        );
         return;
       }
 
       const code = result.codeResult.code;
-      console.log('Code-barres détecté:', code);
       if (lastScanRef.current !== code) {
         isProcessingRef.current = true; // Bloquer les nouveaux scans
         lastScanRef.current = code;
-        console.log('Appel de onScan avec le code:', code);
         onScan(code);
         setTimeout(() => {
           lastScanRef.current = null;
@@ -85,7 +75,6 @@ const CameraScanner = ({ onScan }) => {
     });
 
     return () => {
-      console.log('Arrêt de Quagga...');
       Quagga.stop();
       isInitializedRef.current = false;
       isProcessingRef.current = false;

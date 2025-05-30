@@ -289,7 +289,6 @@ const SaleActionForm = ({
 
   const selectedAction = initialAction;
   if (!selectedAction || !actionConfigs[selectedAction]) {
-    console.log('[SaleActionForm] Invalid or missing action:', initialAction);
     return null;
   }
 
@@ -299,7 +298,6 @@ const SaleActionForm = ({
       return;
     }
     if (isActionDisabled) {
-      console.log('[SaleActionForm] Action disabled due to status:', status);
       addToast({
         title: 'Erreur',
         message:
@@ -309,16 +307,9 @@ const SaleActionForm = ({
       });
       return;
     }
-    console.log(
-      '[SaleActionForm] Submitting action:',
-      selectedAction,
-      'with data:',
-      data
-    );
     setIsSubmitting(true);
     try {
       const quantiteRetour = parseInt(data.quantiteRetour, 10);
-      console.log('[SaleActionForm] Parsed quantiteRetour:', quantiteRetour);
       if (quantiteRetour > quantiteVendu) {
         console.error(
           '[SaleActionForm] Quantité à retourner dépasse la quantité vendue:',
@@ -335,9 +326,7 @@ const SaleActionForm = ({
           produitRemplacementId: parseInt(data.produitRemplacementId, 10)
         })
       };
-      console.log('[SaleActionForm] Payload for API:', payload);
       await actionConfigs[selectedAction].endpoint(payload);
-      console.log('[SaleActionForm] Action successful:', selectedAction);
       addToast({
         title: 'Succès',
         message: `${actionConfigs[selectedAction].title} effectué avec succès pour le produit sélectionné.`,
@@ -360,10 +349,7 @@ const SaleActionForm = ({
       });
     } finally {
       setIsSubmitting(false);
-      console.log(
-        '[SaleActionForm] Submission completed, isSubmitting set to false'
-      );
-    }
+      }
   };
 
   return (

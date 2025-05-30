@@ -97,12 +97,7 @@ const Products = () => {
       setPage(currentPage);
       setTotalPages(totalPages);
       setHasMore(currentPage < totalPages);
-      console.log(
-        `[Products] Page ${currentPage}/${totalPages}, hasMore: ${
-          currentPage < totalPages
-        }`
-      );
-    } catch (err) {
+      } catch (err) {
       console.error('[Products] Erreur de fetch page:', err);
       setHasMore(false);
     } finally {
@@ -126,10 +121,6 @@ const Products = () => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        console.log('[Products] Sentinel intersected:', entry.isIntersecting, {
-          loading,
-          hasMore
-        });
         if (entry.isIntersecting && !loading && hasMore) {
           debouncedFetchProducts(page + 1);
         }

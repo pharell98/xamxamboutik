@@ -38,14 +38,11 @@ const ProductImage = ({ libelle, id, image, layout, containerStyle }) => {
 
       setIsLoading(true);
       try {
-        console.log('[ProductImage] Récupération du logo via API...');
         const settings = await apiServiceSettings.getSettings();
-        console.log('[ProductImage] Réponse API:', settings);
         if (settings?.logo) {
           cachedLogo = settings.logo; // Stocker le logo dans le cache
           setFallbackImage(settings.logo);
-          console.log('[ProductImage] Logo récupéré:', settings.logo);
-        } else {
+          } else {
           console.warn('[ProductImage] Aucun logo trouvé dans les paramètres.');
         }
       } catch (error) {

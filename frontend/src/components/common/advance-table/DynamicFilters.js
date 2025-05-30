@@ -17,7 +17,6 @@ const DynamicFilters = ({
     : [];
 
   const handleChange = (name, val) => {
-    console.log('[DynamicFilters] handleChange:', name, val);
     if (filtersValues[name] !== val) {
       onFiltersChange(name, val);
     }
@@ -51,12 +50,6 @@ const DynamicFilters = ({
           filtersValues[f.name] !== undefined
             ? filtersValues[f.name]
             : f.defaultValue || '';
-        console.log(
-          '[DynamicFilters] Rendering filter:',
-          f.name,
-          'Value:',
-          value
-        );
         return (
           <div key={i} className="me-2 mb-2" style={containerStyle}>
             <InputGroup size="sm">

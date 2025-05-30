@@ -60,14 +60,9 @@ const useShopSettings = () => {
   useEffect(() => {
     let subscription;
     if (stompClient && connected && stompClient.active) {
-      console.log('[useShopSettings] Souscription au topic /topic/settings');
       subscription = stompClient.subscribe('/topic/settings', message => {
         try {
           const settings = JSON.parse(message.body);
-          console.log(
-            '[useShopSettings] Message reçu sur /topic/settings:',
-            settings
-          );
           const normalizedSettings = normalizeSettings(settings);
           setSelectedSettings(normalizedSettings);
           setEditModeSettings(true);
@@ -88,7 +83,6 @@ const useShopSettings = () => {
     }
     return () => {
       if (subscription) {
-        console.log('[useShopSettings] Désabonnement du topic /topic/settings');
         subscription.unsubscribe();
       }
     };
