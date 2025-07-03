@@ -17,7 +17,6 @@ import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitProjection;
 import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
-import sn.boutique.xamxamboutik.Service.approvisionnement.ApprovisionnementService;
 import sn.boutique.xamxamboutik.Service.base.AbstractBaseService;
 import sn.boutique.xamxamboutik.Service.imageservice.service.ImageBackgroundService;
 import sn.boutique.xamxamboutik.Util.ProduitUtils;
@@ -40,7 +39,6 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     private final SimpMessagingTemplate messagingTemplate;
     private final ImageBackgroundService imageBackgroundService;
     private final ProduitMapper produitMapper;
-    private final ApprovisionnementService approvisionnementService;
 
     @Override
     protected ProduitRepository getRepository() {
@@ -52,7 +50,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     public void deleteById(Long id) {
         Produit produit = getRepository().findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + id + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND));
-        getRepository().deleteById(id);
+        getRepository().softDelete(id);
         notifyUpdate(produit, "DELETE");
     }
 
@@ -180,37 +178,27 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         return produitRepository.findApprovisionnementSuggestions(pfx.toLowerCase(), sorted(pg));
     }
 
+    @Override
     @Transactional
-    public Produit updateStock(Long produitId, int quantite, Double prixAchat) {
+    public Produit updateStockAndPrice(Long produitId, int quantiteAjoutee, double prixAchat) {
         requireNonNull(produitId, "L'ID du produit est requis.");
-        if (quantite == 0) {
-            throw new IllegalArgumentException("La quantité doit être non nulle.");
-        }
-
         Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + produitId + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND));
-
         int oldStock = produit.getStockDisponible();
         double oldCMA = produit.getCoupMoyenAcquisition();
-        double prix = prixAchat != null ? prixAchat : produit.getPrixAchat();
-
-        int newStock = oldStock + quantite;
-        if (newStock < 0) {
-            throw new IllegalArgumentException("Stock insuffisant pour cette opération.");
-        }
-        produit.setStockDisponible(newStock);
-
-        if (quantite > 0) {
-            double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, quantite, prix);
-            produit.setCoupMoyenAcquisition(nouveauCMA);
-            produit.setPrixAchat(prix);
-        }
-
-        approvisionnementService.createApprovisionnementVirtuel(produit, quantite, prix);
-
+        int newStock = quantiteAjoutee;
+        double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, newStock, prixAchat);
+        produit.setCoupMoyenAcquisition(nouveauCMA);
+        produit.setStockDisponible(oldStock + newStock);
+        produit.setPrixAchat(prixAchat);
         Produit updated = produitRepository.save(produit);
-        notifyUpdate(updated, "UPDATE_STOCK");
+        notifyUpdate(updated, "UPDATE");
         return updated;
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return produitRepository.existsById(id);
     }
 
     private Produit buildProduit(ProduitRequestDTO dto) {
@@ -292,7 +280,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         int q = Objects.requireNonNullElse(dto.getStockDisponible(), 0);
         if (q > 0) {
             double pa = Objects.requireNonNullElse(dto.getPrixAchat(), 0.0);
-            approvisionnementService.createApprovisionnementVirtuel(p, q, pa);
+            // approvisionnementService.createApprovisionnementVirtuel(p, q, pa);
             p.setCoupMoyenAcquisition(ProduitUtils.calculerCoupMoyenAcquisition(
                     p.getStockDisponible() - q, p.getCoupMoyenAcquisition(), q, pa));
             produitRepository.save(p);

@@ -144,7 +144,7 @@ public class ProduitController extends AbstractBaseController<
 
     @PostMapping("/produits/update-stock")
     public ResponseEntity<ApiResponse<?>> updateStock(@Valid @RequestBody UpdateStockRequestDTO dto) {
-        Produit updated = produitService.updateStock(dto.getProduitId(), dto.getQuantite(), dto.getPrixAchat());
+        Produit updated = produitService.updateStockAndPrice(dto.getProduitId(), dto.getQuantite(), dto.getPrixAchat());
         return ResponseEntity.ok(ApiResponse.success("Stock mis à jour", produitMapper.toResponseWebDTO(updated)));
     }
 }

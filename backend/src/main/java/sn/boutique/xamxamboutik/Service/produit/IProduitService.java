@@ -22,4 +22,6 @@ public interface IProduitService {
     Produit restore(Long id);
     Page<ProduitProjection> suggestionsByLibelleProjection(String prefix, Pageable pageable);
     Page<AddApproProductLibelleSearchResponseDTO> suggestionsForApprovisionnement(String prefix, Pageable pageable);
+    Produit updateStockAndPrice(Long produitId, int quantiteAjoutee, double prixAchat);
+    boolean existsById(Long id);
 }
