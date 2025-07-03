@@ -149,9 +149,9 @@ html[dir='rtl'] .rtl-row-reverse {
 /* -------------------------------------------------------------------------- */
 .bar-indicator-gradient {
   background: linear-gradient(
-                  to right,
-                  rgba($primary, 0.1),
-                  var(--#{$prefix}primary)
+    to right,
+    rgba($primary, 0.1),
+    var(--#{$prefix}primary)
   );
   height: 0.25rem;
   width: 100%;

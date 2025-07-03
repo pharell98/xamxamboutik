@@ -536,7 +536,7 @@ export function useApproDetail({ control }) {
     });
 
     for (let pair of formData.entries()) {
-      }
+    }
 
     try {
       await submitApprovisionnement(formData);

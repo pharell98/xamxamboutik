@@ -42,7 +42,7 @@ const ProductImage = ({ libelle, id, image, layout, containerStyle }) => {
         if (settings?.logo) {
           cachedLogo = settings.logo; // Stocker le logo dans le cache
           setFallbackImage(settings.logo);
-          } else {
+        } else {
           console.warn('[ProductImage] Aucun logo trouvé dans les paramètres.');
         }
       } catch (error) {

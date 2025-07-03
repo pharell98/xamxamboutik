@@ -85,6 +85,7 @@ const useCategories = () => {
       let serverMessage;
       // Check for duplicate entity error based on backend response
       if (
+        error.response?.data?.errorCode === 'ENTITE_DUPLIQUEE' ||
         error.response?.data?.code === 'DUPLICATE_ENTITY' ||
         error.response?.data?.message?.toLowerCase().includes('existe déjà') ||
         error.response?.data?.error?.toLowerCase().includes('existe déjà')

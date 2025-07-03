@@ -120,6 +120,10 @@ const NewProductDetails = ({
 
   /* ----------------------- Soumission --------------------------- */
   const onSubmit = values => {
+    console.log('[NewProductDetails] Valeurs soumises:', values);
+    if (values.image) {
+      console.log('[NewProductDetails] Image jointe:', values.image);
+    }
     onCompleteProduct(values);
   };
 
@@ -129,6 +133,7 @@ const NewProductDetails = ({
       fileOrEvent instanceof File
         ? fileOrEvent
         : fileOrEvent?.target?.files?.[0] || fileOrEvent;
+    console.log('[NewProductDetails] Image uploadée:', file);
     setValue('image', file);
   };
 

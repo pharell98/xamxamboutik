@@ -36,7 +36,9 @@ const ApproDetail = () => {
   } = useApproDetail({ control });
 
   const handleImportSuccess = importedProducts => {
+    console.log('[ApproDetail] Produits importés:', importedProducts);
     importedProducts.forEach(product => {
+      console.log('[ApproDetail] Produit importé (imageURL):', product.imageURL);
       handleAddProduct({
         codeProduit: product.codeProduit,
         libelle: product.libelle,

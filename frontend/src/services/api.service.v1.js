@@ -89,16 +89,12 @@ const apiServiceV1 = {
       const rawProduit = formData.get('produit');
       if (rawProduit) {
         const text = rawProduit.text ? await rawProduit.text() : rawProduit;
-        let produitObj;
         try {
-          produitObj = JSON.parse(text);
-          } catch (parseErr) {
+          JSON.parse(text);
+        } catch (parseErr) {
           console.warn('[apiServiceV1] parse JSON produit error:', parseErr);
         }
       }
-
-      for (const [key, value] of formData.entries()) {
-        }
 
       const method = isEditMode ? 'put' : 'post';
       const url = isEditMode ? `${PRODUCT_ENDPOINT}/${id}` : PRODUCT_ENDPOINT;
@@ -114,7 +110,7 @@ const apiServiceV1 = {
   bulkImportProducts: async products => {
     try {
       // Vérifier et préparer les données pour le backend
-      const preparedProducts = products.map((product, index) => {
+      const preparedProducts = products.map(product => {
         const preparedProduct = {
           id: product.id || null,
           codeProduit: product.codeProduit || '',
@@ -129,7 +125,6 @@ const apiServiceV1 = {
           useImageURL: product.useImageURL || false,
           image: null
         };
-
         return preparedProduct;
       });
 
@@ -235,7 +230,7 @@ const apiServiceV1 = {
       const response = await apiClient[method](url, data);
       return response.data;
     } catch (error) {
-      consolePreference('[apiServiceV1] Erreur saveCategory:', error);
+      console.error('[apiServiceV1] Erreur saveCategory:', error);
       throw error;
     }
   },
@@ -278,10 +273,17 @@ const apiServiceV1 = {
   // APPROVISIONNEMENT
   createApprovisionnement: async formData => {
     try {
+      console.log('[api.service.v1] FormData reçu pour createApprovisionnement:');
+      if (formData && typeof formData.forEach === 'function') {
+        formData.forEach((value, key) => {
+          console.log('  ', key, ':', value);
+        });
+      }
       const response = await apiClient.post(
         `${APPROVISIONNEMENT_ENDPOINT}/supply`,
         formData
       );
+      console.log('[api.service.v1] Réponse backend createApprovisionnement:', response.data);
       return response.data;
     } catch (error) {
       console.error('[apiServiceV1] Erreur createApprovisionnement:', error);

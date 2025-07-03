@@ -97,7 +97,7 @@ const Products = () => {
       setPage(currentPage);
       setTotalPages(totalPages);
       setHasMore(currentPage < totalPages);
-      } catch (err) {
+    } catch (err) {
       console.error('[Products] Erreur de fetch page:', err);
       setHasMore(false);
     } finally {

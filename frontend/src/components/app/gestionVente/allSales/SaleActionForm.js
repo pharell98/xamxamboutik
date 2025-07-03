@@ -349,7 +349,7 @@ const SaleActionForm = ({
       });
     } finally {
       setIsSubmitting(false);
-      }
+    }
   };
 
   return (

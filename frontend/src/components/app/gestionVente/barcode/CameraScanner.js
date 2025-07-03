@@ -54,7 +54,7 @@ const CameraScanner = ({ onScan }) => {
 
     Quagga.onProcessed(result => {
       if (result && result.boxes && result.boxes.length > 0) {
-        }
+      }
     });
 
     Quagga.onDetected(result => {

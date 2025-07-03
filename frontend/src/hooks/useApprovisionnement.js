@@ -23,7 +23,11 @@ export const useApprovisionnement = () => {
     setError(null);
 
     try {
-      // Petit log pour voir le contenu dans la console (remarque : console.log n'affiche pas toujours le FormData)
+      // Affiche le contenu du FormData
+      console.log('[useApprovisionnement] Contenu du FormData avant envoi:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0]+ ':', pair[1]);
+      }
       // Envoi du FormData à l'API via apiServiceV1
       const response = await apiServiceV1.createApprovisionnement(formData);
       return response;
