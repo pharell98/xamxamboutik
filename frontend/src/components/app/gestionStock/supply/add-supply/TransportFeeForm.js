@@ -4,6 +4,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Form, FormGroup } from 'react-bootstrap';
 import * as yup from 'yup';
+import { useAppContext } from 'providers/AppProvider';
 
 // On définit un schéma de type "string",
 // qui peut être vide OU une suite de chiffres (entier >= 0).
@@ -18,6 +19,7 @@ const feeSchema = yup.object().shape({
 });
 
 const TransportFeeForm = ({ onFeeChange, initialFee }) => {
+  const { config: { isDark } } = useAppContext();
   const methods = useForm({
     resolver: yupResolver(feeSchema),
     defaultValues: {
@@ -33,7 +35,7 @@ const TransportFeeForm = ({ onFeeChange, initialFee }) => {
     formState: { errors }
   } = methods;
 
-  // Dès qu’on "blur" ou qu’on valide, on informe le parent
+  // Dès qu'on "blur" ou qu'on valide, on informe le parent
   const onSubmit = values => {
     // values.transportFee est une chaîne (ex: "123" ou "").
     // Si vous voulez la convertir en number, vous pouvez faire:
@@ -44,10 +46,10 @@ const TransportFeeForm = ({ onFeeChange, initialFee }) => {
   return (
     <FormProvider {...methods}>
       {/* 
-        - onBlur => permet de valider dès qu’on quitte le champ 
+        - onBlur => permet de valider dès qu'on quitte le champ 
         - handleSubmit(onSubmit) => applique la validation Yup 
       */}
-      <Form onBlur={handleSubmit(onSubmit)}>
+      <Form onBlur={handleSubmit(onSubmit)} className={isDark ? 'bg-dark text-light' : 'bg-white text-dark'} style={{ borderRadius: 8 }}>
         <FormGroup controlId="transportFee">
           <Form.Label>Frais de transport (Optionnel)</Form.Label>
           <Form.Control
@@ -71,7 +73,7 @@ const TransportFeeForm = ({ onFeeChange, initialFee }) => {
 TransportFeeForm.propTypes = {
   onFeeChange: PropTypes.func.isRequired,
   // On autorise string OU number côté prop,
-  // puis on convertit en chaîne si c’est un number.
+  // puis on convertit en chaîne si c'est un number.
   initialFee: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 

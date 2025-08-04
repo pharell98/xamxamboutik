@@ -22,20 +22,14 @@ export const appRoutes = {
       active: true,
       children: [
         {
-          name: 'Approvisionnement',
-          active: true,
-          children: [
-            {
-              name: 'ajouter produit',
-              to: paths.addProduct,
-              active: true
-            },
-            {
-              name: 'Enregistrer appr.',
-              to: paths.approDetails,
-              active: true
-            }
-          ]
+          name: 'ajouter produit',
+          to: paths.addProduct,
+          active: true
+        },
+        {
+          name: 'Enregistrer appr.',
+          to: paths.approDetails,
+          active: true
         },
         {
           name: 'Alertes Stock',

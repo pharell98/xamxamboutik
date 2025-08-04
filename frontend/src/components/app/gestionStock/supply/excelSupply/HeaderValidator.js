@@ -1,12 +1,12 @@
 const REQUIRED_HEADERS = [
-  'codeProduit',
+  'code produit',
   'libelle',
-  'prixAchat',
-  'prixVente',
-  'stockDisponible',
-  'seuilRuptureStock',
-  'categorieProduit',
-  'imageURL'
+  'prix achat',
+  'prix vente',
+  'stock disponible',
+  'seuil rupture stock',
+  'categorie produit',
+  'image url'
 ];
 
 const validateHeaders = headers => {

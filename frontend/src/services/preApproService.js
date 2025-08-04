@@ -14,7 +14,7 @@ export const setPreAppro = async products => {
 
 export const getPreAppro = async () => {
   try {
-    const data = await localforage.getItem(PRE_APPRO_KEY) || {};
+    const data = (await localforage.getItem(PRE_APPRO_KEY)) || {};
     console.log('[preApproService] getPreAppro retourne:', data);
     return data;
   } catch (error) {
