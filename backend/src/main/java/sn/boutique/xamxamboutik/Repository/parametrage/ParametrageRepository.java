@@ -3,7 +3,7 @@ package sn.boutique.xamxamboutik.Repository.parametrage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import sn.boutique.xamxamboutik.Entity.parametrage.Parametrage;
+import sn.boutique.xamxamboutik.Entity.parametre.Parametrage;
 import sn.boutique.xamxamboutik.Repository.Projection.ParametrageProjection;
 
 import java.util.Optional;

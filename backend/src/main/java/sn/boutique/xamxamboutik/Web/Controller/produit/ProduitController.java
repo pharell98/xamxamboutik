@@ -39,7 +39,6 @@ public class ProduitController extends AbstractBaseController<
         ProduitResponseMobileDTO> {
 
     private final ProduitService produitService;
-    private final IExcelApproImportService excelImportService;
     private final ProduitMapper produitMapper;
 
     @Override protected ProduitService getService() { return produitService; }
@@ -121,15 +120,7 @@ public class ProduitController extends AbstractBaseController<
         return ApiResponse.success("Suggestions approvisionnement", data);
     }
 
-    @PostMapping("/produits/import/excel")
-    public ResponseEntity<ApiResponse<?>> importExcel(@RequestBody List<ProduitRequestDTO> lignes) {
-        try {
-            Map<String, Object> res = excelImportService.importProduitsExcel(lignes);
-            return ResponseEntity.ok(ApiResponse.success("Import terminé", res));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
-    }
+
 
     @GetMapping("/api/products/barcode/{barcode}")
     public ResponseEntity<ApiResponse<?>> findByBarcode(@PathVariable String barcode,

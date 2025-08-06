@@ -19,6 +19,8 @@ public interface IProduitService {
     Produit update(ProduitRequestDTO dto, MultipartFile file) throws Exception;
     Produit update(Produit produit);
     Optional<Produit> findByCode(String codeProduit);
+    Optional<Produit> findByLibelleAndCategorie(String libelle, Long categorieId);
+    Optional<Produit> findByLibelleOnly(String libelle);
     Produit restore(Long id);
     Page<ProduitProjection> suggestionsByLibelleProjection(String prefix, Pageable pageable);
     Page<AddApproProductLibelleSearchResponseDTO> suggestionsForApprovisionnement(String prefix, Pageable pageable);

@@ -120,12 +120,35 @@ public class ApprovisionnementService implements IApprovisionnementService {
         if (appro.getDetailAppros().isEmpty()) {
             throw new IllegalStateException("Aucun produit valide — approvisionnement annulé");
         }
+        
+        log.info("DEBUG - Finalisation de l'approvisionnement: code={}, nb détails={}", 
+                appro.getCodeAppro(), appro.getDetailAppros().size());
+        
         double totalDetails = appro.getDetailAppros().stream()
                 .mapToDouble(d -> d.getPrixAchat() * d.getQuantiteAchat())
                 .sum();
         double frais = Optional.ofNullable(appro.getFraisTransport()).orElse(0.0);
         appro.setMontantAppro(totalDetails + frais);
-        approvisionnementRepository.save(appro); // cascade = détails enregistrés
+        
+        log.info("DEBUG - Calculs: totalDetails={}, frais={}, montantTotal={}", 
+                totalDetails, frais, appro.getMontantAppro());
+        
+        // Sauvegarde explicite avec vérification
+        Approvisionnement savedAppro = approvisionnementRepository.save(appro);
+        
+        log.info("DEBUG - Approvisionnement sauvegardé avec succès: ID={}, Code={}, Montant={}", 
+                savedAppro.getId(), savedAppro.getCodeAppro(), savedAppro.getMontantAppro());
+        
+        // Vérification que l'approvisionnement a bien été sauvegardé
+        Optional<Approvisionnement> verification = approvisionnementRepository.findById(savedAppro.getId());
+        if (verification.isPresent()) {
+            log.info("DEBUG - Vérification réussie: approvisionnement trouvé en base avec {} détails", 
+                    verification.get().getDetailAppros().size());
+        } else {
+            log.error("ERREUR: L'approvisionnement n'a pas été trouvé en base après sauvegarde!");
+            throw new RuntimeException("Échec de la persistance de l'approvisionnement");
+        }
+        
         notifyUpdate();
     }
 

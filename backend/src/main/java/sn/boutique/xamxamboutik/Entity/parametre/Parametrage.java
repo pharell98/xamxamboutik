@@ -1,4 +1,4 @@
-package sn.boutique.xamxamboutik.Entity.parametrage;
+package sn.boutique.xamxamboutik.Entity.parametre;
 
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import jakarta.persistence.*;

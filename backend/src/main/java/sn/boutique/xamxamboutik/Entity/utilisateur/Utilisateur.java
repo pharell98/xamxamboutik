@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Entity.utilisateur;
+
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

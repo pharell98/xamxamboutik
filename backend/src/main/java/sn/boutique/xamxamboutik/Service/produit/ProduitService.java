@@ -130,11 +130,33 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         if (!produitRepository.existsById(produit.getId())) {
             throw new EntityNotFoundException("Produit avec l'ID " + produit.getId() + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND);
         }
-        produit.setLibelle(produit.getLibelle().toLowerCase());
+        
+        log.info("DEBUG - ProduitService.update() - Avant sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
+                produit.getId(), produit.getCodeProduit(), produit.getLibelle(), 
+                produit.getPrixAchat(), produit.getStockDisponible(), produit.getCoupMoyenAcquisition());
+        
+        // Ne pas modifier le libellé car il a déjà été mis à jour dans updateProductInfo()
+        // produit.setLibelle(produit.getLibelle().toLowerCase());
+        
         if (produitRepository.existsByLibelleAndDeletedFalseAndIdNot(produit.getLibelle(), produit.getId())) {
             throw new BaseCustomException("Le produit '" + produit.getLibelle() + "' existe déjà.", "DUPLICATE_ENTITY");
         }
+        
+        // Forcer la sauvegarde en utilisant merge pour s'assurer que les modifications sont persistées
         Produit updated = produitRepository.save(produit);
+        
+        // Vérifier que les données sont bien sauvegardées en rechargeant depuis la base
+        Produit reloaded = produitRepository.findById(produit.getId()).orElse(null);
+        if (reloaded != null) {
+            log.info("DEBUG - ProduitService.update() - Après rechargement depuis DB: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
+                    reloaded.getId(), reloaded.getCodeProduit(), reloaded.getLibelle(), 
+                    reloaded.getPrixAchat(), reloaded.getStockDisponible(), reloaded.getCoupMoyenAcquisition());
+        }
+        
+        log.info("DEBUG - ProduitService.update() - Après sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
+                updated.getId(), updated.getCodeProduit(), updated.getLibelle(), 
+                updated.getPrixAchat(), updated.getStockDisponible(), updated.getCoupMoyenAcquisition());
+        
         notifyUpdate(updated, "UPDATE");
         return updated;
     }
@@ -144,6 +166,21 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     public Optional<Produit> findByCode(String c) {
         requireNonNull(c, "Le code du produit est requis.");
         return produitRepository.findByCodeProduit(c);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Produit> findByLibelleAndCategorie(String libelle, Long categorieId) {
+        requireNonNull(libelle, "Le libellé du produit est requis.");
+        requireNonNull(categorieId, "L'ID de la catégorie est requis.");
+        return produitRepository.findByLibelleAndCategorie_IdAndDeletedFalse(libelle.toLowerCase(), categorieId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Produit> findByLibelleOnly(String libelle) {
+        requireNonNull(libelle, "Le libellé du produit est requis.");
+        return produitRepository.findByLibelleAndDeletedFalse(libelle.toLowerCase());
     }
 
     @Override
