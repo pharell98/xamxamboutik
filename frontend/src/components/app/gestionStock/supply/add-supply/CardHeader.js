@@ -14,13 +14,17 @@ const CardHeader = ({
   isLoading = false,
   onToggleImport
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const hasProducts = localFields.length > 0;
 
   return (
     <Card.Header
       as="h6"
-      className={`bg-body-tertiary d-flex justify-content-between align-items-center py-3 ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`}
+      className={`bg-body-tertiary d-flex justify-content-between align-items-center py-3 ${
+        isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+      }`}
     >
       <div className="d-flex align-items-center">
         <span className="text-primary">{title}</span>

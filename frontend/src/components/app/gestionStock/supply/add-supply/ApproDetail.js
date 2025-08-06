@@ -14,7 +14,9 @@ import { useAppContext } from 'providers/AppProvider';
 const ApproDetail = () => {
   const { control } = useFormContext();
   const [showImport, setShowImport] = useState(false);
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
 
   // Callbacks mémorisés déclarés en haut du composant
   const handleToggleImport = useCallback(() => setShowImport(true), []);
@@ -82,7 +84,12 @@ const ApproDetail = () => {
   }
 
   return (
-    <Card className={`mb-3 shadow-sm ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
+    <Card
+      className={`mb-3 shadow-sm ${
+        isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+      }`}
+      style={{ borderRadius: 8 }}
+    >
       <CardHeader
         localFields={localFields}
         clearAllProducts={clearAllProducts}

@@ -19,7 +19,9 @@ const feeSchema = yup.object().shape({
 });
 
 const TransportFeeForm = ({ onFeeChange, initialFee }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const methods = useForm({
     resolver: yupResolver(feeSchema),
     defaultValues: {
@@ -49,7 +51,11 @@ const TransportFeeForm = ({ onFeeChange, initialFee }) => {
         - onBlur => permet de valider dès qu'on quitte le champ 
         - handleSubmit(onSubmit) => applique la validation Yup 
       */}
-      <Form onBlur={handleSubmit(onSubmit)} className={isDark ? 'bg-dark text-light' : 'bg-white text-dark'} style={{ borderRadius: 8 }}>
+      <Form
+        onBlur={handleSubmit(onSubmit)}
+        className={isDark ? 'bg-dark text-light' : 'bg-white text-dark'}
+        style={{ borderRadius: 8 }}
+      >
         <FormGroup controlId="transportFee">
           <Form.Label>Frais de transport (Optionnel)</Form.Label>
           <Form.Control

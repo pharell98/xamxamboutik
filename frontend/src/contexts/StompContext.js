@@ -27,7 +27,6 @@ export const StompProvider = ({ children }) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [data, setData] = useState([]);
   const [approvisionnementData, setApprovisionnementData] = useState([]);
-  const [venteData, setVenteData] = useState([]);
   const [userData, setUserData] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const stompClientRef = useRef(null);
@@ -36,16 +35,53 @@ export const StompProvider = ({ children }) => {
   const retryIntervalRef = useRef(null);
 
   useEffect(() => {
+    console.log("=== DIAGNOSTIC VARIABLES D'ENVIRONNEMENT ===");
+    console.log('process.env:', process.env);
     console.log('window._env_:', window._env_);
     console.log(
-      'WebSocket URL:',
-      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL
+      'REACT_APP_WS_URL (process.env):',
+      process.env.REACT_APP_WS_URL
     );
-    const brokerURL =
-      window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
-    if (!brokerURL) {
-      console.error('Erreur : brokerURL non défini. Vérifiez env-config.js.');
-      return;
+    console.log(
+      'REACT_APP_WS_URL (window._env_):',
+      window._env_?.REACT_APP_WS_URL
+    );
+
+    // Ordre de priorité pour l'URL WebSocket
+    let brokerURL = null;
+
+    // 1. Priorité à process.env (fichier .env) en développement
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.REACT_APP_WS_URL
+    ) {
+      brokerURL = process.env.REACT_APP_WS_URL;
+      console.log('✅ URL WebSocket trouvée dans process.env (développement)');
+    }
+    // 2. Fallback vers window._env_ (généré par entrypoint.sh)
+    else if (window._env_?.REACT_APP_WS_URL) {
+      brokerURL = window._env_.REACT_APP_WS_URL;
+      console.log('✅ URL WebSocket trouvée dans window._env_');
+    }
+    // 3. Fallback vers process.env (pour la production)
+    else if (process.env.REACT_APP_WS_URL) {
+      brokerURL = process.env.REACT_APP_WS_URL;
+      console.log('✅ URL WebSocket trouvée dans process.env');
+    }
+    // 4. URL par défaut pour le développement local
+    else {
+      brokerURL = 'ws://localhost:8080/api/v1/ws';
+      console.log(
+        "⚠️ Aucune URL WebSocket trouvée, utilisation de l'URL par défaut"
+      );
+    }
+
+    console.log('URL WebSocket finale:', brokerURL);
+
+    // S'assurer que l'URL se termine par /websocket pour SockJS
+    if (!brokerURL.endsWith('/websocket')) {
+      brokerURL = brokerURL.replace(/\/?$/, '/websocket');
+      console.log('URL WebSocket avec /websocket:', brokerURL);
     }
 
     console.log('Tentative de connexion au WebSocket:', brokerURL);
@@ -56,12 +92,15 @@ export const StompProvider = ({ children }) => {
       heartbeatOutgoing: 10000,
       onWebSocketError: error => {
         console.error('Erreur WebSocket:', error);
+        console.error('URL tentée:', brokerURL);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
       onWebSocketClose: event => {
         console.log('WebSocket fermé:', event);
+        console.log('Code de fermeture:', event.code);
+        console.log('Raison de fermeture:', event.reason);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
@@ -92,11 +131,6 @@ export const StompProvider = ({ children }) => {
         console.log('Message reçu sur /topic/updates:', parsed);
         setData(prevData => [...prevData, parsed]);
       });
-      subscribeWithErrorHandling('/topic/ventes', parsed => {
-        console.log('Message reçu sur /topic/ventes:', parsed);
-        setVenteData(prevData => [...prevData, parsed]);
-        setData(prevData => [...prevData, parsed]);
-      });
       subscribeWithErrorHandling('/topic/barcode', parsed => {
         console.log('Message reçu sur /topic/barcode:', parsed);
         setData(prevData => [...prevData, parsed]);
@@ -109,10 +143,6 @@ export const StompProvider = ({ children }) => {
       subscribeWithErrorHandling('/topic/users', parsed => {
         console.log('Message reçu sur /topic/users:', parsed);
         setUserData(prevData => [...prevData, parsed]);
-        setData(prevData => [...prevData, parsed]);
-      });
-      subscribeWithErrorHandling('/topic/settings', parsed => {
-        console.log('Message reçu sur /topic/settings:', parsed);
         setData(prevData => [...prevData, parsed]);
       });
       subscribeWithErrorHandling('/topic/categories', parsed => {
@@ -200,6 +230,8 @@ export const StompProvider = ({ children }) => {
 
     client.onStompError = error => {
       console.error('Erreur STOMP:', error);
+      console.error('Headers:', error.headers);
+      console.error('Message:', error.message);
       setConnected(false);
       setIsReconnecting(true);
       setIsSubscribed(false);
@@ -297,7 +329,6 @@ export const StompProvider = ({ children }) => {
         isReconnecting,
         data,
         approvisionnementData,
-        venteData,
         userData,
         subscribe: subscribeWithErrorHandling,
         unsubscribe,

@@ -129,28 +129,31 @@ const apiServiceV1 = {
    * Importation en masse de produits via Excel pour l'approvisionnement.
    */
   bulkImportProducts: async products =>
-    safeApiCall(
-      () => {
-        // === LOG AVANCÉ DU SERVICE API ===
-        console.log('🔗 === LOG AVANCÉ - SERVICE API ===');
-        console.log('📤 Données reçues par le service:', products);
-        console.log('🔢 Nombre de produits:', products.length);
-        console.log('📋 Structure des données:', Array.isArray(products) ? 'Array' : typeof products);
-        
-        if (Array.isArray(products) && products.length > 0) {
-          console.log('📦 Premier produit (exemple):', products[0]);
-          console.log('🔍 Clés disponibles:', Object.keys(products[0]));
-        }
-        
-        console.log('🌐 Endpoint appelé:', `${APPROVISIONNEMENT_ENDPOINT}/import/excel`);
-        console.log('=== FIN DU LOG SERVICE API ===\n');
-        
-        return apiClient
-          .post(`${APPROVISIONNEMENT_ENDPOINT}/import/excel`, products)
-          .then(r => r.data);
-      },
-      'bulkImportProducts'
-    ),
+    safeApiCall(() => {
+      // === LOG AVANCÉ DU SERVICE API ===
+      console.log('🔗 === LOG AVANCÉ - SERVICE API ===');
+      console.log('📤 Données reçues par le service:', products);
+      console.log('🔢 Nombre de produits:', products.length);
+      console.log(
+        '📋 Structure des données:',
+        Array.isArray(products) ? 'Array' : typeof products
+      );
+
+      if (Array.isArray(products) && products.length > 0) {
+        console.log('📦 Premier produit (exemple):', products[0]);
+        console.log('🔍 Clés disponibles:', Object.keys(products[0]));
+      }
+
+      console.log(
+        '🌐 Endpoint appelé:',
+        `${APPROVISIONNEMENT_ENDPOINT}/import/excel`
+      );
+      console.log('=== FIN DU LOG SERVICE API ===\n');
+
+      return apiClient
+        .post(`${APPROVISIONNEMENT_ENDPOINT}/import/excel`, products)
+        .then(r => r.data);
+    }, 'bulkImportProducts'),
 
   /**
    * Supprime un produit.

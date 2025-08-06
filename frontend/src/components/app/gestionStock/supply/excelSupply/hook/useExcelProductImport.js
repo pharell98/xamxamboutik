@@ -9,7 +9,7 @@ import { useToast } from '../../../../../common/Toast';
 // Mapping des nouveaux headers vers les anciens noms pour la compatibilité
 const HEADER_MAPPING = {
   'code produit': 'codeProduit',
-  'libelle': 'libelle',
+  libelle: 'libelle',
   'prix achat': 'prixAchat',
   'prix vente': 'prixVente',
   'stock disponible': 'stockDisponible',
@@ -31,7 +31,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
     // Nettoyer les données avant la génération des codes
     const cleanedData = cleanData(rawData);
-    
+
     const headers = cleanedData[0];
     const rows = cleanedData.slice(1).map((row, index) => {
       const product = headers.reduce((acc, key, idx) => {
@@ -41,7 +41,8 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
       // Generate code if missing but required fields present
       const hasCode =
-        product['code produit'] && String(product['code produit']).trim() !== '';
+        product['code produit'] &&
+        String(product['code produit']).trim() !== '';
       const hasFields =
         product.libelle &&
         String(product.libelle).trim() !== '' &&
@@ -70,7 +71,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
   };
 
   // Fonction pour régénérer les codes des données modifiées
-  const regenerateCodesForModifiedData = (modifiedData) => {
+  const regenerateCodesForModifiedData = modifiedData => {
     if (!modifiedData || modifiedData.length < 2) {
       return modifiedData;
     }
@@ -79,15 +80,20 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
   };
 
   // Fonction pour nettoyer les espaces inutiles
-  const cleanData = (rawData) => {
+  const cleanData = rawData => {
     if (!rawData || rawData.length < 2) return rawData;
 
     const headers = rawData[0];
-    const rows = rawData.slice(1).map(row => 
+    const rows = rawData.slice(1).map(row =>
       row.map(cell => {
         if (cell === null || cell === undefined) return '';
         if (typeof cell === 'string') {
-          return cell.trim(); // Supprimer les espaces avant et après
+          // Supprimer les espaces avant et après, et remplacer les espaces multiples par un seul espace
+          return cell.trim().replace(/\s+/g, ' ');
+        }
+        // Pour les nombres, les convertir en string puis nettoyer
+        if (typeof cell === 'number') {
+          return cell.toString().trim();
         }
         return cell;
       })
@@ -99,12 +105,10 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
   const formatProductData = rawData => {
     if (!rawData || rawData.length < 2) return [];
 
-    // Nettoyer les données avant le formatage
-    const cleanedData = cleanData(rawData);
-    
-    const headers = cleanedData[0];
+    // Les données sont déjà nettoyées avant d'arriver ici
+    const headers = rawData[0];
     // Remove completely empty rows
-    const rows = cleanedData
+    const rows = rawData
       .slice(1)
       .filter(row => row.some(cell => cell !== undefined && cell !== ''));
 
@@ -126,14 +130,20 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
       });
 
       // Format adapté pour ApprovisionnementExcelRequestDTO
-      mappedProduct.categorieName = String(mappedProduct.categorieProduit || '').trim();
+      mappedProduct.categorieName = String(
+        mappedProduct.categorieProduit || ''
+      ).trim();
       mappedProduct.categorieId = 0;
       mappedProduct.imageURL = mappedProduct.imageURL
         ? String(mappedProduct.imageURL).trim()
         : '';
       mappedProduct.useImageURL = !!mappedProduct.imageURL;
-      mappedProduct.prixAchat = mappedProduct.prixAchat ? Number(mappedProduct.prixAchat) : 0.0;
-      mappedProduct.prixVente = mappedProduct.prixVente ? Number(mappedProduct.prixVente) : 0.0;
+      mappedProduct.prixAchat = mappedProduct.prixAchat
+        ? Number(mappedProduct.prixAchat)
+        : 0.0;
+      mappedProduct.prixVente = mappedProduct.prixVente
+        ? Number(mappedProduct.prixVente)
+        : 0.0;
       mappedProduct.stockDisponible = mappedProduct.stockDisponible
         ? Number(mappedProduct.stockDisponible)
         : 0;
@@ -184,7 +194,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
   };
 
   // Fonction pour mettre à jour les données modifiées
-  const updateModifiedData = (newData) => {
+  const updateModifiedData = newData => {
     // Régénérer les codes si les champs libelle ou categorie produit ont été modifiés
     const processedData = regenerateCodesForModifiedData(newData);
     setModifiedData(processedData);
@@ -193,7 +203,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
   const sendToBackend = async () => {
     // Utiliser les données modifiées au lieu des données originales
     const dataToSend = modifiedData.length > 0 ? modifiedData : data;
-    
+
     if (!dataToSend || dataToSend.length < 2) {
       addToast({
         title: 'Attention',
@@ -205,7 +215,50 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
     setLoading(true);
     try {
-      const formattedData = formatProductData(dataToSend);
+      // === LOG AVANCÉ DES DONNÉES ===
+      console.log('🚀 === LOG AVANCÉ - DONNÉES EXCEL AVANT ENVOI ===');
+      console.log('📊 Données brutes (dataToSend):', dataToSend);
+
+      // Log du nettoyage des espaces
+      console.log('🧹 === NETTOYAGE DES ESPACES ===');
+      const cleanedData = cleanData(dataToSend);
+      console.log('📊 Données après nettoyage:', cleanedData);
+
+      // Comparaison avant/après nettoyage
+      if (dataToSend.length > 1 && cleanedData.length > 1) {
+        console.log('🔍 Comparaison avant/après nettoyage:');
+        for (
+          let i = 1;
+          i < Math.min(dataToSend.length, cleanedData.length);
+          i++
+        ) {
+          const originalRow = dataToSend[i];
+          const cleanedRow = cleanedData[i];
+          let hasChanges = false;
+
+          for (
+            let j = 0;
+            j < Math.min(originalRow.length, cleanedRow.length);
+            j++
+          ) {
+            if (originalRow[j] !== cleanedRow[j]) {
+              if (!hasChanges) {
+                console.log(`  Ligne ${i}:`);
+                hasChanges = true;
+              }
+              console.log(
+                `    Colonne ${j}: "${originalRow[j]}" → "${cleanedRow[j]}"`
+              );
+            }
+          }
+        }
+      }
+      console.log('=== FIN NETTOYAGE ===');
+
+      // Utiliser les données nettoyées pour le formatage
+      const formattedData = formatProductData(cleanedData);
+      console.log('🔧 Données formatées (formattedData):', formattedData);
+
       if (formattedData.length === 0) {
         addToast({
           title: 'Info',
@@ -215,68 +268,60 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         return false;
       }
 
-      // === LOG AVANCÉ DES DONNÉES ===
-      console.log('🚀 === LOG AVANCÉ - DONNÉES EXCEL AVANT ENVOI ===');
-      console.log('📊 Données brutes (dataToSend):', dataToSend);
-      
-      // Log du nettoyage des espaces
-      console.log('🧹 === NETTOYAGE DES ESPACES ===');
-      const cleanedData = cleanData(dataToSend);
-      console.log('📊 Données après nettoyage:', cleanedData);
-      
-      // Comparaison avant/après nettoyage
-      if (dataToSend.length > 1 && cleanedData.length > 1) {
-        console.log('🔍 Comparaison avant/après nettoyage:');
-        for (let i = 1; i < Math.min(dataToSend.length, cleanedData.length); i++) {
-          const originalRow = dataToSend[i];
-          const cleanedRow = cleanedData[i];
-          let hasChanges = false;
-          
-          for (let j = 0; j < Math.min(originalRow.length, cleanedRow.length); j++) {
-            if (originalRow[j] !== cleanedRow[j]) {
-              if (!hasChanges) {
-                console.log(`  Ligne ${i}:`);
-                hasChanges = true;
-              }
-              console.log(`    Colonne ${j}: "${originalRow[j]}" → "${cleanedRow[j]}"`);
-            }
-          }
-        }
-      }
-      console.log('=== FIN NETTOYAGE ===');
-      
-      console.log('🔧 Données formatées (formattedData):', formattedData);
-      
       // Log détaillé de chaque produit
       console.log('📋 Détail des produits à envoyer:');
       formattedData.forEach((product, index) => {
         console.log(`\n📦 Produit ${index + 1}:`);
         console.log('   codeProduit:', product.codeProduit);
         console.log('   libelle:', product.libelle);
-        console.log('   prixAchat:', product.prixAchat, `(${typeof product.prixAchat})`);
-        console.log('   prixVente:', product.prixVente, `(${typeof product.prixVente})`);
-        console.log('   stockDisponible:', product.stockDisponible, `(${typeof product.stockDisponible})`);
-        console.log('   seuilRuptureStock:', product.seuilRuptureStock, `(${typeof product.seuilRuptureStock})`);
+        console.log(
+          '   prixAchat:',
+          product.prixAchat,
+          `(${typeof product.prixAchat})`
+        );
+        console.log(
+          '   prixVente:',
+          product.prixVente,
+          `(${typeof product.prixVente})`
+        );
+        console.log(
+          '   stockDisponible:',
+          product.stockDisponible,
+          `(${typeof product.stockDisponible})`
+        );
+        console.log(
+          '   seuilRuptureStock:',
+          product.seuilRuptureStock,
+          `(${typeof product.seuilRuptureStock})`
+        );
         console.log('   categorieProduit:', product.categorieProduit);
         console.log('   imageURL:', product.imageURL);
         console.log('   categorieName:', product.categorieName);
-        console.log('   categorieId:', product.categorieId, `(${typeof product.categorieId})`);
-        console.log('   useImageURL:', product.useImageURL, `(${typeof product.useImageURL})`);
+        console.log(
+          '   categorieId:',
+          product.categorieId,
+          `(${typeof product.categorieId})`
+        );
+        console.log(
+          '   useImageURL:',
+          product.useImageURL,
+          `(${typeof product.useImageURL})`
+        );
         console.log('   id:', product.id);
       });
-      
+
       console.log('\n🌐 Endpoint:', '/api/v1/approvisionnements/import/excel');
       console.log('📤 Méthode: POST');
       console.log('📦 Payload JSON:', JSON.stringify(formattedData, null, 2));
       console.log('=== FIN DU LOG AVANCÉ ===\n');
 
       const result = await apiServiceV1.bulkImportProducts(formattedData);
-      
+
       // === LOG DE LA RÉPONSE ===
       console.log('📥 === LOG RÉPONSE BACKEND ===');
       console.log('✅ Réponse complète:', result);
       console.log('📊 Structure de la réponse:', typeof result);
-      
+
       if (result && typeof result === 'object') {
         console.log('🔍 Clés de la réponse:', Object.keys(result));
         if (result.data) {
@@ -285,7 +330,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         }
       }
       console.log('=== FIN LOG RÉPONSE ===\n');
-      
+
       const { erreurs = [], produitsEnregistres = [] } = result.data || {};
 
       if (erreurs.length > 0) {
@@ -325,7 +370,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         addToast({
           title: 'Erreur',
           message:
-            resp?.message || error.message || 'Erreur lors de l\'importation.',
+            resp?.message || error.message || "Erreur lors de l'importation.",
           type: 'error'
         });
       }

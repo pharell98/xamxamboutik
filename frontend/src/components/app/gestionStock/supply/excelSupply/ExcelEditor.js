@@ -41,7 +41,7 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
   const primaryColor = getColor('primary') || '#2c7be5';
   const secondaryColor = getColor('secondary') || '#6c757d';
   const backgroundColor = isDark ? '#2a2d35' : '#ffffff';
-  const headerBackground = isDark 
+  const headerBackground = isDark
     ? 'linear-gradient(135deg, #3a3f4b 0%, #2a2d35 100%)'
     : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
   const headerTextColor = isDark ? '#ffffff' : '#495057';
@@ -57,7 +57,7 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
   const getColumnWidth = (header, index) => {
     const columnWidths = {
       'code produit': '100px',
-      'libelle': '140px',
+      libelle: '140px',
       'prix achat': '80px',
       'prix vente': '80px',
       'stock disponible': '100px',
@@ -65,7 +65,7 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
       'categorie produit': '120px',
       'image url': '160px'
     };
-    
+
     return columnWidths[header] || '120px';
   };
 
@@ -76,7 +76,7 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
           maxHeight: '60vh',
           overflow: 'auto',
           borderRadius: '12px',
-          boxShadow: isDark 
+          boxShadow: isDark
             ? '0 8px 24px rgba(0, 0, 0, 0.4)'
             : '0 8px 24px rgba(0, 0, 0, 0.15)',
           background: backgroundColor,
@@ -93,7 +93,7 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
               zIndex: 1,
               background: headerBackground,
               color: headerTextColor,
-              boxShadow: isDark 
+              boxShadow: isDark
                 ? '0 2px 8px rgba(0, 0, 0, 0.3)'
                 : '0 2px 8px rgba(0, 0, 0, 0.1)'
             }}
@@ -137,7 +137,8 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
                       left: '-100%',
                       width: '100%',
                       height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                      background:
+                        'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
                       animation: 'shimmer 3s infinite'
                     }}
                   />
@@ -150,16 +151,17 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
               <tr
                 key={rowIndex}
                 style={{
-                  background: rowIndex % 2 === 0 ? rowBackground : alternateRowBackground,
+                  background:
+                    rowIndex % 2 === 0 ? rowBackground : alternateRowBackground,
                   color: textColor
                 }}
                 className="table-row-hover"
               >
                 {headers.map((header, colIndex) => (
-                  <td 
-                    key={colIndex} 
-                    style={{ 
-                      padding: '8px', 
+                  <td
+                    key={colIndex}
+                    style={{
+                      padding: '8px',
                       border: `1px solid ${borderColor}`,
                       width: getColumnWidth(header, colIndex),
                       minWidth: getColumnWidth(header, colIndex),
@@ -180,7 +182,8 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
                         border: `1px solid ${inputBorderColor}`,
                         background: inputBackground,
                         color: textColor,
-                        transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+                        transition:
+                          'border-color 0.3s ease, box-shadow 0.3s ease',
                         textAlign: 'center',
                         width: '100%',
                         maxWidth: '100%'
@@ -244,15 +247,17 @@ const ExcelEditor = ({ initialData, onDataChange }) => {
             background: ${isDark ? '#3a3f4b' : '#e7f1ff'} !important;
             transform: scale(1.01);
             transition: background 0.3s ease, transform 0.3s ease;
-            box-shadow: ${isDark 
-              ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-              : '0 2px 8px rgba(0, 0, 0, 0.1)'};
+            box-shadow: ${
+              isDark
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(0, 0, 0, 0.1)'
+            };
           }
           .custom-input:focus {
             border-color: ${inputFocusColor} !important;
-            box-shadow: 0 0 0 0.2rem ${isDark 
-              ? 'rgba(73, 80, 87, 0.25)' 
-              : 'rgba(44, 123, 229, 0.25)'} !important;
+            box-shadow: 0 0 0 0.2rem ${
+              isDark ? 'rgba(73, 80, 87, 0.25)' : 'rgba(44, 123, 229, 0.25)'
+            } !important;
             outline: none;
           }
           .custom-input::placeholder {

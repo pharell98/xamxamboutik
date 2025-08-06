@@ -36,7 +36,7 @@ const ExcelViewer = ({ data }) => {
   const primaryColor = getColor('primary') || '#2c7be5';
   const secondaryColor = getColor('secondary') || '#6c757d';
   const backgroundColor = isDark ? '#2a2d35' : '#ffffff';
-  const headerBackground = isDark 
+  const headerBackground = isDark
     ? 'linear-gradient(135deg, #3a3f4b 0%, #2a2d35 100%)'
     : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
   const headerTextColor = isDark ? '#ffffff' : '#495057';
@@ -49,7 +49,7 @@ const ExcelViewer = ({ data }) => {
   const getColumnWidth = (header, index) => {
     const columnWidths = {
       'code produit': '100px',
-      'libelle': '140px',
+      libelle: '140px',
       'prix achat': '80px',
       'prix vente': '80px',
       'stock disponible': '100px',
@@ -57,7 +57,7 @@ const ExcelViewer = ({ data }) => {
       'categorie produit': '120px',
       'image url': '160px'
     };
-    
+
     return columnWidths[header] || '120px';
   };
 
@@ -69,7 +69,7 @@ const ExcelViewer = ({ data }) => {
   };
 
   // Fonction pour formater l'URL
-  const formatUrl = (url) => {
+  const formatUrl = url => {
     if (!url) return '';
     if (url.length <= 25) return url;
     const domain = url.match(/https?:\/\/([^\/]+)/);
@@ -85,7 +85,7 @@ const ExcelViewer = ({ data }) => {
         maxHeight: '60vh',
         overflow: 'auto',
         borderRadius: '12px',
-        boxShadow: isDark 
+        boxShadow: isDark
           ? '0 8px 24px rgba(0, 0, 0, 0.4)'
           : '0 8px 24px rgba(0, 0, 0, 0.15)',
         background: backgroundColor,
@@ -102,7 +102,7 @@ const ExcelViewer = ({ data }) => {
             zIndex: 1,
             background: headerBackground,
             color: headerTextColor,
-            boxShadow: isDark 
+            boxShadow: isDark
               ? '0 2px 8px rgba(0, 0, 0, 0.3)'
               : '0 2px 8px rgba(0, 0, 0, 0.1)'
           }}
@@ -134,9 +134,9 @@ const ExcelViewer = ({ data }) => {
                     zIndex: 2,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
-                }}
-              >
-                {col}
+                  }}
+                >
+                  {col}
                 </div>
                 {/* Effet de brillance subtil */}
                 <div
@@ -146,7 +146,8 @@ const ExcelViewer = ({ data }) => {
                     left: '-100%',
                     width: '100%',
                     height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                    background:
+                      'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
                     animation: 'shimmer 3s infinite'
                   }}
                 />
@@ -166,7 +167,8 @@ const ExcelViewer = ({ data }) => {
                   ? 'translateX(0)'
                   : 'translateX(-20px)',
                 transition: 'opacity 0.6s ease, transform 0.6s ease',
-                background: rIdx % 2 === 0 ? rowBackground : alternateRowBackground,
+                background:
+                  rIdx % 2 === 0 ? rowBackground : alternateRowBackground,
                 color: textColor
               }}
               className="table-row-hover"
@@ -193,13 +195,12 @@ const ExcelViewer = ({ data }) => {
                       maxWidth: '100%'
                     }}
                     title={row[cIdx] || ''} // Tooltip pour voir le contenu complet
-                >
-                    {header === 'image url' 
+                  >
+                    {header === 'image url'
                       ? formatUrl(row[cIdx] || '')
                       : header === 'libelle'
                       ? truncateText(row[cIdx] || '', 25)
-                      : row[cIdx] ?? ''
-                    }
+                      : row[cIdx] ?? ''}
                   </div>
                 </td>
               ))}
@@ -229,9 +230,11 @@ const ExcelViewer = ({ data }) => {
             background: ${isDark ? '#3a3f4b' : '#e7f1ff'} !important;
             transform: scale(1.01);
             transition: background 0.3s ease, transform 0.3s ease;
-            box-shadow: ${isDark 
-              ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-              : '0 2px 8px rgba(0, 0, 0, 0.1)'};
+            box-shadow: ${
+              isDark
+                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(0, 0, 0, 0.1)'
+            };
           }
           @keyframes shimmer {
             0% { left: -100%; }

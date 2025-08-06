@@ -50,7 +50,9 @@ const NewProductDetails = React.memo(
     onCompleteProduct = () => {},
     editMode = false
   }) => {
-    const { config: { isDark } } = useAppContext();
+    const {
+      config: { isDark }
+    } = useAppContext();
     if (!currentProduct) return null;
 
     const { categories, loading, error } = useCategories();
@@ -166,8 +168,15 @@ const NewProductDetails = React.memo(
 
     /* ---------------------------- UI ----------------------------- */
     return (
-      <Card className={`mt-3 border-primary shadow-sm ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
-        <Card.Header className={isDark ? 'bg-primary text-white' : 'bg-primary text-white'}>
+      <Card
+        className={`mt-3 border-primary shadow-sm ${
+          isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+        }`}
+        style={{ borderRadius: 8 }}
+      >
+        <Card.Header
+          className={isDark ? 'bg-primary text-white' : 'bg-primary text-white'}
+        >
           <h6 className="mb-0">Informations pour : {currentProduct.libelle}</h6>
         </Card.Header>
 

@@ -22,7 +22,9 @@ const TotalAndValidation = ({
   className = '',
   disableSubmit = false
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const amounts = [
     {
       id: 'transport',
@@ -39,7 +41,12 @@ const TotalAndValidation = ({
   ];
 
   return (
-    <div className={`border-top pt-4 mt-4 ${className} ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
+    <div
+      className={`border-top pt-4 mt-4 ${className} ${
+        isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+      }`}
+      style={{ borderRadius: 8 }}
+    >
       <Row>
         {amounts.map(({ id, label, amount, currency }) => (
           <Col key={id} md={6} className="mb-3">

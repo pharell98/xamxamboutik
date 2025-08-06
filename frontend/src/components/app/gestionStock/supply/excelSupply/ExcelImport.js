@@ -62,23 +62,23 @@ const ExcelImporter = ({ onData }) => {
       }}
       className="excel-import-container"
     >
-    <Form.Group controlId="excelImport" className="mb-3">
-        <Form.Label 
-          style={{ 
-            fontSize: '16px', 
+      <Form.Group controlId="excelImport" className="mb-3">
+        <Form.Label
+          style={{
+            fontSize: '16px',
             fontWeight: '500',
             color: labelColor,
             marginBottom: '12px'
           }}
         >
           📁 Importer un fichier Excel
-      </Form.Label>
-      <Form.Control
-        type="file"
-        accept=".xlsx, .xls"
-        onChange={handleFile}
-          style={{ 
-            fontSize: '14px', 
+        </Form.Label>
+        <Form.Control
+          type="file"
+          accept=".xlsx, .xls"
+          onChange={handleFile}
+          style={{
+            fontSize: '14px',
             padding: '12px',
             background: inputBackground,
             border: `1px solid ${inputBorderColor}`,
@@ -86,29 +86,33 @@ const ExcelImporter = ({ onData }) => {
             borderRadius: '8px',
             cursor: 'pointer'
           }}
-      />
-        <Form.Text 
-          className="text-muted" 
-          style={{ 
+        />
+        <Form.Text
+          className="text-muted"
+          style={{
             fontSize: '12px',
             color: helpTextColor,
             marginTop: '8px',
             display: 'block'
           }}
         >
-          📋 Sélectionnez un fichier .xlsx ou .xls contenant vos produits avec les colonnes :
+          📋 Sélectionnez un fichier .xlsx ou .xls contenant vos produits avec
+          les colonnes :
           <br />
-          <code style={{ 
-            fontSize: '11px',
-            background: isDark ? '#343a40' : '#e9ecef',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            color: isDark ? '#e9ecef' : '#495057'
-          }}>
-            code produit, libelle, prix achat, prix vente, stock disponible, seuil rupture stock, categorie produit, image url
+          <code
+            style={{
+              fontSize: '11px',
+              background: isDark ? '#343a40' : '#e9ecef',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              color: isDark ? '#e9ecef' : '#495057'
+            }}
+          >
+            code produit, libelle, prix achat, prix vente, stock disponible,
+            seuil rupture stock, categorie produit, image url
           </code>
-      </Form.Text>
-    </Form.Group>
+        </Form.Text>
+      </Form.Group>
       <style>
         {`
           .excel-import-container:hover {
@@ -119,9 +123,9 @@ const ExcelImporter = ({ onData }) => {
           }
           .excel-import-container input[type="file"]:focus {
             border-color: ${primaryColor} !important;
-            box-shadow: 0 0 0 0.2rem ${isDark 
-              ? 'rgba(73, 80, 87, 0.25)' 
-              : 'rgba(44, 123, 229, 0.25)'} !important;
+            box-shadow: 0 0 0 0.2rem ${
+              isDark ? 'rgba(73, 80, 87, 0.25)' : 'rgba(44, 123, 229, 0.25)'
+            } !important;
           }
         `}
       </style>

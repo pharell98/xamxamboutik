@@ -20,7 +20,9 @@ const ProductListItem = ({
   handleRemoveProduct,
   handleCompleteProduct
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   // Détermine si le champ "libelle" est en lecture seule
   const libelleReadOnly =
     product.originalData || (product.isValidated && !product.isEditing);
@@ -34,7 +36,12 @@ const ProductListItem = ({
 
   return (
     <>
-      <Row className={`gx-2 flex-between-center mb-3 ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
+      <Row
+        className={`gx-2 flex-between-center mb-3 ${
+          isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+        }`}
+        style={{ borderRadius: 8 }}
+      >
         {/* Libellé */}
         <Col sm={4}>
           <input

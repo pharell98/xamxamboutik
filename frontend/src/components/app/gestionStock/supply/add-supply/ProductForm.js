@@ -58,7 +58,9 @@ const ProductForm = React.memo(
     shouldResetBaseFields,
     onResetDone
   }) => {
-    const { config: { isDark } } = useAppContext();
+    const {
+      config: { isDark }
+    } = useAppContext();
     // Setup react-hook-form
     const methods = useForm({
       resolver: yupResolver(productSchema),
@@ -152,7 +154,13 @@ const ProductForm = React.memo(
 
     return (
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(handleAdd)} className={`mt-3 ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
+        <form
+          onSubmit={handleSubmit(handleAdd)}
+          className={`mt-3 ${
+            isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+          }`}
+          style={{ borderRadius: 8 }}
+        >
           <h6 className="mb-3">
             Ajouter un nouveau produit ou sélectionner un existant
           </h6>

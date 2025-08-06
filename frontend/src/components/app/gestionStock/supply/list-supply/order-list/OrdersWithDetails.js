@@ -15,7 +15,9 @@ const OrdersWithDetails = ({ setSelectedProduct }) => {
     // On lit le dernier code notifié depuis le localStorage au montage
     return localStorage.getItem('lastNotifiedApproCode') || null;
   });
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
 
   // Écouter les messages WebSocket pour déclencher un rafraîchissement
   useEffect(() => {
@@ -51,7 +53,12 @@ const OrdersWithDetails = ({ setSelectedProduct }) => {
   };
 
   return (
-    <Row className={`mb-3 g-3 ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: 8 }}>
+    <Row
+      className={`mb-3 g-3 ${
+        isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+      }`}
+      style={{ borderRadius: 8 }}
+    >
       <Col xs={12} className="mb-3">
         <Approvisionnements
           onOrderSelect={handleOrderSelect}
