@@ -82,6 +82,9 @@ public class ExcelApproImportService implements IExcelApproImportService {
                     verifyDataPersistence(produitsEnregistres);
                     log.info("DEBUG - Transaction ACID terminée avec succès - Commit imminent");
                     
+                    // Notifier via WebSocket après la finalisation
+                    log.info("DEBUG - Notification WebSocket après import Excel");
+                    
                     return createSuccessResponse(appro, produitsEnregistres);
                     
                 } catch (Exception e) {
@@ -356,6 +359,7 @@ public class ExcelApproImportService implements IExcelApproImportService {
                     p.getLibelle());
         }
     }
+
     /**
      * Met à jour les informations du produit
      */

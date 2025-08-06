@@ -283,8 +283,14 @@ public class ApprovisionnementService implements IApprovisionnementService {
      */
     private void notifyUpdate() {
         if (messagingTemplate != null) {
-            messagingTemplate.convertAndSend("/topic/approvisionnements", "update");
-            log.info("Message STOMP envoyé à /topic/approvisionnements");
+            // Créer un message plus informatif avec timestamp
+            Map<String, Object> message = new HashMap<>();
+            message.put("type", "APPROVISIONNEMENT_CREATED");
+            message.put("timestamp", LocalDateTime.now().toString());
+            message.put("message", "Nouvel approvisionnement créé");
+            
+            messagingTemplate.convertAndSend("/topic/approvisionnements", message);
+            log.info("Message STOMP envoyé à /topic/approvisionnements: {}", message);
         } else {
             log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour /topic/approvisionnements");
         }
