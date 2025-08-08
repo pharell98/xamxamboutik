@@ -216,17 +216,10 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
     setLoading(true);
     try {
       // === LOG AVANCÉ DES DONNÉES ===
-      console.log('🚀 === LOG AVANCÉ - DONNÉES EXCEL AVANT ENVOI ===');
-      console.log('📊 Données brutes (dataToSend):', dataToSend);
-
       // Log du nettoyage des espaces
-      console.log('🧹 === NETTOYAGE DES ESPACES ===');
       const cleanedData = cleanData(dataToSend);
-      console.log('📊 Données après nettoyage:', cleanedData);
-
       // Comparaison avant/après nettoyage
       if (dataToSend.length > 1 && cleanedData.length > 1) {
-        console.log('🔍 Comparaison avant/après nettoyage:');
         for (
           let i = 1;
           i < Math.min(dataToSend.length, cleanedData.length);
@@ -243,22 +236,14 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
           ) {
             if (originalRow[j] !== cleanedRow[j]) {
               if (!hasChanges) {
-                console.log(`  Ligne ${i}:`);
                 hasChanges = true;
               }
-              console.log(
-                `    Colonne ${j}: "${originalRow[j]}" → "${cleanedRow[j]}"`
-              );
             }
           }
         }
       }
-      console.log('=== FIN NETTOYAGE ===');
-
       // Utiliser les données nettoyées pour le formatage
       const formattedData = formatProductData(cleanedData);
-      console.log('🔧 Données formatées (formattedData):', formattedData);
-
       if (formattedData.length === 0) {
         addToast({
           title: 'Info',
@@ -269,68 +254,15 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
       }
 
       // Log détaillé de chaque produit
-      console.log('📋 Détail des produits à envoyer:');
-      formattedData.forEach((product, index) => {
-        console.log(`\n📦 Produit ${index + 1}:`);
-        console.log('   codeProduit:', product.codeProduit);
-        console.log('   libelle:', product.libelle);
-        console.log(
-          '   prixAchat:',
-          product.prixAchat,
-          `(${typeof product.prixAchat})`
-        );
-        console.log(
-          '   prixVente:',
-          product.prixVente,
-          `(${typeof product.prixVente})`
-        );
-        console.log(
-          '   stockDisponible:',
-          product.stockDisponible,
-          `(${typeof product.stockDisponible})`
-        );
-        console.log(
-          '   seuilRuptureStock:',
-          product.seuilRuptureStock,
-          `(${typeof product.seuilRuptureStock})`
-        );
-        console.log('   categorieProduit:', product.categorieProduit);
-        console.log('   imageURL:', product.imageURL);
-        console.log('   categorieName:', product.categorieName);
-        console.log(
-          '   categorieId:',
-          product.categorieId,
-          `(${typeof product.categorieId})`
-        );
-        console.log(
-          '   useImageURL:',
-          product.useImageURL,
-          `(${typeof product.useImageURL})`
-        );
-        console.log('   id:', product.id);
-      });
-
-      console.log('\n🌐 Endpoint:', '/api/v1/approvisionnements/import/excel');
-      console.log('📤 Méthode: POST');
-      console.log('📦 Payload JSON:', JSON.stringify(formattedData, null, 2));
-      console.log('=== FIN DU LOG AVANCÉ ===\n');
+      formattedData.forEach((product, index) => {});
 
       const result = await apiServiceV1.bulkImportProducts(formattedData);
 
       // === LOG DE LA RÉPONSE ===
-      console.log('📥 === LOG RÉPONSE BACKEND ===');
-      console.log('✅ Réponse complète:', result);
-      console.log('📊 Structure de la réponse:', typeof result);
-
       if (result && typeof result === 'object') {
-        console.log('🔍 Clés de la réponse:', Object.keys(result));
         if (result.data) {
-          console.log('📦 Données de la réponse:', result.data);
-          console.log('🔍 Clés des données:', Object.keys(result.data));
         }
       }
-      console.log('=== FIN LOG RÉPONSE ===\n');
-
       const { erreurs = [], produitsEnregistres = [] } = result.data || {};
 
       if (erreurs.length > 0) {
@@ -349,6 +281,11 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         message: `${produitsEnregistres.length} produit(s) importé(s).`,
         type: 'success'
       });
+
+      // Déclencher un seul rafraîchissement après un délai
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('approvisionnement-created'));
+      }, 1500);
 
       if (onImportSuccess) {
         onImportSuccess(produitsEnregistres);

@@ -1,16 +1,26 @@
 // src/views/approvisionnementColumnsConfig.js
 import React from 'react';
 
-export const getApprovisionnementColumns = onDetail => [
+export const getApprovisionnementColumns = (
+  onDetail,
+  selectedApproId = null
+) => [
   {
     accessorKey: 'codeAppro',
     header: 'Code Appro',
     meta: {
       headerProps: { className: 'text-center text-900' }
     },
-    cell: ({ row: { original } }) => (
-      <div className="text-center">{original.codeAppro || '—'}</div>
-    )
+    cell: ({ row: { original } }) => {
+      const isSelected = selectedApproId === original.id;
+      return (
+        <div
+          className={`text-center ${isSelected ? 'fw-bold text-primary' : ''}`}
+        >
+          {original.codeAppro || '—'}
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'montantAppro',
@@ -18,13 +28,18 @@ export const getApprovisionnementColumns = onDetail => [
     meta: {
       headerProps: { className: 'text-center text-900' }
     },
-    cell: ({ row: { original } }) => (
-      <div className="text-center">
-        {original.montantAppro !== undefined
-          ? `${original.montantAppro} cfa`
-          : '—'}
-      </div>
-    )
+    cell: ({ row: { original } }) => {
+      const isSelected = selectedApproId === original.id;
+      return (
+        <div
+          className={`text-center ${isSelected ? 'fw-bold text-primary' : ''}`}
+        >
+          {original.montantAppro !== undefined
+            ? `${original.montantAppro} cfa`
+            : '—'}
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'fraisTransport',
@@ -32,13 +47,18 @@ export const getApprovisionnementColumns = onDetail => [
     meta: {
       headerProps: { className: 'text-center text-900' }
     },
-    cell: ({ row: { original } }) => (
-      <div className="text-center">
-        {original.fraisTransport !== undefined
-          ? `${original.fraisTransport} cfa`
-          : '—'}
-      </div>
-    )
+    cell: ({ row: { original } }) => {
+      const isSelected = selectedApproId === original.id;
+      return (
+        <div
+          className={`text-center ${isSelected ? 'fw-bold text-primary' : ''}`}
+        >
+          {original.fraisTransport !== undefined
+            ? `${original.fraisTransport} cfa`
+            : '—'}
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'date',
@@ -46,26 +66,38 @@ export const getApprovisionnementColumns = onDetail => [
     meta: {
       headerProps: { className: 'text-center text-900' }
     },
-    cell: ({ row: { original } }) => (
-      <div className="text-center">{original.date || '—'}</div>
-    )
+    cell: ({ row: { original } }) => {
+      const isSelected = selectedApproId === original.id;
+      return (
+        <div
+          className={`text-center ${isSelected ? 'fw-bold text-primary' : ''}`}
+        >
+          {original.date || '—'}
+        </div>
+      );
+    }
   },
   {
     accessorKey: 'actions',
     header: 'Actions',
     enableSorting: false,
     meta: { cellProps: { className: 'text-center' } },
-    cell: ({ row: { original } }) => (
-      <div className="text-center">
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          onClick={() => onDetail(original)}
-        >
-          Détail
-        </button>
-      </div>
-    )
+    cell: ({ row: { original } }) => {
+      const isSelected = selectedApproId === original.id;
+      return (
+        <div className="text-center">
+          <button
+            type="button"
+            className={`btn btn-sm ${
+              isSelected ? 'btn-outline-primary fw-bold' : 'btn-primary'
+            }`}
+            onClick={() => onDetail(original)}
+          >
+            {isSelected ? 'Sélectionné' : 'Détail'}
+          </button>
+        </div>
+      );
+    }
   }
 ];
 

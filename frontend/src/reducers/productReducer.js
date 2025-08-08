@@ -15,6 +15,7 @@ export const productReducer = (state, action) => {
         item => item.id === payload.product.id
       );
       if (existingItem) {
+        // Si le produit existe déjà, mettre à jour la quantité
         return {
           ...state,
           cartItems: state.cartItems.map(item =>
@@ -33,9 +34,10 @@ export const productReducer = (state, action) => {
           }
         };
       }
+      // Nouveau produit : l'ajouter en haut du panier
       return {
         ...state,
-        cartItems: [...state.cartItems, payload.product],
+        cartItems: [payload.product, ...state.cartItems],
         cartModal: {
           show: true,
           product: payload.product,

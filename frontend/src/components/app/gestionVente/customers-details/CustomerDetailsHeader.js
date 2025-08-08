@@ -12,66 +12,81 @@ const CustomerDetailsHeader = () => {
   } = useAppContext();
 
   return (
-    <Card className="mb-3">
-      <Card.Header>
-        <Row className="g-2">
+    <Card className="mb-3 fade-in">
+      <Card.Header className="bg-light">
+        <Row className="g-2 align-items-center">
           <Col>
-            <h5 className="mb-2">
-              Tony Robbins (<a href="mailto:tony@gmail.com">tony@gmail.com</a>)
+            <h5 className="mb-2 fw-bold">
+              Tony Robbins (<a href="mailto:tony@gmail.com" className="text-primary">tony@gmail.com</a>)
             </h5>
-            <IconButton
-              iconClassName="fs-11 me-1"
-              variant="falcon-default"
-              size="sm"
-              icon="plus"
-            >
-              Add note
-            </IconButton>
-            <Dropdown className="d-inline-block ms-2">
-              <Dropdown.Toggle
-                as={Button}
+            <div className="d-flex flex-wrap gap-2">
+              <IconButton
+                iconClassName="fs-11 me-1"
                 variant="falcon-default"
                 size="sm"
-                className="dropdown-caret-none"
+                icon="plus"
+                className="btn-primary"
               >
-                <FontAwesomeIcon icon="ellipsis-h" />
-              </Dropdown.Toggle>
+                <span className="d-none d-sm-inline">Add note</span>
+                <span className="d-inline d-sm-none">Note</span>
+              </IconButton>
+              <Dropdown className="d-inline-block">
+                <Dropdown.Toggle
+                  as={Button}
+                  variant="falcon-default"
+                  size="sm"
+                  className="dropdown-caret-none"
+                >
+                  <FontAwesomeIcon icon="ellipsis-h" />
+                </Dropdown.Toggle>
 
-              <Dropdown.Menu align={isRTL ? 'end' : 'start'}>
-                <Dropdown.Item as={Link} to="#!">
-                  Edit
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="#!">
-                  Report
-                </Dropdown.Item>
-                <Dropdown.Item as={Link} to="#!">
-                  Archive
-                </Dropdown.Item>
-                <Dropdown.Divider as="div" />
-                <Dropdown.Item as={Link} to="#!" className="text-danger">
-                  Delete user
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+                <Dropdown.Menu align={isRTL ? 'end' : 'start'}>
+                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                    <FontAwesomeIcon icon="edit" className="me-2" />
+                    Edit
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                    <FontAwesomeIcon icon="file-alt" className="me-2" />
+                    Report
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                    <FontAwesomeIcon icon="archive" className="me-2" />
+                    Archive
+                  </Dropdown.Item>
+                  <Dropdown.Divider as="div" />
+                  <Dropdown.Item as={Link} to="#!" className="text-danger d-flex align-items-center">
+                    <FontAwesomeIcon icon="trash" className="me-2" />
+                    Delete user
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
           </Col>
           <Col xs="auto">
-            <h6 className="text-uppercase text-600 mb-0">
-              Customer
-              <FontAwesomeIcon icon="user" className="ms-2" />
-            </h6>
+            <div className="d-flex align-items-center">
+              <h6 className="text-uppercase text-600 mb-0 me-2">
+                Customer
+              </h6>
+              <FontAwesomeIcon icon="user" className="text-primary" />
+            </div>
           </Col>
         </Row>
       </Card.Header>
-      <Card.Body className="border-top">
-        <Flex>
-          <FontAwesomeIcon
-            icon="user"
-            className="text-success me-2"
-            transform="down-5"
-          />
+      <Card.Body className="border-top bg-light">
+        <Flex className="align-items-start">
+          <div className="bg-success rounded-circle p-2 me-3">
+            <FontAwesomeIcon
+              icon="user"
+              className="text-white"
+              transform="down-5"
+            />
+          </div>
           <div className="flex-1">
-            <p className="mb-0">Customer was created</p>
-            <p className="fs-10 mb-0 text-600">Jan 12, 11:13 PM</p>
+            <p className="mb-1 fw-semibold">Customer was created</p>
+            <p className="fs-10 mb-0 text-600">
+              <FontAwesomeIcon icon="clock" className="me-1" />
+              Jan 12, 11:13 PM
+            </p>
           </div>
         </Flex>
       </Card.Body>

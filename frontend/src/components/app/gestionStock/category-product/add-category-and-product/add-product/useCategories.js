@@ -73,6 +73,12 @@ const useCategories = () => {
         } avec succès.`,
         type: 'success'
       });
+
+      // Déclencher un événement pour rafraîchir les tables
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('category-updated'));
+      }, 1000);
+
       setSelectedCategory(null);
       setEditModeCategory(false);
     } catch (error) {

@@ -5,7 +5,17 @@ import QuantityController from '../QuantityController';
 import venteServiceV1 from 'services/vente.service.v1';
 import { useToast } from '../../../common/Toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faCalculator, 
+  faPrint, 
+  faBox, 
+  faSortNumericUp, 
+  faMoneyBill, 
+  faHandHoldingUsd,
+  faShoppingCart,
+  faTrash,
+  faTimes
+} from '@fortawesome/free-solid-svg-icons';
 import CalculatorModal from './CalculatorModal';
 import { useAppContext } from 'providers/AppProvider';
 import InvoiceGenerator from '../facture/InvoiceGenerator';
@@ -214,26 +224,39 @@ const CartSection = ({ onClose, show = true }) => {
   return (
     <>
       <Card
-        className={`p-3 border-0 ${isDark ? 'bg-dark text-white' : 'bg-white'}`}
+        className={`p-3 border-0 cart-section ${isDark ? 'bg-dark text-white' : 'bg-white'}`}
         style={{ maxHeight: '75vh', overflowY: 'auto' }}
       >
-        <h5 className="mb-3">Votre Panier</h5>
+        <div className="cart-header mb-3">
+          <h5 className="mb-0 fw-bold">
+            <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
+            Votre Panier
+          </h5>
+        </div>
 
         {cartItems.length === 0 ? (
           <p>Votre panier est vide.</p>
         ) : (
           <>
             <div
-              className={`row fw-bold px-2 mb-2 py-2 ${
+              className={`row fw-bold px-2 mb-2 py-2 rounded ${
                 isDark ? 'bg-dark text-white' : 'bg-light text-dark'
               }`}
             >
-              <div className="col-5">Produit</div>
-              <div className="col-3 text-center">Quantité</div>
-              <div className="col-4 text-end">Prix</div>
+              <div className="col-5">
+                <FontAwesomeIcon icon={faBox} className="me-1" />
+                Produit
+              </div>
+              <div className="col-3 text-center">
+                Quantité
+              </div>
+              <div className="col-4 text-end">
+                <FontAwesomeIcon icon={faMoneyBill} className="me-1" />
+                Prix
+              </div>
             </div>
 
-            {cartItems.map(item => {
+            {cartItems.map((item, index) => {
               const customPrice = modifiedPrices[item.id];
               const unitPrice =
                 customPrice ?? parseInt(item.totalPrice / item.quantity, 10);
@@ -241,25 +264,30 @@ const CartSection = ({ onClose, show = true }) => {
               return (
                 <Card
                   key={item.id}
-                  className={`mb-3 shadow-sm border-200 ${
+                  className={`mb-3 shadow-sm border-200 cart-item ${
                     isDark ? 'bg-dark text-white' : ''
-                  }`}
+                  } ${index === 0 ? 'border-primary' : ''}`}
+                  style={{
+                    borderLeft: index === 0 ? '4px solid #007bff' : undefined
+                  }}
                 >
                   <Card.Body className="p-3">
-                    <div className="row g-3 align-items-center">
-                      <div className="col-12 col-sm-5 d-flex align-items-start">
-                        <img
-                          src={item.image || '/assets/img/no-image.png'}
-                          alt={item.libelle}
-                          className="rounded-1 me-3 mb-2 mb-sm-0"
-                          style={{
-                            width: '60px',
-                            height: '60px',
-                            objectFit: 'cover'
-                          }}
-                        />
-                        <div>
-                          <h5 className="fs-9 fw-semibold mb-1">
+                    <div className="row g-2 align-items-center">
+                      <div className="col-12 col-md-5 d-flex align-items-start">
+                        <div className="product-image me-2 mb-2 mb-md-0">
+                          <img
+                            src={item.image || '/no-image.svg'}
+                            alt={item.libelle}
+                            className="rounded"
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h5 className="fs-9 fw-semibold mb-1 product-title">
                             {item.libelle}
                           </h5>
                           <Button
@@ -268,37 +296,45 @@ const CartSection = ({ onClose, show = true }) => {
                             className="text-danger p-0 fs--1"
                             onClick={() => handleRemoveItem(item)}
                           >
+                            <FontAwesomeIcon icon={faTrash} className="me-1" />
                             Supprimer
                           </Button>
                         </div>
                       </div>
 
-                      <div className="col-6 col-sm-3 text-center">
-                        <QuantityController
-                          quantity={item.quantity}
-                          handleIncrease={() =>
-                            handleQuantityChange(item.id, item.quantity + 1)
-                          }
-                          handleDecrease={() =>
-                            handleQuantityChange(item.id, item.quantity - 1)
-                          }
-                          handleChange={val =>
-                            handleQuantityChange(item.id, val)
-                          }
-                          btnClassName="px-2"
-                          max={item.quantiteDisponible || Infinity}
-                        />
+                      <div className="col-6 col-md-3 d-flex justify-content-center">
+                        <div className="quantity-wrapper">
+                          <QuantityController
+                            quantity={item.quantity}
+                            handleIncrease={() =>
+                              handleQuantityChange(item.id, item.quantity + 1)
+                            }
+                            handleDecrease={() =>
+                              handleQuantityChange(item.id, item.quantity - 1)
+                            }
+                            handleChange={val =>
+                              handleQuantityChange(item.id, val)
+                            }
+                            btnClassName="px-1"
+                            max={item.quantiteDisponible || Infinity}
+                          />
+                        </div>
                       </div>
 
-                      <div className="col-6 col-sm-4">
-                        <div className="d-flex justify-content-end">
+                      <div className="col-6 col-md-4 d-flex justify-content-end">
+                        <div className="price-wrapper">
                           <Form.Control
                             type="number"
                             min="0"
                             max="999999"
                             step="1"
-                            className="text-end"
-                            style={{ width: '125px' }}
+                            className="text-end input-spin-none"
+                            style={{ 
+                              width: '100px',
+                              WebkitAppearance: 'none',
+                              MozAppearance: 'textfield',
+                              appearance: 'none'
+                            }}
                             value={unitPrice}
                             onChange={e =>
                               handlePriceChange(
@@ -341,32 +377,38 @@ const CartSection = ({ onClose, show = true }) => {
               </div>
             )}
 
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <div>
+            <div className="cart-total d-flex align-items-center justify-content-between mb-2 p-3 rounded">
+              <div className="d-flex flex-wrap gap-3">
                 <Form.Check
                   type="checkbox"
                   id="loan-checkbox"
-                  label="Prêt"
+                  label={
+                    <span>
+                                        <FontAwesomeIcon icon={faHandHoldingUsd} className="me-1" />
+                  Prêt
+                    </span>
+                  }
                   checked={isLoan}
                   onChange={e => setIsLoan(e.target.checked)}
-                  className="fs-8 me-3"
+                  className="fs-8"
                 />
                 <Form.Check
                   type="checkbox"
                   id="print-invoice"
                   label={
-                    <>
+                    <span>
                       <FontAwesomeIcon icon={faPrint} className="me-1" />
                       Générer Facture
-                    </>
+                    </span>
                   }
                   checked={printInvoice}
                   onChange={e => setPrintInvoice(e.target.checked)}
                   className="fs-8"
                 />
               </div>
-              <h5 className="mb-0">
-                Total <span className="ms-2">XOF {totalCost}</span>
+              <h5 className="mb-0 fw-bold">
+                <FontAwesomeIcon icon={faCalculator} className="me-2" />
+                Total <span className="ms-2 text-primary">XOF {totalCost.toLocaleString()}</span>
               </h5>
             </div>
 
@@ -410,25 +452,30 @@ const CartSection = ({ onClose, show = true }) => {
         )}
 
         {cartItems.length > 0 && (
-          <div className="d-flex justify-content-between mt-3">
+          <div className="d-flex flex-wrap gap-2 justify-content-between mt-3">
             <Button
               variant="outline-secondary"
               onClick={() => setShowCalculator(true)}
+              className="btn-sm"
             >
               <FontAwesomeIcon icon={faCalculator} className="me-1" />
-              Calculatrice
+              <span className="d-none d-sm-inline">Calculatrice</span>
+              <span className="d-inline d-sm-none">Calc</span>
             </Button>
 
             {onClose && (
-              <Button variant="secondary" onClick={onClose}>
-                Fermer
+              <Button variant="secondary" onClick={onClose} className="btn-sm">
+                <FontAwesomeIcon icon={faTimes} className="me-1" />
+                <span className="d-none d-sm-inline">Fermer</span>
+                <span className="d-inline d-sm-none">X</span>
               </Button>
             )}
 
             <Button
-              variant="primary"
+              variant="success"
               onClick={handleValidateSale}
               disabled={(isLoan || printInvoice) && !validateCustomerInfo()}
+              className="btn-sm"
             >
               {isLoan ? 'Valider Crédit' : 'Valider Vente'}
             </Button>

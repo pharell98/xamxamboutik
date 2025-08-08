@@ -21,6 +21,7 @@ const PageAppro = () => {
         titleTag="h5"
         className="mb-3"
       />
+
       <Row className="mb-3">
         <Col md={6}>
           <ApproDetail selectedProduct={selectedProduct} />

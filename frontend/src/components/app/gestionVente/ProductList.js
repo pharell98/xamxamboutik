@@ -28,26 +28,54 @@ const ProductList = ({ product, index }) => {
   const isInStock = stockDisponible > 0;
   const { handleAddToCart } = useProductHook(product);
 
+  const handleRowClick = () => {
+    if (isInStock && !isInCart) {
+      handleAddToCart(1, true);
+      // Feedback visuel
+      const row = document.querySelector(`[data-product-id="${id}"]`);
+      if (row) {
+        row.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+        setTimeout(() => {
+          row.style.backgroundColor = '';
+        }, 300);
+      }
+    }
+  };
+
   return (
     <Col
       xs={12}
-      className={classNames('py-2 px-1', {
+      className={classNames('py-2 px-1 fade-in product-list-item', {
         // Alterne l'arrière-plan pour les lignes impaires/paire
         'bg-100': index % 2 !== 0,
         // Ajoute un background supplémentaire si le produit est dans le panier
-        'bg-light': isInCart
+        'bg-light': isInCart,
+        'cursor-pointer': isInStock && !isInCart,
+        'cursor-not-allowed': !isInStock
       })}
+      data-product-id={id}
+      onClick={handleRowClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleRowClick();
+        }
+      }}
     >
       <Row className="g-2 align-items-center">
         {/* Colonne image */}
         <Col sm={2} md={2}>
-          <ProductImage
-            libelle={libelle}
-            id={id}
-            image={image}
-            layout="list"
-            containerStyle={{ height: '100%' }}
-          />
+          <div className="product-image">
+            <ProductImage
+              libelle={libelle}
+              id={id}
+              image={image}
+              layout="list"
+              containerStyle={{ height: '100%' }}
+            />
+          </div>
         </Col>
         <Col sm={10} md={10}>
           <Row className="h-100">
@@ -58,7 +86,7 @@ const ProductList = ({ product, index }) => {
               className="mb-2 mb-md-0"
             >
               <h4
-                className="fs-7 text-warning mb-1"
+                className="fs-7 text-warning mb-1 price-display"
                 style={{
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -68,7 +96,7 @@ const ProductList = ({ product, index }) => {
                 XOF {prixVente}
               </h4>
               <h6
-                className="fs-8 mb-1"
+                className="fs-8 mb-1 product-title"
                 style={{
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -124,14 +152,22 @@ const ProductList = ({ product, index }) => {
               xs="auto"
               className="d-flex align-items-center mt-auto mt-md-0"
             >
-              <IconButton
-                size="sm"
-                variant="primary"
-                icon="cart-plus"
-                onClick={() => handleAddToCart(1, true)}
-              >
-                Vendre
-              </IconButton>
+              <div className="product-actions">
+                <IconButton
+                  size="sm"
+                  variant="primary"
+                  icon="plus"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Empêcher le déclenchement du click de la ligne
+                    handleAddToCart(1, true);
+                  }}
+                  disabled={!isInStock}
+                  className="w-100"
+                >
+                  <span className="d-none d-sm-inline">+1</span>
+                  <span className="d-inline d-sm-none">+</span>
+                </IconButton>
+              </div>
             </Col>
           </Row>
         </Col>

@@ -19,10 +19,8 @@ const Categories = ({ onEdit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [subscriptionId] = useState(`categories-${Date.now()}`); // ID unique pour la souscription
 
-  const { stompClient, connected, subscribe, unsubscribe, isConnected } =
-    useStompClient();
+  const { data } = useStompClient();
   const { addToast } = useToast();
 
   const handleFiltersChange = useCallback((name, value) => {
@@ -58,6 +56,12 @@ const Categories = ({ onEdit }) => {
         message: `Catégorie "${categoryToDelete.libelle}" supprimée avec succès.`,
         type: 'success'
       });
+
+      // Déclencher un événement pour rafraîchir les tables
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('category-updated'));
+      }, 1000);
+
       setRefresh(prev => prev + 1);
       closeDeleteModal();
     } catch (error) {
@@ -83,6 +87,12 @@ const Categories = ({ onEdit }) => {
           message: `Catégorie "${category.libelle}" restaurée avec succès.`,
           type: 'success'
         });
+
+        // Déclencher un événement pour rafraîchir les tables
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('category-updated'));
+        }, 1000);
+
         setRefresh(prev => prev + 1);
       } catch (error) {
         console.error('[Categories] Erreur lors de la restauration:', error);
@@ -141,60 +151,38 @@ const Categories = ({ onEdit }) => {
     [filters, searchTerm, addToast]
   );
 
+  // Écouter les messages WebSocket pour les catégories
   useEffect(() => {
-    if (!stompClient || !connected) {
-      return;
+    if (Array.isArray(data) && data.length > 0) {
+      const latestMessage = data[data.length - 1];
+
+      // Vérifier si c'est un message de catégorie
+      if (
+        latestMessage &&
+        (latestMessage.type === 'CATEGORY_CREATED' ||
+          latestMessage.type === 'CATEGORY_UPDATED' ||
+          latestMessage.type === 'CATEGORY_DELETED' ||
+          latestMessage.message?.includes('catégorie') ||
+          latestMessage.message?.includes('category') ||
+          latestMessage === 'update') // Accepter aussi les strings simples
+      ) {
+        setRefresh(prev => prev + 1);
+      }
     }
+  }, [data]);
 
-    let retryCount = 0;
-    const maxRetries = 5;
-
-    const attemptSubscription = () => {
-      if (retryCount >= maxRetries) {
-        console.error(
-          `Échec de la souscription à /topic/categories après ${maxRetries} tentatives.`
-        );
-        addToast({
-          title: 'Erreur WebSocket',
-          message:
-            "Impossible de s'abonner aux mises à jour des catégories après plusieurs tentatives.",
-          type: 'error'
-        });
-        return;
-      }
-
-      if (isConnected()) {
-        const subscribed = subscribe(
-          '/topic/categories',
-          () => {
-            setRefresh(prev => prev + 1);
-          },
-          subscriptionId
-        );
-        if (!subscribed) {
-          retryCount++;
-          setTimeout(attemptSubscription, 1000);
-        }
-      } else {
-        retryCount++;
-        setTimeout(attemptSubscription, 1000);
-      }
+  // Écouter les événements personnalisés pour les catégories
+  useEffect(() => {
+    const handleCategoryUpdated = () => {
+      setRefresh(prev => prev + 1);
     };
 
-    attemptSubscription();
+    window.addEventListener('category-updated', handleCategoryUpdated);
 
     return () => {
-      unsubscribe(subscriptionId);
+      window.removeEventListener('category-updated', handleCategoryUpdated);
     };
-  }, [
-    stompClient,
-    connected,
-    subscribe,
-    unsubscribe,
-    isConnected,
-    addToast,
-    subscriptionId
-  ]);
+  }, []);
 
   const columns = getCategoriesColumns(
     onEdit,
@@ -217,7 +205,7 @@ const Categories = ({ onEdit }) => {
   return (
     <>
       <Row className="mb-3">
-        <Col md={12}>
+        <Col md="12">
           <AdvanceTableProvider {...table}>
             <Card className="mb-3">
               <Card.Header className="bg-body-tertiary">

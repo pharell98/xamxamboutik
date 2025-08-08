@@ -45,11 +45,7 @@ export const shopSettingsSchema = Yup.object().shape({
     .min(2, 'La rue doit contenir au moins 2 caractères')
     .transform((value, originalValue) =>
       originalValue.trim() === '' ? null : value
-    ),
-  facebookUrl: Yup.string().url('URL Facebook invalide').nullable(),
-  instagramUrl: Yup.string().url('URL Instagram invalide').nullable(),
-  twitterUrl: Yup.string().url('URL Twitter invalide').nullable(),
-  websiteUrl: Yup.string().url('URL du site web invalide').nullable()
+    )
 });
 
 // Schéma de validation pour les informations de base des produits

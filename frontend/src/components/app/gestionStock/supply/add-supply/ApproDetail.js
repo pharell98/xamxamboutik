@@ -49,12 +49,7 @@ const ApproDetail = () => {
 
   const handleImportSuccess = useCallback(
     importedProducts => {
-      console.log('[ApproDetail] Produits importés:', importedProducts);
       importedProducts.forEach(product => {
-        console.log(
-          '[ApproDetail] Produit importé (imageURL):',
-          product.imageURL
-        );
         handleAddProduct({
           codeProduit: product.codeProduit,
           libelle: product.libelle,
@@ -69,6 +64,12 @@ const ApproDetail = () => {
     },
     [handleAddProduct]
   );
+
+  // Fonction pour déclencher le rafraîchissement de la table
+  const triggerTableRefresh = useCallback(() => {
+    // Émettre un événement personnalisé pour déclencher le rafraîchissement
+    window.dispatchEvent(new CustomEvent('approvisionnement-created'));
+  }, []);
 
   if (isLoading) {
     return <div>Chargement...</div>;

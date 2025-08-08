@@ -7,18 +7,20 @@ import PageHeader from '../../../common/PageHeader';
 
 const PageAlerteStock = () => {
   return (
-    <Container fluid>
-      <Row className="mb-4">
-        <Col md={12}>
-          <PageHeader
-            title="Liste produit Rupture/Faible Stock"
-            titleTag="h5"
-            className="mb-3"
-          />
-          <RuptureStock />
-        </Col>
-      </Row>
-    </Container>
+    <div className="inventory-mobile">
+      <Container fluid className="px-0 px-md-2">
+        <Row className="mb-2 mb-md-3 g-0">
+          <Col xs={12}>
+            <PageHeader
+              title="Liste produit Rupture/Faible Stock"
+              titleTag="h5"
+              className="mb-2 mb-md-3 px-2"
+            />
+            <RuptureStock />
+          </Col>
+        </Row>
+      </Container>
+    </div>
   );
 };
 

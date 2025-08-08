@@ -11,13 +11,45 @@ const OrdersWithDetails = ({ setSelectedProduct }) => {
   const [refresh, setRefresh] = useState(0);
   const { approvisionnementData } = useStompClient();
   const { addToast } = useToast();
-  const [lastNotifiedCode, setLastNotifiedCode] = useState(() => {
-    // On lit le dernier code notifié depuis le localStorage au montage
-    return localStorage.getItem('lastNotifiedApproCode') || null;
-  });
   const {
     config: { isDark }
   } = useAppContext();
+
+  // Nettoyage et écoute d'événements au montage du composant
+  useEffect(() => {
+    // Nettoyer les anciens messages stockés pour éviter les conflits
+    const oldKeys = ['lastNotifiedApproCode', 'lastProcessedApproMessage'];
+    oldKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Écouter les événements de création d'approvisionnement
+    let lastEventTime = 0;
+    const handleApprovisionnementCreated = () => {
+      const now = Date.now();
+      // Éviter les événements trop rapprochés (moins de 2 secondes)
+      if (now - lastEventTime < 2000) {
+        return;
+      }
+      lastEventTime = now;
+
+      setRefresh(prev => prev + 1);
+    };
+
+    window.addEventListener(
+      'approvisionnement-created',
+      handleApprovisionnementCreated
+    );
+
+    return () => {
+      window.removeEventListener(
+        'approvisionnement-created',
+        handleApprovisionnementCreated
+      );
+    };
+  }, []);
 
   // Écouter les messages WebSocket pour déclencher un rafraîchissement
   useEffect(() => {
@@ -27,24 +59,19 @@ const OrdersWithDetails = ({ setSelectedProduct }) => {
     ) {
       const latestMessage =
         approvisionnementData[approvisionnementData.length - 1];
-      const code = latestMessage.codeAppro || 'inconnu';
+
+      // Accepter tout message d'approvisionnement (plus flexible)
       if (
         latestMessage &&
-        latestMessage.type !== 'ERROR' &&
-        code !== lastNotifiedCode &&
-        code !== 'inconnu'
+        (latestMessage.type === 'APPROVISIONNEMENT_CREATED' ||
+          latestMessage.message === 'Nouvel approvisionnement créé' ||
+          latestMessage === 'update')
       ) {
+        // Déclencher le rafraîchissement de la table immédiatement
         setRefresh(prev => prev + 1);
-        addToast({
-          title: 'Nouvel approvisionnement',
-          message: `Approvisionnement ${code} créé.`,
-          type: 'success'
-        });
-        setLastNotifiedCode(code);
-        localStorage.setItem('lastNotifiedApproCode', code);
       }
     }
-  }, [approvisionnementData, addToast, lastNotifiedCode]);
+  }, [approvisionnementData]);
 
   // Callback pour gérer la sélection d'un approvisionnement
   const handleOrderSelect = id => {
@@ -63,13 +90,18 @@ const OrdersWithDetails = ({ setSelectedProduct }) => {
         <Approvisionnements
           onOrderSelect={handleOrderSelect}
           refresh={refresh}
+          selectedApproId={selectedApproId}
         />
       </Col>
       <Col xs={12}>
         {selectedApproId ? (
           <ApprovisionnementDetails approId={selectedApproId} />
         ) : (
-          <p>Sélectionnez une commande pour voir les détails.</p>
+          <div className="alert alert-warning" role="alert">
+            <i className="fas fa-exclamation-triangle me-2"></i>
+            Sélectionnez un approvisionnement dans la liste pour voir ses
+            détails.
+          </div>
         )}
       </Col>
     </Row>

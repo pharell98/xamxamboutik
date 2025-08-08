@@ -98,32 +98,10 @@ const apiServiceV1 = {
     safeApiCall(
       () =>
         apiClient
-          .get(`/api/products/barcode/${barcode}`, {
-            headers: { 'X-Client-Type': 'web' }
-          })
+          .get(`${PRODUCT_ENDPOINT}/barcode/${barcode}`)
           .then(r => r.data),
       'getProductByBarcode'
     ),
-
-  /**
-   * Crée ou modifie un produit.
-   */
-  saveProduct: async (formData, isEditMode = false, id = null) =>
-    safeApiCall(async () => {
-      const rawProduit = formData.get('produit');
-      if (rawProduit) {
-        const text = rawProduit.text ? await rawProduit.text() : rawProduit;
-        try {
-          JSON.parse(text);
-        } catch (parseErr) {
-          /* ignore */
-        }
-      }
-      const method = isEditMode ? 'put' : 'post';
-      const url = isEditMode ? `${PRODUCT_ENDPOINT}/${id}` : PRODUCT_ENDPOINT;
-      const response = await apiClient[method](url, formData);
-      return response.data;
-    }, 'saveProduct'),
 
   /**
    * Importation en masse de produits via Excel pour l'approvisionnement.
@@ -131,24 +109,8 @@ const apiServiceV1 = {
   bulkImportProducts: async products =>
     safeApiCall(() => {
       // === LOG AVANCÉ DU SERVICE API ===
-      console.log('🔗 === LOG AVANCÉ - SERVICE API ===');
-      console.log('📤 Données reçues par le service:', products);
-      console.log('🔢 Nombre de produits:', products.length);
-      console.log(
-        '📋 Structure des données:',
-        Array.isArray(products) ? 'Array' : typeof products
-      );
-
       if (Array.isArray(products) && products.length > 0) {
-        console.log('📦 Premier produit (exemple):', products[0]);
-        console.log('🔍 Clés disponibles:', Object.keys(products[0]));
       }
-
-      console.log(
-        '🌐 Endpoint appelé:',
-        `${APPROVISIONNEMENT_ENDPOINT}/import/excel`
-      );
-      console.log('=== FIN DU LOG SERVICE API ===\n');
 
       return apiClient
         .post(`${APPROVISIONNEMENT_ENDPOINT}/import/excel`, products)
@@ -248,6 +210,36 @@ const apiServiceV1 = {
         : CATEGORY_ENDPOINT;
       return apiClient[method](url, data).then(r => r.data);
     }, 'saveCategory'),
+
+  /**
+   * Crée un produit.
+   */
+  createProduct: async data =>
+    safeApiCall(
+      () => apiClient.post(PRODUCT_ENDPOINT, data).then(r => r.data),
+      'createProduct'
+    ),
+
+  /**
+   * Met à jour un produit.
+   */
+  updateProduct: async (id, data) =>
+    safeApiCall(
+      () => apiClient.put(`${PRODUCT_ENDPOINT}/${id}`, data).then(r => r.data),
+      'updateProduct'
+    ),
+
+  /**
+   * Crée ou met à jour un produit.
+   */
+  saveProduct: async (formData, isEditMode = false, productId = null) =>
+    safeApiCall(() => {
+      const method = isEditMode ? 'put' : 'post';
+      const url = isEditMode
+        ? `${PRODUCT_ENDPOINT}/${productId}`
+        : PRODUCT_ENDPOINT;
+      return apiClient[method](url, formData).then(r => r.data);
+    }, 'saveProduct'),
 
   /**
    * Supprime une catégorie.

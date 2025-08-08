@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Col } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import IconButton from 'components/common/IconButton';
 import { Link } from 'react-router-dom';
 import DownloadStockPDF from './DownloadStockPDF';
@@ -20,11 +20,11 @@ const CriticalStockHeader = ({ refresh }) => {
   const hasSelectedProducts = Object.keys(selectedProductsObject).length > 0;
 
   return (
-    <div className="d-lg-flex justify-content-between">
-      <div className="border-bottom border-200 my-3"></div>
-      <div className="d-flex align-items-center justify-content-between justify-content-lg-end px-x1">
-        <Col xs={10} className="d-flex justify-content-end">
-          <div id="orders-actions" className="d-flex">
+    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center w-100">
+      <div className="border-bottom border-200 my-1 my-md-2 w-100"></div>
+      <div className="d-flex align-items-center justify-content-between justify-content-md-end w-100">
+        <Col xs={12} className="d-flex justify-content-center justify-content-md-end px-0">
+          <div id="orders-actions" className="d-flex flex-wrap gap-1">
             {!hasSelectedProducts ? (
               <IconButton
                 variant="falcon-default"
@@ -32,9 +32,10 @@ const CriticalStockHeader = ({ refresh }) => {
                 icon="info"
                 transform="shrink-3"
                 iconAlign="middle"
-                style={{ paddingTop: '1px', paddingBottom: '1px' }}
+                className="px-1 py-1"
               >
-                <span className="ms-1">Aucun produit sélectionné</span>
+                <span className="ms-1 d-none d-sm-inline">Aucun produit sélectionné</span>
+                <span className="ms-1 d-inline d-sm-none">Aucun produit</span>
               </IconButton>
             ) : (
               <>
@@ -48,9 +49,10 @@ const CriticalStockHeader = ({ refresh }) => {
                     icon="plus"
                     transform="shrink-3"
                     iconAlign="middle"
-                    style={{ paddingTop: '1px', paddingBottom: '1px' }}
+                    className="px-1 py-1"
                   >
-                    <span className="ms-1">Valider</span>
+                    <span className="ms-1 d-none d-sm-inline">Valider</span>
+                    <span className="ms-1 d-inline d-sm-none">OK</span>
                   </IconButton>
                 </Link>
                 <DownloadStockPDF selectedProducts={selectedProductsObject} />

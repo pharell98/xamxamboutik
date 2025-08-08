@@ -72,7 +72,7 @@ const ExcelViewer = ({ data }) => {
   const formatUrl = url => {
     if (!url) return '';
     if (url.length <= 25) return url;
-    const domain = url.match(/https?:\/\/([^\/]+)/);
+    const domain = url.match(/https?:\/\/([^/]+)/);
     if (domain) {
       return domain[1] + '/...';
     }

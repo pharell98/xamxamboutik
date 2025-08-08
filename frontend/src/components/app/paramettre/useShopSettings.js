@@ -1,124 +1,128 @@
-import { useEffect, useState } from 'react';
-import { useToast } from 'components/common/Toast';
+import { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faCheckCircle, 
+  faExclamationTriangle, 
+  faInfoCircle,
+  faSpinner
+} from '@fortawesome/free-solid-svg-icons';
+import { useToast } from '../../common/Toast';
 import apiServiceSettings from '../../../services/api.service.settings';
-import { useStompClient } from '../../../contexts/StompContext';
 
 const useShopSettings = () => {
   const [selectedSettings, setSelectedSettings] = useState(null);
   const [editModeSettings, setEditModeSettings] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { addToast } = useToast();
-  const { stompClient, connected } = useStompClient();
 
-  // Normalize settings data
-  const normalizeSettings = settings => ({
-    id: settings.id,
-    shopName: settings.shopName || '',
-    logo:
-      settings.logo && settings.logo !== 'blob'
-        ? { preview: settings.logo }
-        : null,
-    email: settings.email || '',
-    phone: settings.phone || '',
-    country: settings.country || '',
-    region: settings.region || '',
-    department: settings.department || '',
-    neighborhood: settings.neighborhood || '',
-    street: settings.street || '',
-    facebookUrl: settings.facebookUrl || '',
-    instagramUrl: settings.instagramUrl || '',
-    twitterUrl: settings.twitterUrl || '',
-    websiteUrl: settings.websiteUrl || ''
-  });
-
-  // Initial fetch of settings
-  useEffect(() => {
-    const fetchExistingSettings = async () => {
-      try {
-        const response = await apiServiceSettings.getSettings();
-        if (response) {
-          const normalizedSettings = normalizeSettings(response);
-          setSelectedSettings(normalizedSettings);
-          setEditModeSettings(true);
-        } else {
-          setSelectedSettings(null);
-          setEditModeSettings(false);
-        }
-      } catch (error) {
-        if (error?.response?.status !== 404) {
-          console.error(
-            '[useShopSettings] Erreur lors de la récupération initiale:',
-            error
-          );
-        }
-      }
-    };
-    fetchExistingSettings();
-  }, []);
-
-  // Subscribe to STOMP /topic/settings
-  useEffect(() => {
-    let subscription;
-    if (stompClient && connected && stompClient.active) {
-      subscription = stompClient.subscribe('/topic/settings', message => {
-        try {
-          const settings = JSON.parse(message.body);
-          const normalizedSettings = normalizeSettings(settings);
-          setSelectedSettings(normalizedSettings);
-          setEditModeSettings(true);
-          addToast({
-            title: 'Paramètres mis à jour',
-            message: `Les paramètres de "${settings.shopName}" ont été ${
-              normalizedSettings.id ? 'mis à jour' : 'créés'
-            }.`,
-            type: 'success'
-          });
-        } catch (error) {
-          console.error(
-            '[useShopSettings] Erreur lors du traitement du message STOMP:',
-            error
-          );
-        }
-      });
-    }
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, [stompClient, connected, addToast]);
-
-  const handleSaveSettings = async formData => {
+  const fetchSettings = useCallback(async () => {
     try {
+      setIsLoading(true);
+      const response = await apiServiceSettings.getSettings();
+      if (response) {
+        // Normaliser les données reçues
+        const normalizedSettings = {
+          id: response.id,
+          shopName: response.shopName || '',
+          logo: response.logo && response.logo !== 'blob' 
+            ? { preview: response.logo } 
+            : null,
+          email: response.email || '',
+          phone: response.phone || '',
+          country: response.country || '',
+          region: response.region || '',
+          department: response.department || '',
+          neighborhood: response.neighborhood || '',
+          street: response.street || ''
+        };
+        setSelectedSettings(normalizedSettings);
+        setEditModeSettings(true);
+      } else {
+        setSelectedSettings(null);
+        setEditModeSettings(false);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des paramètres:', error);
+      addToast({
+        title: 'Erreur',
+        message: 'Erreur lors du chargement des paramètres',
+        type: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings, refreshKey]);
+
+  const handleSaveSettings = useCallback(async (formData) => {
+    try {
+      setIsLoading(true);
+      
+      // Notification de début de sauvegarde
+      addToast({
+        title: 'Enregistrement en cours',
+        message: 'Enregistrement des paramètres en cours...',
+        type: 'info',
+        duration: 3000
+      });
+
       const response = await apiServiceSettings.saveSettings(
         formData,
         editModeSettings,
         selectedSettings?.id
       );
-      // No need to update state here; STOMP message will handle it
-      setRefreshKey(prev => prev + 1);
-      return response;
+
+      if (response) {
+        // Notification de succès
+        addToast({
+          title: 'Succès !',
+          message: editModeSettings 
+            ? 'Les paramètres ont été mis à jour avec succès.'
+            : 'Les paramètres ont été créés avec succès.',
+          type: 'success'
+        });
+        
+        setRefreshKey(prev => prev + 1);
+        setEditModeSettings(true);
+      }
     } catch (error) {
-      console.error('[useShopSettings] Erreur lors de la sauvegarde:', error);
-      const serverMessage =
-        typeof error === 'string'
-          ? error
-          : error.response?.data?.message ||
-            'Une erreur est survenue lors de la création ou de la mise à jour des paramètres.';
+      console.error('Erreur lors de la sauvegarde des paramètres:', error);
+      
+      // Notification d'erreur
       addToast({
-        title: 'Erreur',
-        message: serverMessage,
+        title: 'Erreur !',
+        message: error.message || 'Erreur lors de l\'enregistrement des paramètres',
         type: 'error'
       });
-      throw error;
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [addToast, editModeSettings, selectedSettings?.id]);
+
+  const resetSettings = useCallback(() => {
+    setSelectedSettings(null);
+    setEditModeSettings(false);
+    setRefreshKey(prev => prev + 1);
+    
+    addToast({
+      title: 'Réinitialisation',
+      message: 'Les paramètres ont été réinitialisés.',
+      type: 'info'
+    });
+  }, [addToast]);
 
   return {
     selectedSettings,
     editModeSettings,
+    isLoading,
+    refreshKey,
     handleSaveSettings,
-    refreshKey
+    resetSettings,
+    fetchSettings
   };
 };
 

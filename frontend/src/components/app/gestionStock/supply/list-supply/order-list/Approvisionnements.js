@@ -10,26 +10,18 @@ import { getApprovisionnementColumns } from './approvisionnementColumnsConfig';
 import { useToast } from 'components/common/Toast';
 import ApprovisionnementDetails from './ApprovisionnementDetails';
 
-const Approvisionnements = ({ onOrderSelect, refresh }) => {
-  const [selectedApproId, setSelectedApproId] = useState(null);
+const Approvisionnements = ({ onOrderSelect, refresh, selectedApproId }) => {
   const { addToast } = useToast();
 
   // Callback pour gérer l'action "Détail"
   const handleDetail = useCallback(
     approvisionnement => {
-      addToast({
-        title: 'Détail',
-        message: `Affichage du détail pour l'approvisionnement ${approvisionnement.codeAppro}.`,
-        type: 'info'
-      });
       // Si un callback onOrderSelect est passé en props, on l'appelle :
       if (onOrderSelect) {
         onOrderSelect(approvisionnement.id);
-      } else {
-        setSelectedApproId(approvisionnement.id);
       }
     },
-    [addToast, onOrderSelect]
+    [onOrderSelect]
   );
 
   // Fonction pour récupérer la liste des approvisionnements
@@ -59,8 +51,10 @@ const Approvisionnements = ({ onOrderSelect, refresh }) => {
     [addToast]
   );
 
-  // Configuration des colonnes avec le callback handleDetail
-  const columns = getApprovisionnementColumns(handleDetail);
+  // Configuration des colonnes avec le callback handleDetail et l'ID sélectionné
+  const columns = React.useMemo(() => {
+    return getApprovisionnementColumns(handleDetail, selectedApproId);
+  }, [handleDetail, selectedApproId]);
 
   // Hook de gestion du tableau avec pagination côté serveur
   const table = useAdvanceTable({
@@ -94,7 +88,12 @@ const Approvisionnements = ({ onOrderSelect, refresh }) => {
                 />
                 <AdvanceTable
                   headerClassName="bg-200 text-nowrap align-middle"
-                  rowClassName="align-middle white-space-nowrap"
+                  rowClassName={row => {
+                    const isSelected = selectedApproId === row.original?.id;
+                    return `align-middle white-space-nowrap ${
+                      isSelected ? 'table-primary bg-primary bg-opacity-10' : ''
+                    }`;
+                  }}
                   tableProps={{
                     size: 'sm',
                     striped: true,

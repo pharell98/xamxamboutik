@@ -218,11 +218,11 @@ const Products = () => {
   const finalProducts = filteredProducts;
 
   return (
-    <>
+    <div className="vente-mobile">
       <Row className="mb-3">
         <Col xs={12}>
-          <Card>
-            <Card.Body className="d-flex align-items-center justify-content-between flex-wrap">
+          <Card className="search-section">
+            <Card.Body className="d-flex align-items-center justify-content-between flex-wrap p-2 p-md-3">
               <div
                 className="d-flex flex-column w-100"
                 style={{ maxWidth: '500px' }}
@@ -283,7 +283,7 @@ const Products = () => {
         <Col
           xs={12}
           md={4}
-          className="order-1 order-md-2 mb-3 mb-md-0"
+          className="order-1 order-md-2 mb-3 mb-md-0 cart-section"
           style={{
             maxHeight: '100%',
             overflowY: 'auto'
@@ -300,7 +300,7 @@ const Products = () => {
             overflowY: 'auto'
           }}
         >
-          <Card>
+          <Card className="vente-components">
             <Card.Body
               className={classNames({
                 'p-0 overflow-hidden': isList,
@@ -308,19 +308,22 @@ const Products = () => {
               })}
             >
               {finalProducts.length === 0 ? (
-                <div className="text-center py-5">
+                <div className="empty-state">
                   <FontAwesomeIcon
                     icon="search"
-                    size="2x"
-                    className="text-300 mb-3"
+                    className="empty-icon"
                   />
-                  <h4>Aucun produit trouvé</h4>
-                  <p className="text-700">
-                    Aucune correspondance pour « {searchTerm} »
+                  <h4 className="empty-title">Aucun produit trouvé</h4>
+                  <p className="empty-description">
+                    {searchTerm ? `Aucune correspondance pour « ${searchTerm} »` : 'Aucun produit disponible'}
                   </p>
                 </div>
               ) : (
-                <Row className={classNames({ 'g-0': isList })}>
+                <Row className={classNames({ 
+                  'g-0': isList,
+                  'product-grid': isGrid,
+                  'product-list': isList
+                })}>
                   {finalProducts.map((product, index) =>
                     isList ? (
                       <ProductList
@@ -334,7 +337,7 @@ const Products = () => {
                         sm={4}
                         md={3}
                         key={product.id}
-                        className="mb-3"
+                        className="mb-3 product-grid-item"
                       >
                         <ProductGrid product={product} />
                       </Col>
@@ -347,11 +350,18 @@ const Products = () => {
               ref={sentinelRef}
               style={{ height: '50px', background: 'transparent' }}
             />
-            {loading && <Loading />}
+            {loading && (
+              <div className="loading-state">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Chargement...</span>
+                </div>
+                <span className="ms-2">Chargement des produits...</span>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>
-    </>
+    </div>
   );
 };
 
