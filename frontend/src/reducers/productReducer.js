@@ -55,14 +55,23 @@ export const productReducer = (state, action) => {
       };
 
     case 'UPDATE_CART_ITEM_QUANTITY':
+      // Validation stricte de la quantité
+      const validQuantity = (() => {
+        const { quantity } = payload;
+        if (!quantity || quantity <= 0 || isNaN(quantity) || !Number.isInteger(quantity)) {
+          return 1; // Valeur par défaut si invalide
+        }
+        return Math.max(1, quantity);
+      })();
+      
       return {
         ...state,
         cartItems: state.cartItems.map(item =>
           item.id === payload.productId
             ? {
                 ...item,
-                quantity: payload.quantity,
-                totalPrice: item.prixVente * payload.quantity
+                quantity: validQuantity,
+                totalPrice: item.prixVente * validQuantity
               }
             : item
         )

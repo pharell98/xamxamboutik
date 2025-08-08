@@ -28,6 +28,7 @@ export const StompProvider = ({ children }) => {
   const [data, setData] = useState([]);
   const [approvisionnementData, setApprovisionnementData] = useState([]);
   const [userData, setUserData] = useState([]);
+  const [venteData, setVenteData] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const stompClientRef = useRef(null);
   const subscriptionsRef = useRef([]);
@@ -49,6 +50,12 @@ export const StompProvider = ({ children }) => {
         }
         return prevData;
       });
+      setVenteData(prevData => {
+        if (prevData.length > 20) {
+          return prevData.slice(-10);
+        }
+        return prevData;
+      });
     }, 60000); // Nettoyer toutes les minutes
 
     return () => {
@@ -59,7 +66,7 @@ export const StompProvider = ({ children }) => {
   useEffect(() => {
     // URL WebSocket depuis .env ou valeur par défaut
     const brokerURL =
-      process.env.REACT_APP_WS_URL || 'ws://localhost:8080/api/v1/ws';
+      process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
 
     // S'assurer que l'URL se termine par /websocket pour SockJS
     const finalBrokerURL = brokerURL.endsWith('/websocket')
@@ -72,11 +79,13 @@ export const StompProvider = ({ children }) => {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onWebSocketError: () => {
+        console.error('[StompContext] Erreur WebSocket');
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
       onWebSocketClose: () => {
+        console.warn('[StompContext] Connexion WebSocket fermée');
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
@@ -170,6 +179,21 @@ export const StompProvider = ({ children }) => {
           return newData.slice(-5);
         });
       });
+      subscribeWithErrorHandling('/topic/ventes', parsed => {
+        console.log('[StompContext] Message de vente reçu:', parsed);
+        console.log('[StompContext] Type de message:', typeof parsed);
+        console.log('[StompContext] Structure du message:', JSON.stringify(parsed, null, 2));
+        
+        setVenteData(prevData => {
+          const newData = [...prevData, parsed];
+          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
+          return newData.slice(-5);
+        });
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
+      });
 
       // Réessayer les souscriptions en attente
       pendingSubscriptionsRef.current.forEach(({ topic, callback }) => {
@@ -210,6 +234,7 @@ export const StompProvider = ({ children }) => {
     };
 
     client.onConnect = () => {
+      console.log('[StompContext] Connexion WebSocket établie');
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
@@ -217,6 +242,7 @@ export const StompProvider = ({ children }) => {
       // Ajouter un léger délai pour s'assurer que la connexion est stable
       setTimeout(() => {
         if (stompClientRef.current && stompClientRef.current.connected) {
+          console.log('[StompContext] Souscription aux topics...');
           subscribeToTopics();
           startRetrySubscriptions();
         }
@@ -323,6 +349,7 @@ export const StompProvider = ({ children }) => {
         data,
         approvisionnementData,
         userData,
+        venteData,
         subscribe: subscribeWithErrorHandling,
         unsubscribe,
         isConnected

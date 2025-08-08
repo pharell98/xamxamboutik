@@ -81,12 +81,35 @@ const CartSection = ({ onClose, show = true }) => {
   const handleQuantityChange = (productId, newQuantity) => {
     const item = cartItems.find(item => item.id === productId);
     if (item) {
+      // Validation stricte de la quantité
+      if (!newQuantity || 
+          newQuantity <= 0 || 
+          isNaN(newQuantity) || 
+          !Number.isInteger(newQuantity)) {
+        // Si la quantité est invalide, la remettre à 1
+        productsDispatch({
+          type: 'UPDATE_CART_ITEM_QUANTITY',
+          payload: { productId, quantity: 1 }
+        });
+        return;
+      }
+      
       const maxQuantity = item.quantiteDisponible || Infinity;
       const validQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
-      productsDispatch({
-        type: 'UPDATE_CART_ITEM_QUANTITY',
-        payload: { productId, quantity: validQuantity }
-      });
+      
+      // Vérifier que la quantité finale est valide
+      if (validQuantity >= 1 && validQuantity <= maxQuantity) {
+        productsDispatch({
+          type: 'UPDATE_CART_ITEM_QUANTITY',
+          payload: { productId, quantity: validQuantity }
+        });
+      } else {
+        // Si la quantité est toujours invalide, forcer à 1
+        productsDispatch({
+          type: 'UPDATE_CART_ITEM_QUANTITY',
+          payload: { productId, quantity: 1 }
+        });
+      }
     }
   };
 
@@ -117,6 +140,38 @@ const CartSection = ({ onClose, show = true }) => {
   };
 
   const handleValidateSale = async () => {
+    // Validation du panier vide
+    if (!cartItems || cartItems.length === 0) {
+      addToast({
+        title: 'Erreur',
+        message: 'Le panier est vide. Veuillez ajouter des produits.',
+        type: 'error',
+        duration: 5000
+      });
+      return;
+    }
+
+    // Validation stricte des quantités
+    const invalidItems = cartItems.filter(item => {
+      // Vérifier si la quantité est définie, valide et supérieure à 0
+      return !item.quantity || 
+             item.quantity <= 0 || 
+             isNaN(item.quantity) || 
+             !Number.isInteger(item.quantity) ||
+             item.quantity > (item.quantiteDisponible || Infinity);
+    });
+    
+    if (invalidItems.length > 0) {
+      const invalidProductNames = invalidItems.map(item => item.libelle).join(', ');
+      addToast({
+        title: 'Erreur',
+        message: `Quantités invalides pour : ${invalidProductNames}. Quantité minimum : 1`,
+        type: 'error',
+        duration: 7000
+      });
+      return;
+    }
+
     if (!validateCustomerInfo()) {
       addToast({
         title: 'Erreur',

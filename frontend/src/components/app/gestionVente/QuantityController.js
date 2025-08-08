@@ -12,6 +12,65 @@ const QuantityController = ({
   btnClassName,
   max = Infinity
 }) => {
+  const [inputValue, setInputValue] = React.useState(quantity.toString());
+  const [isEditing, setIsEditing] = React.useState(false);
+
+  // Synchroniser l'input avec la quantité externe
+  React.useEffect(() => {
+    if (!isEditing) {
+      setInputValue(quantity.toString());
+    }
+  }, [quantity, isEditing]);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Permettre la saisie vide temporairement
+    if (value === '') {
+      return;
+    }
+    
+    const numValue = parseInt(value, 10);
+    // Validation stricte : seulement des nombres entiers positifs
+    if (!isNaN(numValue) && 
+        Number.isInteger(numValue) && 
+        numValue >= 1 && 
+        numValue <= max) {
+      handleChange(numValue);
+    }
+  };
+
+  const handleInputBlur = () => {
+    setIsEditing(false);
+    const numValue = parseInt(inputValue, 10);
+    
+    // Validation stricte lors de la perte de focus
+    if (inputValue === '' || 
+        isNaN(numValue) || 
+        numValue < 1 || 
+        !Number.isInteger(numValue)) {
+      setInputValue('1');
+      handleChange(1);
+    } else if (numValue > max) {
+      setInputValue(max.toString());
+      handleChange(max);
+    } else {
+      setInputValue(numValue.toString());
+      handleChange(numValue);
+    }
+  };
+
+  const handleInputFocus = () => {
+    setIsEditing(true);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleInputBlur();
+    }
+  };
   return (
     <div 
       className="quantity-controller-wrapper"
@@ -37,7 +96,11 @@ const QuantityController = ({
           variant="outline-secondary"
           size="sm"
           className={classNames(btnClassName, 'quantity-btn quantity-btn-decrease')}
-          onClick={handleDecrease}
+          onClick={() => {
+            const newQuantity = Math.max(1, quantity - 1);
+            handleChange(newQuantity);
+            setInputValue(newQuantity.toString());
+          }}
           disabled={quantity <= 1}
           style={{
             border: '1px solid #dee2e6',
@@ -57,15 +120,12 @@ const QuantityController = ({
         </InputGroup.Text>
         <Form.Control
           className="quantity-input input-spin-none"
-          type="number"
-          min="1"
-          max={max}
-          value={quantity}
-          onChange={e =>
-            handleChange(
-              Math.max(1, Math.min(parseInt(e.target.value, 10) || 1, max))
-            )
-          }
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          onFocus={handleInputFocus}
+          onKeyDown={handleInputKeyDown}
           style={{
             border: '1px solid #dee2e6',
             textAlign: 'center',
@@ -87,7 +147,11 @@ const QuantityController = ({
           variant="outline-secondary"
           size="sm"
           className={classNames(btnClassName, 'quantity-btn quantity-btn-increase')}
-          onClick={handleIncrease}
+          onClick={() => {
+            const newQuantity = Math.min(max, quantity + 1);
+            handleChange(newQuantity);
+            setInputValue(newQuantity.toString());
+          }}
           disabled={quantity >= max}
           style={{
             border: '1px solid #dee2e6',

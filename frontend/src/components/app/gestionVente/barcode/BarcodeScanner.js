@@ -2,21 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useProductContext } from 'providers/ProductProvider';
 import ScannerToggle from './ScannerToggle';
 import CameraScanner from './CameraScanner';
-import venteServiceV1 from 'services/api.service.v1';
+import apiServiceV1 from 'services/api.service.v1';
+import venteServiceV1 from 'services/vente.service.v1';
 import { useToast } from '../../../common/Toast';
 import { v4 as uuidv4 } from 'uuid';
+import useBarcodeScanner from './useBarcodeScanner';
 
 const BarcodeScanner = () => {
   const { productsDispatch } = useProductContext();
   const { addToast } = useToast();
   const [scannerMode, setScannerMode] = useState('usb');
-  const [barcodeInput, setBarcodeInput] = useState('');
-  const barcodeRef = useRef('');
   const lastToastMessageRef = useRef('');
   const lastToastTimeRef = useRef(0);
-  const containerRef = useRef(null);
-
-  const isValidBarcode = barcode => /^\d{13}$/.test(barcode);
 
   const showToast = (title, message, type, duration) => {
     const now = Date.now();
@@ -38,102 +35,122 @@ const BarcodeScanner = () => {
     lastToastTimeRef.current = now;
   };
 
-  useEffect(() => {
-    // Synchronise la ref avec l'état actuel
-    barcodeRef.current = barcodeInput;
-  }, [barcodeInput]);
-
-  useEffect(() => {
-    // Focus sur le conteneur pour capter les événements clavier dès le montage ou changement de mode
-    if (scannerMode === 'usb' && containerRef.current) {
-      containerRef.current.focus();
-    }
-  }, [scannerMode]);
-
-  const handleKeyDown = async event => {
-    if (scannerMode !== 'usb') return;
-    const key = event.key;
-    if (key === 'Enter') {
-      const code = barcodeRef.current;
-      setBarcodeInput('');
-      if (!isValidBarcode(code)) {
-        showToast(
-          'Erreur',
-          'Le code-barres doit contenir exactement 13 chiffres',
-          'error',
-          5000
-        );
-        return;
-      }
-      try {
-        const response = await venteServiceV1.getProductByBarcode(code);
-        if (response.success && response.data) {
-          const product = response.data;
-          productsDispatch({
-            type: 'ADD_TO_CART',
-            payload: {
-              product: {
-                ...product,
-                quantity: 1,
-                totalPrice: product.prixVente
-              }
+  // Fonction de traitement du scan USB
+  const handleUsbScan = async (code) => {
+    try {
+      console.log('[BarcodeScanner] Recherche du produit avec le code:', code);
+      const response = await apiServiceV1.getProductByBarcode(code);
+      console.log('[BarcodeScanner] Réponse API complète:', response);
+      
+      if (response.success && response.data) {
+        const product = response.data;
+        console.log('[BarcodeScanner] Produit trouvé:', product);
+        
+        productsDispatch({
+          type: 'ADD_TO_CART',
+          payload: {
+            product: {
+              ...product,
+              quantity: 1,
+              totalPrice: product.prixVente
             }
-          });
-        } else {
-          showToast('Erreur', 'Produit non trouvé', 'error', 5000);
-        }
-      } catch (error) {
-        showToast(
-          'Erreur',
-          `Erreur lors de la récupération du produit: ${error.message}`,
-          'error',
-          5000
-        );
+          }
+        });
+        
+        // Toast de succès supprimé
+      } else {
+        console.error('[BarcodeScanner] Produit non trouvé pour le code:', code);
+        showToast('Erreur', 'Produit non trouvé', 'error', 5000);
       }
-    } else if (key.length === 1) {
-      setBarcodeInput(prev => prev + key);
-    }
-  };
-
-  const handleCameraScan = async code => {
-    if (!isValidBarcode(code)) {
+    } catch (error) {
+      console.error('[BarcodeScanner] Erreur lors de la récupération du produit:', error);
+      console.error('[BarcodeScanner] Détails de l\'erreur:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la récupération du produit';
       showToast(
         'Erreur',
-        'Le code-barres doit contenir exactement 13 chiffres',
+        errorMessage,
         'error',
         5000
       );
-      return;
     }
+  };
+
+  // Fonction de traitement du scan caméra
+  const handleCameraScan = async (code) => {
     try {
-      const response = await venteServiceV1.getProductByBarcode(code);
+      console.log('[BarcodeScanner] Recherche du produit avec le code (camera):', code);
+      const response = await apiServiceV1.getProductByBarcode(code);
+      console.log('[BarcodeScanner] Réponse API complète (camera):', response);
+        
       if (response.success && response.data) {
         const product = response.data;
+        console.log('[BarcodeScanner] Produit trouvé (camera):', product);
+        
         productsDispatch({
           type: 'ADD_TO_CART',
           payload: {
             product: { ...product, quantity: 1, totalPrice: product.prixVente }
           }
         });
+        
+        // Toast de succès supprimé
       } else {
+        console.error('[BarcodeScanner] Produit non trouvé pour le code (camera):', code);
         showToast('Erreur', 'Produit non trouvé', 'error', 5000);
       }
     } catch (error) {
+      console.error('[BarcodeScanner] Erreur lors de la récupération du produit (camera):', error);
+      console.error('[BarcodeScanner] Détails de l\'erreur (camera):', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la récupération du produit';
       showToast(
         'Erreur',
-        `Erreur lors de la récupération du produit: ${error.message}`,
+        errorMessage,
         'error',
         5000
       );
     }
   };
 
+  // Utilisation du hook personnalisé pour le scanner USB
+  const { containerRef, handleKeyDown, handleBlur, isProcessing } = useBarcodeScanner(
+    handleUsbScan,
+    scannerMode === 'usb'
+  );
+
+  // Gestionnaire pour éviter les interférences avec la navbar
+  const handleFocus = () => {
+    console.log('[BarcodeScanner] Scanner focusé');
+  };
+
+  const handleClick = (e) => {
+    // Empêcher la propagation pour éviter les conflits
+    e.stopPropagation();
+  };
+
   return (
     <div
       ref={containerRef}
       tabIndex={0}
-      style={{ outline: 'none' }}
+      style={{ 
+        outline: 'none',
+        position: 'relative'
+      }}
       onKeyDown={handleKeyDown}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
     >
       <ScannerToggle
         scannerMode={scannerMode}

@@ -1,5 +1,5 @@
 import { useProductContext } from 'providers/ProductProvider';
-import venteServiceV1 from 'services/api.service.v1';
+import apiServiceV1 from 'services/api.service.v1';
 
 const useProductHook = product => {
   const {
@@ -25,7 +25,7 @@ const useProductHook = product => {
 
   const getProductByBarcode = async barcode => {
     try {
-      const response = await venteServiceV1.getProductByBarcode(barcode);
+      const response = await apiServiceV1.getProductByBarcode(barcode);
       if (response.success && response.data) {
         return response.data;
       }
