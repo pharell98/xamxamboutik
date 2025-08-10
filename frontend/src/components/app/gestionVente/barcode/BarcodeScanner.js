@@ -60,7 +60,12 @@ const BarcodeScanner = () => {
         // Toast de succès supprimé
       } else {
         console.error('[BarcodeScanner] Produit non trouvé pour le code:', code);
-        showToast('Erreur', 'Produit non trouvé', 'error', 5000);
+        showToast(
+          'Produit introuvable', 
+          `Code ${code} non enregistré`, 
+          'warning', 
+          4000
+        );
       }
     } catch (error) {
       console.error('[BarcodeScanner] Erreur lors de la récupération du produit:', error);
@@ -70,12 +75,37 @@ const BarcodeScanner = () => {
         data: error.response?.data,
         message: error.message
       });
-      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la récupération du produit';
+      
+      let errorMessage = 'Erreur de récupération';
+      let errorTitle = 'Erreur';
+      let errorType = 'error';
+      let errorDuration = 4000;
+
+      // Messages d'erreur personnalisés selon le type d'erreur
+      if (error.response?.status === 404) {
+        errorTitle = 'Produit introuvable';
+        errorMessage = `Code ${code} non enregistré`;
+        errorType = 'warning';
+        errorDuration = 4000;
+      } else if (error.response?.status === 500) {
+        errorTitle = 'Erreur serveur';
+        errorMessage = 'Problème temporaire';
+        errorDuration = 4000;
+      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
+        errorTitle = 'Connexion perdue';
+        errorMessage = 'Vérifiez votre connexion';
+        errorDuration = 4000;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       showToast(
-        'Erreur',
+        errorTitle,
         errorMessage,
-        'error',
-        5000
+        errorType,
+        errorDuration
       );
     }
   };
@@ -101,7 +131,12 @@ const BarcodeScanner = () => {
         // Toast de succès supprimé
       } else {
         console.error('[BarcodeScanner] Produit non trouvé pour le code (camera):', code);
-        showToast('Erreur', 'Produit non trouvé', 'error', 5000);
+        showToast(
+          'Produit introuvable', 
+          `Code ${code} non enregistré`, 
+          'warning', 
+          4000
+        );
       }
     } catch (error) {
       console.error('[BarcodeScanner] Erreur lors de la récupération du produit (camera):', error);
@@ -111,12 +146,37 @@ const BarcodeScanner = () => {
         data: error.response?.data,
         message: error.message
       });
-      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la récupération du produit';
+      
+      let errorMessage = 'Erreur de récupération';
+      let errorTitle = 'Erreur';
+      let errorType = 'error';
+      let errorDuration = 4000;
+
+      // Messages d'erreur personnalisés selon le type d'erreur
+      if (error.response?.status === 404) {
+        errorTitle = 'Produit introuvable';
+        errorMessage = `Code ${code} non enregistré`;
+        errorType = 'warning';
+        errorDuration = 4000;
+      } else if (error.response?.status === 500) {
+        errorTitle = 'Erreur serveur';
+        errorMessage = 'Problème temporaire';
+        errorDuration = 4000;
+      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
+        errorTitle = 'Connexion perdue';
+        errorMessage = 'Vérifiez votre connexion';
+        errorDuration = 4000;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       showToast(
-        'Erreur',
+        errorTitle,
         errorMessage,
-        'error',
-        5000
+        errorType,
+        errorDuration
       );
     }
   };
