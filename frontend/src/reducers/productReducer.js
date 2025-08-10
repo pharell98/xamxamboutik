@@ -1,114 +1,127 @@
-// /reducers/productReducer.js
+// Constants
+const DEFAULT_MODAL_STATE = {
+  show: false,
+  product: {},
+  quantity: 0,
+  type: 'add'
+};
 
+/**
+ * Valide et normalise une quantité
+ */
+const validateQuantity = (quantity) => {
+  const num = Number(quantity);
+  return !num || num <= 0 || !Number.isInteger(num) ? 1 : Math.max(1, num);
+};
+
+/**
+ * Met à jour un produit existant dans le panier
+ */
+const updateExistingCartItem = (cartItems, productId, newProduct) => {
+  return cartItems.map(item =>
+    item.id === productId
+      ? {
+          ...item,
+          quantity: newProduct.quantity,
+          totalPrice: item.prixVente * newProduct.quantity
+        }
+      : item
+  );
+};
+
+/**
+ * Met à jour la quantité d'un article du panier
+ */
+const updateCartItemQuantity = (cartItems, productId, quantity) => {
+  const validQuantity = validateQuantity(quantity);
+  
+  return cartItems.map(item =>
+    item.id === productId
+      ? {
+          ...item,
+          quantity: validQuantity,
+          totalPrice: item.prixVente * validQuantity
+        }
+      : item
+  );
+};
+
+/**
+ * Ajoute un nouveau produit au panier
+ */
+const addNewCartItem = (cartItems, product) => [product, ...cartItems];
+
+/**
+ * Supprime un produit du panier
+ */
+const removeCartItem = (cartItems, productId) =>
+  cartItems.filter(item => item.id !== productId);
+
+/**
+ * Actions du reducer
+ */
+const actions = {
+  SET_PRODUCTS: (state, payload) => ({
+    ...state,
+    products: payload
+  }),
+
+  ADD_TO_CART: (state, { product }) => {
+    const existingItem = state.cartItems.find(item => item.id === product.id);
+    
+    const cartItems = existingItem
+      ? updateExistingCartItem(state.cartItems, product.id, product)
+      : addNewCartItem(state.cartItems, product);
+
+    return {
+      ...state,
+      cartItems,
+      cartModal: {
+        show: true,
+        product,
+        type: 'add'
+      }
+    };
+  },
+
+  REMOVE_FROM_CART: (state, { product }) => ({
+    ...state,
+    cartItems: removeCartItem(state.cartItems, product.id)
+  }),
+
+  UPDATE_CART_ITEM_QUANTITY: (state, { productId, quantity }) => ({
+    ...state,
+    cartItems: updateCartItemQuantity(state.cartItems, productId, quantity)
+  }),
+
+  SHOW_CART_MODAL: (state) => ({
+    ...state,
+    cartModal: { ...state.cartModal, show: true }
+  }),
+
+  HIDE_CART_MODAL: (state) => ({
+    ...state,
+    cartModal: { ...state.cartModal, show: false }
+  }),
+
+  CHECKOUT: (state) => ({
+    ...state,
+    cartItems: [],
+    cartModal: DEFAULT_MODAL_STATE
+  })
+};
+
+/**
+ * Reducer principal pour la gestion des produits
+ */
 export const productReducer = (state, action) => {
   const { type, payload } = action;
-
-  switch (type) {
-    case 'SET_PRODUCTS':
-      return {
-        ...state,
-        products: payload
-      };
-
-    case 'ADD_TO_CART': {
-      const existingItem = state.cartItems.find(
-        item => item.id === payload.product.id
-      );
-      if (existingItem) {
-        // Si le produit existe déjà, mettre à jour la quantité
-        return {
-          ...state,
-          cartItems: state.cartItems.map(item =>
-            item.id === existingItem.id
-              ? {
-                  ...item,
-                  quantity: payload.product.quantity,
-                  totalPrice: item.prixVente * payload.product.quantity
-                }
-              : item
-          ),
-          cartModal: {
-            show: true,
-            product: payload.product,
-            type: 'add'
-          }
-        };
-      }
-      // Nouveau produit : l'ajouter en haut du panier
-      return {
-        ...state,
-        cartItems: [payload.product, ...state.cartItems],
-        cartModal: {
-          show: true,
-          product: payload.product,
-          type: 'add'
-        }
-      };
-    }
-
-    case 'REMOVE_FROM_CART':
-      return {
-        ...state,
-        cartItems: state.cartItems.filter(
-          product => product.id !== payload.product.id
-        )
-      };
-
-    case 'UPDATE_CART_ITEM_QUANTITY':
-      // Validation stricte de la quantité
-      const validQuantity = (() => {
-        const { quantity } = payload;
-        if (!quantity || quantity <= 0 || isNaN(quantity) || !Number.isInteger(quantity)) {
-          return 1; // Valeur par défaut si invalide
-        }
-        return Math.max(1, quantity);
-      })();
-      
-      return {
-        ...state,
-        cartItems: state.cartItems.map(item =>
-          item.id === payload.productId
-            ? {
-                ...item,
-                quantity: validQuantity,
-                totalPrice: item.prixVente * validQuantity
-              }
-            : item
-        )
-      };
-
-    case 'SHOW_CART_MODAL':
-      return {
-        ...state,
-        cartModal: {
-          ...state.cartModal,
-          show: true
-        }
-      };
-
-    case 'HIDE_CART_MODAL':
-      return {
-        ...state,
-        cartModal: {
-          ...state.cartModal,
-          show: false
-        }
-      };
-
-    // Ajout de l'action CHECKOUT pour vider le panier et réinitialiser le modal
-    case 'CHECKOUT':
-      return {
-        ...state,
-        cartItems: [],
-        cartModal: {
-          show: false,
-          product: {},
-          quantity: 0,
-          type: 'add'
-        }
-      };
-
-    default:
-      return state;
+  const actionHandler = actions[type];
+  
+  if (actionHandler) {
+    return actionHandler(state, payload);
   }
+  
+  console.warn(`[productReducer] Action non reconnue: ${type}`);
+  return state;
 };

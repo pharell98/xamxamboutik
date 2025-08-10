@@ -1,43 +1,41 @@
+import { useCallback } from 'react';
 import { useProductContext } from 'providers/ProductProvider';
 import apiServiceV1 from 'services/api.service.v1';
 
-const useProductHook = product => {
-  const {
-    productsState: { cartItems },
-    productsDispatch,
-    isInShoppingCart
-  } = useProductContext();
+/**
+ * Hook personnalisé pour gérer les actions sur les produits
+ * @param {Object} product - Le produit concerné
+ */
+const useProductHook = (product) => {
+  const { productsDispatch } = useProductContext();
 
-  const handleAddToCart = (quantity, showModal = true) => {
+  const handleAddToCart = useCallback((quantity = 1) => {
+    if (!product || !product.prixVente) {
+      console.warn('[useProductHook] Produit invalide ou prix manquant');
+      return;
+    }
+
     const productToAdd = {
       ...product,
-      quantity,
-      totalPrice: quantity * product.prixVente
+      quantity: Math.max(1, Number(quantity)),
+      totalPrice: Math.max(1, Number(quantity)) * Number(product.prixVente)
     };
 
     productsDispatch({
       type: 'ADD_TO_CART',
-      payload: {
-        product: productToAdd
-      }
+      payload: { product: productToAdd }
     });
-  };
+  }, [product, productsDispatch]);
 
-  const getProductByBarcode = async barcode => {
+  const getProductByBarcode = useCallback(async (barcode) => {
     try {
       const response = await apiServiceV1.getProductByBarcode(barcode);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return null;
+      return response.success ? response.data : null;
     } catch (error) {
-      console.error(
-        'Erreur lors de la récupération du produit par barcode:',
-        error
-      );
+      console.error('[useProductHook] Erreur récupération produit:', error);
       return null;
     }
-  };
+  }, []);
 
   return { handleAddToCart, getProductByBarcode };
 };

@@ -1,28 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useProductContext } from 'providers/ProductProvider';
-import ScannerToggle from './ScannerToggle';
-import CameraScanner from './CameraScanner';
-import apiServiceV1 from 'services/api.service.v1';
-import venteServiceV1 from 'services/vente.service.v1';
 import { useToast } from '../../../common/Toast';
 import { v4 as uuidv4 } from 'uuid';
+
+import ScannerToggle from './ScannerToggle';
+import CameraScanner from './CameraScanner';
 import useBarcodeScanner from './useBarcodeScanner';
+import apiServiceV1 from 'services/api.service.v1';
+
+// Constants
+const TOAST_DUPLICATE_TIMEOUT = 2000;
+const ERROR_MESSAGES = {
+  404: { title: 'Produit introuvable', type: 'warning' },
+  500: { title: 'Erreur serveur', message: 'Problème temporaire', type: 'error' },
+  0: { title: 'Connexion perdue', message: 'Vérifiez votre connexion', type: 'error' },
+  default: { title: 'Erreur', message: 'Erreur de récupération', type: 'error' }
+};
 
 const BarcodeScanner = () => {
   const { productsDispatch } = useProductContext();
   const { addToast } = useToast();
   const [scannerMode, setScannerMode] = useState('usb');
-  const lastToastMessageRef = useRef('');
-  const lastToastTimeRef = useRef(0);
+  
+  // Toast deduplication
+  const lastToastRef = useRef({ message: '', time: 0 });
 
-  const showToast = (title, message, type, duration) => {
+  // Toast handler with deduplication
+  const showToast = useCallback((title, message, type, duration = 4000) => {
     const now = Date.now();
-    if (
-      message === lastToastMessageRef.current &&
-      now - lastToastTimeRef.current < 2000
-    ) {
+    const { message: lastMessage, time: lastTime } = lastToastRef.current;
+    
+    if (message === lastMessage && now - lastTime < TOAST_DUPLICATE_TIMEOUT) {
       return;
     }
+
     addToast({
       id: `${uuidv4()}-${now}`,
       title,
@@ -31,191 +42,78 @@ const BarcodeScanner = () => {
       duration,
       'data-toast-message': message
     });
-    lastToastMessageRef.current = message;
-    lastToastTimeRef.current = now;
-  };
 
-  // Fonction de traitement du scan USB
-  const handleUsbScan = async (code) => {
+    lastToastRef.current = { message, time: now };
+  }, [addToast]);
+
+  // Add product to cart
+  const addProductToCart = useCallback((product) => {
+    productsDispatch({
+      type: 'ADD_TO_CART',
+      payload: {
+        product: {
+          ...product,
+          quantity: 1,
+          totalPrice: product.prixVente
+        }
+      }
+    });
+  }, [productsDispatch]);
+
+  // Handle API errors
+  const handleScanError = useCallback((error, code) => {
+    const status = error.response?.status;
+    const errorConfig = ERROR_MESSAGES[status] || ERROR_MESSAGES.default;
+    
+    const message = status === 404 
+      ? `Code ${code} non enregistré`
+      : error.response?.data?.message || error.message || errorConfig.message;
+
+    showToast(errorConfig.title, message, errorConfig.type);
+  }, [showToast]);
+
+  // Generic scan handler
+  const handleScan = useCallback(async (code) => {
     try {
-      console.log('[BarcodeScanner] Recherche du produit avec le code:', code);
       const response = await apiServiceV1.getProductByBarcode(code);
-      console.log('[BarcodeScanner] Réponse API complète:', response);
       
       if (response.success && response.data) {
-        const product = response.data;
-        console.log('[BarcodeScanner] Produit trouvé:', product);
-        
-        productsDispatch({
-          type: 'ADD_TO_CART',
-          payload: {
-            product: {
-              ...product,
-              quantity: 1,
-              totalPrice: product.prixVente
-            }
-          }
-        });
-        
-        // Toast de succès supprimé
+        addProductToCart(response.data);
       } else {
-        console.log('[BarcodeScanner] Produit non trouvé pour le code:', code);
-        showToast(
-          'Produit introuvable', 
-          `Code ${code} non enregistré`, 
-          'warning', 
-          4000
-        );
+        showToast('Produit introuvable', `Code ${code} non enregistré`, 'warning');
       }
     } catch (error) {
-      console.error('[BarcodeScanner] Erreur lors de la récupération du produit:', error);
-      console.error('[BarcodeScanner] Détails de l\'erreur:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      });
-      
-      let errorMessage = 'Erreur de récupération';
-      let errorTitle = 'Erreur';
-      let errorType = 'error';
-      let errorDuration = 4000;
-
-      // Messages d'erreur personnalisés selon le type d'erreur
-      if (error.response?.status === 404) {
-        errorTitle = 'Produit introuvable';
-        errorMessage = `Code ${code} non enregistré`;
-        errorType = 'warning';
-        errorDuration = 4000;
-      } else if (error.response?.status === 500) {
-        errorTitle = 'Erreur serveur';
-        errorMessage = 'Problème temporaire';
-        errorDuration = 4000;
-      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
-        errorTitle = 'Connexion perdue';
-        errorMessage = 'Vérifiez votre connexion';
-        errorDuration = 4000;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      showToast(
-        errorTitle,
-        errorMessage,
-        errorType,
-        errorDuration
-      );
+      handleScanError(error, code);
     }
-  };
+  }, [addProductToCart, showToast, handleScanError]);
 
-  // Fonction de traitement du scan caméra
-  const handleCameraScan = async (code) => {
-    try {
-      console.log('[BarcodeScanner] Recherche du produit avec le code (camera):', code);
-      const response = await apiServiceV1.getProductByBarcode(code);
-      console.log('[BarcodeScanner] Réponse API complète (camera):', response);
-        
-      if (response.success && response.data) {
-        const product = response.data;
-        console.log('[BarcodeScanner] Produit trouvé (camera):', product);
-        
-        productsDispatch({
-          type: 'ADD_TO_CART',
-          payload: {
-            product: { ...product, quantity: 1, totalPrice: product.prixVente }
-          }
-        });
-        
-        // Toast de succès supprimé
-      } else {
-        console.log('[BarcodeScanner] Produit non trouvé pour le code (camera):', code);
-        showToast(
-          'Produit introuvable', 
-          `Code ${code} non enregistré`, 
-          'warning', 
-          4000
-        );
-      }
-    } catch (error) {
-      console.error('[BarcodeScanner] Erreur lors de la récupération du produit (camera):', error);
-      console.error('[BarcodeScanner] Détails de l\'erreur (camera):', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      });
-      
-      let errorMessage = 'Erreur de récupération';
-      let errorTitle = 'Erreur';
-      let errorType = 'error';
-      let errorDuration = 4000;
-
-      // Messages d'erreur personnalisés selon le type d'erreur
-      if (error.response?.status === 404) {
-        errorTitle = 'Produit introuvable';
-        errorMessage = `Code ${code} non enregistré`;
-        errorType = 'warning';
-        errorDuration = 4000;
-      } else if (error.response?.status === 500) {
-        errorTitle = 'Erreur serveur';
-        errorMessage = 'Problème temporaire';
-        errorDuration = 4000;
-      } else if (error.response?.status === 0 || error.message?.includes('Network Error')) {
-        errorTitle = 'Connexion perdue';
-        errorMessage = 'Vérifiez votre connexion';
-        errorDuration = 4000;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      showToast(
-        errorTitle,
-        errorMessage,
-        errorType,
-        errorDuration
-      );
-    }
-  };
-
-  // Utilisation du hook personnalisé pour le scanner USB
-  const { containerRef, handleKeyDown, isProcessing } = useBarcodeScanner(
-    handleUsbScan,
+  // USB Scanner setup
+  const { containerRef, handleKeyDown } = useBarcodeScanner(
+    handleScan,
     scannerMode === 'usb'
   );
 
-  // Gestionnaire pour éviter les interférences avec la navbar
-  const handleFocus = () => {
-    console.log('[BarcodeScanner] Scanner focusé');
-  };
-
-  const handleClick = (e) => {
-    // Empêcher la propagation pour éviter les conflits
-    e.stopPropagation();
-  };
+  // Event handlers
+  const handleContainerClick = useCallback((e) => e.stopPropagation(), []);
+  const handleMouseEvent = useCallback((e) => e.stopPropagation(), []);
 
   return (
     <div
       ref={containerRef}
       tabIndex={0}
-      style={{ 
-        outline: 'none',
-        position: 'relative'
-      }}
+      style={{ outline: 'none', position: 'relative' }}
       onKeyDown={handleKeyDown}
-      onFocus={handleFocus}
-      onClick={handleClick}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
+      onClick={handleContainerClick}
+      onMouseDown={handleMouseEvent}
+      onMouseUp={handleMouseEvent}
     >
       <ScannerToggle
         scannerMode={scannerMode}
         setScannerMode={setScannerMode}
       />
-      {scannerMode === 'camera' && <CameraScanner onScan={handleCameraScan} />}
+      {scannerMode === 'camera' && (
+        <CameraScanner onScan={handleScan} />
+      )}
     </div>
   );
 };

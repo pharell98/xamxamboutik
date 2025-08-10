@@ -1,170 +1,168 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
-import classNames from 'classnames';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+// Constants
+const MIN_QUANTITY = 1;
+const BUTTON_WIDTH = '32px';
+
+/**
+ * Valide et normalise une quantité
+ */
+const validateQuantity = (value, max) => {
+  const num = parseInt(value, 10);
+  if (isNaN(num) || num < MIN_QUANTITY) return MIN_QUANTITY;
+  return Math.min(num, max);
+};
+
+/**
+ * Styles pour les boutons et l'input
+ */
+const buttonStyle = {
+  border: '1px solid #dee2e6',
+  backgroundColor: '#f8f9fa',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: BUTTON_WIDTH,
+  width: BUTTON_WIDTH,
+  padding: '0.375rem 0.25rem',
+  transition: 'all 0.2s ease'
+};
+
+const inputStyle = {
+  border: '1px solid #dee2e6',
+  textAlign: 'center',
+  fontWeight: '600',
+  borderRadius: '0',
+  borderLeft: 'none',
+  borderRight: 'none',
+  flex: '1',
+  minWidth: '50px',
+  maxWidth: '60px',
+  padding: '0.375rem 0.5rem',
+  WebkitAppearance: 'none',
+  MozAppearance: 'textfield',
+  appearance: 'none'
+};
+
+const containerStyle = {
+  display: 'flex',
+  alignItems: 'stretch',
+  borderRadius: '6px',
+  overflow: 'hidden',
+  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+};
+
+/**
+ * Composant de contrôle de quantité avec boutons + et -
+ */
 const QuantityController = ({
   quantity,
   handleChange,
-  handleIncrease,
-  handleDecrease,
-  btnClassName,
-  max = Infinity
+  max = Infinity,
+  disabled = false
 }) => {
-  const [inputValue, setInputValue] = React.useState(quantity.toString());
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [inputValue, setInputValue] = useState(quantity.toString());
+  const [isEditing, setIsEditing] = useState(false);
 
   // Synchroniser l'input avec la quantité externe
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isEditing) {
       setInputValue(quantity.toString());
     }
   }, [quantity, isEditing]);
 
-  const handleInputChange = (e) => {
+  const updateQuantity = useCallback((newQuantity) => {
+    const validQuantity = validateQuantity(newQuantity, max);
+    setInputValue(validQuantity.toString());
+    handleChange(validQuantity);
+  }, [handleChange, max]);
+
+  const handleDecrease = useCallback(() => {
+    updateQuantity(quantity - 1);
+  }, [quantity, updateQuantity]);
+
+  const handleIncrease = useCallback(() => {
+    updateQuantity(quantity + 1);
+  }, [quantity, updateQuantity]);
+
+  const handleInputChange = useCallback((e) => {
     const value = e.target.value;
     setInputValue(value);
     
-    // Permettre la saisie vide temporairement
-    if (value === '') {
-      return;
+    if (value !== '') {
+      const validQuantity = validateQuantity(value, max);
+      if (validQuantity !== quantity) {
+        handleChange(validQuantity);
+      }
     }
-    
-    const numValue = parseInt(value, 10);
-    // Validation stricte : seulement des nombres entiers positifs
-    if (!isNaN(numValue) && 
-        Number.isInteger(numValue) && 
-        numValue >= 1 && 
-        numValue <= max) {
-      handleChange(numValue);
-    }
-  };
+  }, [handleChange, max, quantity]);
 
-  const handleInputBlur = () => {
+  const handleInputBlur = useCallback(() => {
     setIsEditing(false);
-    const numValue = parseInt(inputValue, 10);
-    
-    // Validation stricte lors de la perte de focus
-    if (inputValue === '' || 
-        isNaN(numValue) || 
-        numValue < 1 || 
-        !Number.isInteger(numValue)) {
-      setInputValue('1');
-      handleChange(1);
-    } else if (numValue > max) {
-      setInputValue(max.toString());
-      handleChange(max);
-    } else {
-      setInputValue(numValue.toString());
-      handleChange(numValue);
+    const validQuantity = validateQuantity(inputValue || '1', max);
+    setInputValue(validQuantity.toString());
+    if (validQuantity !== quantity) {
+      handleChange(validQuantity);
     }
-  };
+  }, [inputValue, handleChange, max, quantity]);
 
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     setIsEditing(true);
-  };
+  }, []);
 
-  const handleInputKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleInputBlur();
     }
-  };
+  }, [handleInputBlur]);
+
+  const canDecrease = quantity > MIN_QUANTITY && !disabled;
+  const canIncrease = quantity < max && !disabled;
+
   return (
-    <div 
-      className="quantity-controller-wrapper"
-      style={{
-        width: '100%',
-        maxWidth: '140px',
-        minWidth: '120px'
-      }}
-    >
-      <InputGroup 
-        size="sm" 
-        className="quantity-controller"
-        style={{
-          display: 'flex',
-          alignItems: 'stretch',
-          borderRadius: '6px',
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <InputGroup.Text 
+    <div style={{ width: '100%', maxWidth: '140px', minWidth: '120px' }}>
+      <InputGroup size="sm" style={containerStyle}>
+        {/* Bouton diminuer */}
+        <InputGroup.Text
           as={Button}
           variant="outline-secondary"
-          size="sm"
-          className={classNames(btnClassName, 'quantity-btn quantity-btn-decrease')}
-          onClick={() => {
-            const newQuantity = Math.max(1, quantity - 1);
-            handleChange(newQuantity);
-            setInputValue(newQuantity.toString());
-          }}
-          disabled={quantity <= 1}
+          onClick={handleDecrease}
+          disabled={!canDecrease}
           style={{
-            border: '1px solid #dee2e6',
-            backgroundColor: '#f8f9fa',
+            ...buttonStyle,
             borderRadius: '6px 0 0 6px',
-            borderRight: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '32px',
-            width: '32px',
-            padding: '0.375rem 0.25rem',
-            transition: 'all 0.2s ease'
+            borderRight: 'none'
           }}
         >
           <FontAwesomeIcon icon="minus" />
         </InputGroup.Text>
+
+        {/* Input quantité */}
         <Form.Control
-          className="quantity-input input-spin-none"
           type="text"
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onFocus={handleInputFocus}
-          onKeyDown={handleInputKeyDown}
-          style={{
-            border: '1px solid #dee2e6',
-            textAlign: 'center',
-            fontWeight: '600',
-            borderRadius: '0',
-            borderLeft: 'none',
-            borderRight: 'none',
-            flex: '1',
-            minWidth: '50px',
-            maxWidth: '60px',
-            padding: '0.375rem 0.5rem',
-            WebkitAppearance: 'none',
-            MozAppearance: 'textfield',
-            appearance: 'none'
-          }}
+          onKeyDown={handleKeyDown}
+          disabled={disabled}
+          style={inputStyle}
         />
-        <InputGroup.Text 
+
+        {/* Bouton augmenter */}
+        <InputGroup.Text
           as={Button}
           variant="outline-secondary"
-          size="sm"
-          className={classNames(btnClassName, 'quantity-btn quantity-btn-increase')}
-          onClick={() => {
-            const newQuantity = Math.min(max, quantity + 1);
-            handleChange(newQuantity);
-            setInputValue(newQuantity.toString());
-          }}
-          disabled={quantity >= max}
+          onClick={handleIncrease}
+          disabled={!canIncrease}
           style={{
-            border: '1px solid #dee2e6',
-            backgroundColor: '#f8f9fa',
+            ...buttonStyle,
             borderRadius: '0 6px 6px 0',
-            borderLeft: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '32px',
-            width: '32px',
-            padding: '0.375rem 0.25rem',
-            transition: 'all 0.2s ease'
+            borderLeft: 'none'
           }}
         >
           <FontAwesomeIcon icon="plus" />
@@ -177,10 +175,8 @@ const QuantityController = ({
 QuantityController.propTypes = {
   quantity: PropTypes.number.isRequired,
   handleChange: PropTypes.func.isRequired,
-  handleIncrease: PropTypes.func.isRequired,
-  handleDecrease: PropTypes.func.isRequired,
-  btnClassName: PropTypes.string,
-  max: PropTypes.number
+  max: PropTypes.number,
+  disabled: PropTypes.bool
 };
 
 export default QuantityController;
