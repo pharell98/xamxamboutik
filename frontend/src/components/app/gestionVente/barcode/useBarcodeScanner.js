@@ -201,6 +201,12 @@ const useBarcodeScanner = (onScan, isActive = true) => {
       if (!isActive || isProcessingRef.current) return;
       
       const key = event.key;
+      const activeElement = document.activeElement;
+      
+      // Ignorer si l'événement vient déjà du container du scanner pour éviter la duplication
+      if (activeElement === containerRef.current) {
+        return;
+      }
       
       // Ignorer les touches de navigation
       const navigationKeys = [
@@ -211,6 +217,21 @@ const useBarcodeScanner = (onScan, isActive = true) => {
       ];
       
       if (navigationKeys.includes(key)) return;
+      
+      // Vérifier si on est dans un élément actif (input, etc.)
+      if (isElementActive(activeElement)) {
+        return;
+      }
+      
+      // Vérifier si on est dans une modal
+      if (isInModal()) {
+        return;
+      }
+      
+      // Vérifier si on est dans la navbar
+      if (isInNavbar(activeElement)) {
+        return;
+      }
       
       // Si c'est un chiffre, l'ajouter au buffer
       if (key.length === 1 && /^\d$/.test(key)) {
@@ -263,7 +284,7 @@ const useBarcodeScanner = (onScan, isActive = true) => {
         document.removeEventListener('keydown', handleGlobalKeyDown);
       };
     }
-  }, [isActive, isValidBarcode, processBarcode]);
+  }, [isActive, isValidBarcode, processBarcode, isElementActive, isInModal, isInNavbar]);
 
   // Focus initial seulement
   useEffect(() => {
