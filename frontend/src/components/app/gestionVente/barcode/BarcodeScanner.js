@@ -59,7 +59,7 @@ const BarcodeScanner = () => {
         
         // Toast de succès supprimé
       } else {
-        console.error('[BarcodeScanner] Produit non trouvé pour le code:', code);
+        console.log('[BarcodeScanner] Produit non trouvé pour le code:', code);
         showToast(
           'Produit introuvable', 
           `Code ${code} non enregistré`, 
@@ -130,7 +130,7 @@ const BarcodeScanner = () => {
         
         // Toast de succès supprimé
       } else {
-        console.error('[BarcodeScanner] Produit non trouvé pour le code (camera):', code);
+        console.log('[BarcodeScanner] Produit non trouvé pour le code (camera):', code);
         showToast(
           'Produit introuvable', 
           `Code ${code} non enregistré`, 
@@ -182,7 +182,7 @@ const BarcodeScanner = () => {
   };
 
   // Utilisation du hook personnalisé pour le scanner USB
-  const { containerRef, handleKeyDown, handleBlur, isProcessing } = useBarcodeScanner(
+  const { containerRef, handleKeyDown, isProcessing } = useBarcodeScanner(
     handleUsbScan,
     scannerMode === 'usb'
   );
@@ -207,7 +207,6 @@ const BarcodeScanner = () => {
       }}
       onKeyDown={handleKeyDown}
       onFocus={handleFocus}
-      onBlur={handleBlur}
       onClick={handleClick}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
