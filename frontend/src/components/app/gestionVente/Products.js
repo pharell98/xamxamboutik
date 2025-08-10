@@ -35,8 +35,8 @@ import { useToast } from '../../common/Toast';
 // Constantes pour améliorer la maintenabilité
 const PRODUCTS_PER_PAGE = 24;
 const DEBOUNCE_DELAY = 300;
-const STOCK_UPDATE_DELAY = 300;
-const PRODUCT_RELOAD_DELAY = 1000;
+
+
 const SENTINEL_MARGIN = '100px';
 
 // Hook personnalisé pour la gestion des produits
@@ -116,17 +116,19 @@ const useProducts = () => {
 
   const reloadProductsAfterSale = useCallback(
     _.debounce(async () => {
-      console.log('[Products] Rechargement des produits après vente...');
+      console.log('[Products] Rechargement fluide des produits après vente...');
       // Éviter les rechargements multiples
       if (loading) {
         console.log('[Products] Rechargement ignoré - requête en cours');
         return;
       }
       try {
+        // Démarrer le loading avec un délai minimal pour la fluidité
         setLoading(true);
+        
         const response = await venteServiceV1.getMostSoldProducts(1, PRODUCTS_PER_PAGE, 'web');
         if (response.success && response.data) {
-          const { content } = response.data;
+          const { content, totalPages } = response.data;
           if (content && Array.isArray(content)) {
             const validatedProducts = content
               .filter(product => product && (product.id || product.produitId))
@@ -141,18 +143,25 @@ const useProducts = () => {
                 quantiteDisponible: Number(product.stockDisponible || product.stock || 0),
                 totalPrice: Number(product.prixVente || product.prix || 0) * 1
               }));
+            
             console.log('[Products] Nouveaux produits chargés:', validatedProducts.length);
+            
+            // Transition fluide : remplacer les produits d'un coup
             setProducts(validatedProducts);
             setPage(1);
-            setHasMore(true);
+            setTotalPages(totalPages || 1);
+            setHasMore(1 < (totalPages || 1));
           }
         }
       } catch (error) {
         console.error('[Products] Erreur lors du rechargement des produits:', error);
       } finally {
-        setLoading(false);
+        // Délai minimal pour éviter le flash
+        setTimeout(() => {
+          setLoading(false);
+        }, 200);
       }
-    }, PRODUCT_RELOAD_DELAY),
+    }, 500), // Réduit le délai de debounce pour plus de réactivité
     [] // Supprimé les dépendances instables
   );
 
@@ -169,38 +178,8 @@ const useProducts = () => {
   };
 };
 
-// Hook personnalisé pour la gestion des stocks
-const useStockManagement = (products, setProducts) => {
-  const updateProductStocks = useCallback(
-    _.debounce(soldItems => {
-      console.log('[Products] Mise à jour des stocks en cours...', soldItems);
-      setProducts(prevProducts => {
-        const updatedProducts = prevProducts.map(product => {
-          const soldItem = soldItems.find(
-            item => item.productId === product.id
-          );
-          if (soldItem) {
-            const newStock = Math.max(
-              0,
-              product.stockDisponible - soldItem.quantity
-            );
-            console.log(`[Products] Produit ${product.libelle}: ${product.stockDisponible} -> ${newStock}`);
-            return {
-              ...product,
-              stockDisponible: newStock
-            };
-          }
-          return product;
-        });
-        console.log('[Products] Stocks mis à jour:', updatedProducts.length, 'produits');
-        return updatedProducts;
-      });
-    }, STOCK_UPDATE_DELAY),
-    [] // Supprimé les dépendances instables
-  );
-
-  return { updateProductStocks };
-};
+// Hook supprimé - plus besoin de gestion manuelle des stocks
+// Le rechargement complet gère tout automatiquement
 
 const Products = () => {
   const navigate = useNavigate();
@@ -231,7 +210,7 @@ const Products = () => {
     setLastSoldItems
   } = useProducts();
 
-  const { updateProductStocks } = useStockManagement(products, setProducts);
+  // Plus besoin du hook de gestion des stocks
 
   // Ajouter une vérification pour éviter les requêtes multiples
   const isInitializedRef = useRef(false);
@@ -302,7 +281,7 @@ const Products = () => {
     };
   }, [page, loading, hasMore]); // Supprimé debouncedFetchProducts de la dépendance
 
-  // Gestion des messages WebSocket
+  // Gestion des messages WebSocket - Effet unique après vente
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
@@ -313,17 +292,16 @@ const Products = () => {
         Array.isArray(latestMessage.soldItems) &&
         latestMessage.soldItems.length > 0
       ) {
-        console.log('[Products] Mise à jour des stocks pour:', latestMessage.soldItems);
-        updateProductStocks(latestMessage.soldItems);
-        // Délayer le rechargement pour éviter les boucles
+        console.log('[Products] Rechargement des produits après vente...');
+        // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
-        }, 1000);
+        }, 500); // Réduit le délai pour plus de fluidité
       }
     }
-  }, [venteData]); // Supprimé updateProductStocks et reloadProductsAfterSale des dépendances
+  }, [venteData]);
 
-  // Gestion des événements de checkout
+  // Gestion des événements de checkout - Effet unique
   useEffect(() => {
     const handleCheckout = event => {
       const soldItems =
@@ -334,13 +312,18 @@ const Products = () => {
           libelle: item.libelle
         }));
       setLastSoldItems(soldItems);
-      updateProductStocks(soldItems);
+      
+      // Un seul effet : rechargement complet au lieu de mise à jour immédiate
+      console.log('[Products] Checkout détecté, rechargement des produits...');
+      setTimeout(() => {
+        reloadProductsAfterSale();
+      }, 300);
     };
     window.addEventListener('checkout', handleCheckout);
     return () => {
       window.removeEventListener('checkout', handleCheckout);
     };
-  }, [cartItems]); // Supprimé updateProductStocks et setLastSoldItems des dépendances
+  }, [cartItems]);
 
   // Filtrage des produits
   const filteredProducts = useMemo(() => {
@@ -363,6 +346,35 @@ const Products = () => {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
+          }
+          
+          /* Transitions fluides pour le rechargement */
+          .product-grid-item, .product-list-item {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+          }
+          
+          .vente-components {
+            transition: opacity 0.2s ease;
+          }
+          
+          .loading-overlay {
+            transition: opacity 0.3s ease;
+          }
+          
+          /* Animation d'apparition pour les nouveaux produits */
+          .fade-in {
+            animation: fadeInProduct 0.4s ease-out;
+          }
+          
+          @keyframes fadeInProduct {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
         `}
       </style>
@@ -505,11 +517,22 @@ const Products = () => {
             />
             
             {loading && (
-              <div className="loading-state">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Chargement...</span>
+              <div className="loading-state position-relative">
+                <div 
+                  className="loading-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    zIndex: 10,
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="d-flex align-items-center">
+                    <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
+                      <span className="visually-hidden">Mise à jour...</span>
+                    </div>
+                    <span className="text-muted">Mise à jour des produits...</span>
+                  </div>
                 </div>
-                <span className="ms-2">Chargement des produits...</span>
               </div>
             )}
           </Card>
