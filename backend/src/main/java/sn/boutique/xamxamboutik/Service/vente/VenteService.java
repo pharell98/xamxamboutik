@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -70,6 +71,10 @@ public class VenteService implements IVenteService {
     public Vente createVente(VenteRequestDTO dto) {
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
+        
+        // Génération automatique du numéro de facture
+        vente.setNumeroFacture(generateNumeroFacture());
+        
         double totalMontant = 0.0;
         vente.setEstCredit(false);
         vente.setMontantRestant(0.0);
@@ -114,6 +119,36 @@ public class VenteService implements IVenteService {
         Vente savedVente = venteRepository.save(vente);
         notifyUpdate(savedVente);
         return savedVente;
+    }
+
+    /**
+     * Génère automatiquement un numéro de facture au format FAC-JJ-MM-AA-0001
+     * @return Le numéro de facture généré
+     */
+    private String generateNumeroFacture() {
+        LocalDateTime now = LocalDateTime.now();
+        String jour = String.format("%02d", now.getDayOfMonth());
+        String mois = String.format("%02d", now.getMonthValue());
+        String annee = String.format("%02d", now.getYear() % 100); // Prend les 2 derniers chiffres de l'année
+        
+        String prefix = "FAC-" + jour + "-" + mois + "-" + annee + "-";
+        
+        // Récupérer le dernier numéro de facture du jour
+        Optional<String> lastNumero = venteRepository.findLastNumeroFactureByPrefix(prefix);
+        
+        int sequence = 1;
+        if (lastNumero.isPresent()) {
+            String lastNum = lastNumero.get();
+            // Extraire le numéro de séquence (les 4 derniers chiffres)
+            String sequenceStr = lastNum.substring(lastNum.lastIndexOf("-") + 1);
+            try {
+                sequence = Integer.parseInt(sequenceStr) + 1;
+            } catch (NumberFormatException e) {
+                sequence = 1;
+            }
+        }
+        
+        return prefix + String.format("%04d", sequence);
     }
 
     private void notifyUpdate(Vente vente) {

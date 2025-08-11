@@ -14,7 +14,8 @@ import java.util.Set;
         name = "ventes",
         indexes = {
                 @Index(name = "idx_vente_date", columnList = "date"),
-                @Index(name = "idx_vente_client_id", columnList = "client_id")
+                @Index(name = "idx_vente_client_id", columnList = "client_id"),
+                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture")
         }
 )
 @Data
@@ -36,6 +37,9 @@ public class Vente extends BaseEntity {
 
     @Column(name = "est_credit")
     private Boolean estCredit = false;
+
+    @Column(name = "numero_facture", unique = true)
+    private String numeroFacture;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

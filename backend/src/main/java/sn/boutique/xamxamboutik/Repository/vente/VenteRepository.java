@@ -9,9 +9,14 @@ import sn.boutique.xamxamboutik.Entity.vente.Vente;
 import sn.boutique.xamxamboutik.Repository.Projection.VenteProjection;
 import sn.boutique.xamxamboutik.Repository.base.SoftDeleteRepository;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
+
+    @Query("SELECT v.numeroFacture FROM Vente v WHERE v.numeroFacture LIKE :prefix% ORDER BY v.numeroFacture DESC LIMIT 1")
+    Optional<String> findLastNumeroFactureByPrefix(@Param("prefix") String prefix);
+
     @Query("""
     SELECT dv.id             AS detailVenteId,
            p.id              AS productId,
