@@ -122,7 +122,7 @@ public class ProduitController extends AbstractBaseController<
 
 
 
-    @GetMapping("/api/products/barcode/{barcode}")
+    @GetMapping("/products/barcode/{barcode}")
     public ResponseEntity<ApiResponse<?>> findByBarcode(@PathVariable String barcode,
                                                         @RequestHeader(value="X-Client-Type", defaultValue="web") String clientType) {
         Produit p = produitService.findByCode(barcode)
