@@ -71,11 +71,14 @@ const Products = ({ onEdit }) => {
         (latestMessage.type === 'PRODUCT_CREATED' ||
           latestMessage.type === 'PRODUCT_UPDATED' ||
           latestMessage.type === 'PRODUCT_DELETED' ||
+          latestMessage.type === 'STOCK_UPDATE' ||
           latestMessage.action === 'product_update' ||
+          latestMessage.action === 'UPDATE' ||
           latestMessage.message?.includes('produit') ||
           latestMessage.message?.includes('product') ||
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
+        console.log('[Products] Message WebSocket reçu, rafraîchissement des données:', latestMessage);
         debouncedSetRefresh();
       }
     }
@@ -87,10 +90,17 @@ const Products = ({ onEdit }) => {
       debouncedSetRefresh();
     };
 
+    const handleStockUpdated = () => {
+      console.log('[Products] Événement stock-updated reçu, rafraîchissement des données');
+      debouncedSetRefresh();
+    };
+
     window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('stock-updated', handleStockUpdated);
 
     return () => {
       window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('stock-updated', handleStockUpdated);
     };
   }, [debouncedSetRefresh]);
 

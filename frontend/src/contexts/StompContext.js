@@ -121,6 +121,13 @@ export const StompProvider = ({ children }) => {
           return newData.slice(-5);
         });
       });
+      subscribeWithErrorHandling('/topic/stock-updates', parsed => {
+        console.log('[StompContext] Mise à jour de stock reçue:', parsed);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
+      });
       subscribeWithErrorHandling('/topic/approvisionnements', parsed => {
         // Accepter les messages sous forme d'objet ou de string
         let messageToStore = parsed;

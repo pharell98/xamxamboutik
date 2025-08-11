@@ -28,14 +28,7 @@ const ruptureFiltersConfig = [
   }
 ];
 
-const getRuptureColumns = () => [
-  {
-    accessorKey: 'codeProduit',
-    header: 'Code',
-    cell: ({ row: { original } }) => original.codeProduit || '—',
-    size: 60,
-    minSize: 50
-  },
+const getRuptureColumns = (getColumnStyles) => [
   {
     accessorKey: 'image',
     header: 'Image',
@@ -44,14 +37,14 @@ const getRuptureColumns = () => [
         <img
           src={original.image}
           alt={original.libelle}
-          style={{ width: 35, height: 35, objectFit: 'cover' }}
+          style={{ width: 40, height: 40, objectFit: 'cover' }}
           className="rounded"
         />
       ) : (
         <div 
           style={{ 
-            width: 35, 
-            height: 35, 
+            width: 40, 
+            height: 40, 
             backgroundColor: '#f8f9fa',
             borderRadius: '4px',
             display: 'flex',
@@ -59,60 +52,120 @@ const getRuptureColumns = () => [
             justifyContent: 'center'
           }}
         >
-          <i className="fas fa-image text-muted" style={{ fontSize: '0.7rem' }}></i>
+          <i className="fas fa-image text-muted" style={{ fontSize: '0.8rem' }}></i>
         </div>
       ),
-    size: 50,
-    minSize: 40
+    enableSorting: false,
+    meta: {
+      headerProps: {
+        style: getColumnStyles(50, 40, 45),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(50, 40, 45),
+        className: 'text-center'
+      }
+    }
+  },
+  {
+    accessorKey: 'codeProduit',
+    header: 'Code',
+    cell: ({ row: { original } }) => (
+      <div className="text-start fw-medium text-truncate">
+        {original.codeProduit || '—'}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(100, 70, 85),
+        className: 'text-start'
+      },
+      cellProps: {
+        style: getColumnStyles(100, 70, 85)
+      }
+    }
   },
   {
     accessorKey: 'libelle',
-    header: 'Produit',
+    header: 'Nom du Produit',
     cell: ({ row: { original } }) => (
-      <div className="text-truncate" style={{ maxWidth: '100px' }}>
+      <div className="text-start fw-medium text-truncate" title={original.libelle}>
         {original.libelle || '—'}
       </div>
     ),
-    size: 120,
-    minSize: 80
-  },
-  {
-    accessorKey: 'prixAchat',
-    header: "Prix d'achat",
-    cell: ({ row: { original } }) => (
-      <div className="text-end">
-        {original.prixAchat ? `${original.prixAchat} FCFA` : '—'}
-      </div>
-    ),
-    size: 90,
-    minSize: 70
-  },
-  {
-    accessorKey: 'statut',
-    header: 'Statut',
-    cell: ({ row: { original } }) =>
-      original.stockDisponible <= 0 ? (
-        <SubtleBadge bg="danger" className="fs-10">Rupture</SubtleBadge>
-      ) : (
-        <SubtleBadge bg="warning" className="fs-10">Faible</SubtleBadge>
-      ),
-    size: 70,
-    minSize: 50
+    meta: {
+      headerProps: {
+        style: getColumnStyles(180, 120, 150),
+        className: 'text-start'
+      },
+      cellProps: {
+        style: getColumnStyles(180, 120, 150)
+      }
+    }
   },
   {
     accessorKey: 'stockDisponible',
     header: 'Stock',
     cell: ({ row: { original } }) => (
       <div className="text-center">
-        <strong
-          style={{ color: original.stockDisponible <= 0 ? 'red' : 'orange' }}
+        <span
+          className={`fw-bold ${
+            original.stockDisponible <= 0 ? 'text-danger' : 'text-warning'
+          }`}
         >
           {original.stockDisponible}
-        </strong>
+        </span>
       </div>
     ),
-    size: 60,
-    minSize: 40
+    meta: {
+      headerProps: {
+        style: getColumnStyles(70, 50, 60),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(70, 50, 60)
+      }
+    }
+  },
+  {
+    accessorKey: 'statut',
+    header: 'Statut',
+    cell: ({ row: { original } }) => (
+      <div className="text-center">
+        {original.stockDisponible <= 0 ? (
+          <SubtleBadge bg="danger" className="fs-10">Rupture</SubtleBadge>
+        ) : (
+          <SubtleBadge bg="warning" className="fs-10">Faible</SubtleBadge>
+        )}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(90, 70, 80),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(90, 70, 80)
+      }
+    }
+  },
+  {
+    accessorKey: 'prixAchat',
+    header: "Prix d'Achat",
+    cell: ({ row: { original } }) => (
+      <div className="text-end fw-medium">
+        {original.prixAchat ? `${original.prixAchat} FCFA` : '—'}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(130, 100, 115),
+        className: 'text-end'
+      },
+      cellProps: {
+        style: getColumnStyles(130, 100, 115)
+      }
+    }
   }
 ];
 
@@ -131,6 +184,21 @@ const RuptureStock = () => {
     }));
     setRefresh(prev => prev + 1);
   }, []);
+
+  // Ajuster les largeurs de colonnes selon la taille d'écran
+  const getColumnStyles = (baseWidth, mobileWidth = null, tabletWidth = null) => {
+    let width = baseWidth;
+    if (isMobile && mobileWidth) {
+      width = mobileWidth;
+    } else if (isTablet && tabletWidth) {
+      width = tabletWidth;
+    }
+    return {
+      width: `${width}px`,
+      minWidth: `${width}px`,
+      maxWidth: `${width}px`
+    };
+  };
 
   // Écouter les messages WebSocket pour les ruptures de stock
   useEffect(() => {
@@ -161,7 +229,7 @@ const RuptureStock = () => {
 
   const table = useAdvanceTable({
     data: [],
-    columns: getRuptureColumns(),
+    columns: getRuptureColumns(getColumnStyles),
     selection: !isMobile, // Désactiver la sélection sur mobile pour économiser l'espace
     sortable: true,
     pagination: true,
@@ -240,7 +308,7 @@ const RuptureStock = () => {
                   tableProps={{
                     size: 'sm',
                     striped: true,
-                    className: 'fs-10 mb-0'
+                    className: 'fs-10 mb-0 table-fixed-layout'
                   }}
                 />
               </div>

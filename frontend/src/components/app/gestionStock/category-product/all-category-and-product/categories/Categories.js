@@ -156,16 +156,19 @@ const Categories = ({ onEdit }) => {
     if (Array.isArray(data) && data.length > 0) {
       const latestMessage = data[data.length - 1];
 
-      // Vérifier si c'est un message de catégorie
+      // Vérifier si c'est un message de catégorie ou de mise à jour de stock
       if (
         latestMessage &&
         (latestMessage.type === 'CATEGORY_CREATED' ||
           latestMessage.type === 'CATEGORY_UPDATED' ||
           latestMessage.type === 'CATEGORY_DELETED' ||
+          latestMessage.type === 'STOCK_UPDATE' ||
+          latestMessage.action === 'UPDATE' ||
           latestMessage.message?.includes('catégorie') ||
           latestMessage.message?.includes('category') ||
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
+        console.log('[Categories] Message WebSocket reçu, rafraîchissement des données:', latestMessage);
         setRefresh(prev => prev + 1);
       }
     }
@@ -177,10 +180,17 @@ const Categories = ({ onEdit }) => {
       setRefresh(prev => prev + 1);
     };
 
+    const handleStockUpdated = () => {
+      console.log('[Categories] Événement stock-updated reçu, rafraîchissement des données');
+      setRefresh(prev => prev + 1);
+    };
+
     window.addEventListener('category-updated', handleCategoryUpdated);
+    window.addEventListener('stock-updated', handleStockUpdated);
 
     return () => {
       window.removeEventListener('category-updated', handleCategoryUpdated);
+      window.removeEventListener('stock-updated', handleStockUpdated);
     };
   }, []);
 

@@ -9,7 +9,9 @@ import {
   faHandHoldingUsd,
   faShoppingCart,
   faTrash,
-  faTimes
+  faTimes,
+  faList,
+  faReceipt
 } from '@fortawesome/free-solid-svg-icons';
 
 import { useProductContext } from 'providers/ProductProvider';
@@ -19,6 +21,7 @@ import venteServiceV1 from 'services/vente.service.v1';
 import InvoiceGenerator from '../facture/InvoiceGenerator';
 import QuantityController from '../QuantityController';
 import CalculatorModal from './CalculatorModal';
+import Sales from '../allSales/Sales';
 
 // Constants
 const COMPANY_INFO = {
@@ -71,12 +74,22 @@ const useCartCalculations = (cartItems, modifiedPrices) => {
 };
 
 // Components
-const CartHeader = () => (
-  <div className="cart-header mb-3">
+const CartHeader = ({ showSales, onToggleView }) => (
+  <div className="cart-header mb-3 d-flex justify-content-between align-items-center">
     <h5 className="mb-0 fw-bold">
-      <FontAwesomeIcon icon={faShoppingCart} className="me-2" />
-      Votre Panier
+      <FontAwesomeIcon icon={showSales ? faReceipt : faShoppingCart} className="me-2" />
+      {showSales ? 'Historique des Ventes' : 'Votre Panier'}
     </h5>
+    <Button
+      variant="outline-primary"
+      size="sm"
+      onClick={onToggleView}
+      className="d-flex align-items-center gap-2"
+      title={showSales ? 'Afficher le panier' : 'Afficher les ventes'}
+    >
+      <FontAwesomeIcon icon={showSales ? faShoppingCart : faList} />
+      {showSales ? 'Panier' : 'Ventes'}
+    </Button>
   </div>
 );
 
@@ -335,6 +348,7 @@ const CartSection = ({ onClose, show = true }) => {
   const [paymentMode, setPaymentMode] = useState('espece');
   const [printInvoice, setPrintInvoice] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showSales, setShowSales] = useState(false);
 
   // Custom hooks
   const paymentModes = usePaymentModes();
@@ -505,58 +519,67 @@ const CartSection = ({ onClose, show = true }) => {
         className={`p-3 border-0 cart-section ${isDark ? 'bg-dark text-white' : 'bg-white'}`}
         style={{ maxHeight: '75vh', overflowY: 'auto' }}
       >
-        <CartHeader />
+        <CartHeader 
+          showSales={showSales} 
+          onToggleView={() => setShowSales(!showSales)} 
+        />
 
-        {cartItems.length === 0 ? (
-          <p>Votre panier est vide.</p>
+        {showSales ? (
+          <Sales />
         ) : (
           <>
-            <CartTableHeader isDark={isDark} />
+            {cartItems.length === 0 ? (
+              <p>Votre panier est vide.</p>
+            ) : (
+              <>
+                <CartTableHeader isDark={isDark} />
 
-            {cartItems.map((item, index) => (
-              <CartItem
-                key={item.id}
-                item={item}
-                index={index}
-                isDark={isDark}
-                modifiedPrices={modifiedPrices}
-                onPriceChange={handlePriceChange}
-                onQuantityChange={handleQuantityChange}
-                onRemove={handleRemoveItem}
+                {cartItems.map((item, index) => (
+                  <CartItem
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    isDark={isDark}
+                    modifiedPrices={modifiedPrices}
+                    onPriceChange={handlePriceChange}
+                    onQuantityChange={handleQuantityChange}
+                    onRemove={handleRemoveItem}
+                  />
+                ))}
+
+                <PaymentModeSelector 
+                  paymentModes={paymentModes}
+                  paymentMode={paymentMode}
+                  setPaymentMode={setPaymentMode}
+                />
+
+                <CartTotal
+                  totalCost={totalCost}
+                  isLoan={isLoan}
+                  printInvoice={printInvoice}
+                  setIsLoan={setIsLoan}
+                  setPrintInvoice={setPrintInvoice}
+                />
+
+                <CustomerInfoForm
+                  isLoan={isLoan}
+                  printInvoice={printInvoice}
+                  customerInfo={customerInfo}
+                  setCustomerInfo={setCustomerInfo}
+                />
+              </>
+            )}
+
+            {cartItems.length > 0 && (
+              <CartActions
+                onCalculator={() => setShowCalculator(true)}
+                onClose={onClose}
+                onValidate={handleValidateSale}
+                isLoan={isLoan}
+                isValidCustomer={isValidCustomer}
               />
-            ))}
-
-            <PaymentModeSelector 
-              paymentModes={paymentModes}
-              paymentMode={paymentMode}
-              setPaymentMode={setPaymentMode}
-            />
-
-            <CartTotal
-              totalCost={totalCost}
-              isLoan={isLoan}
-              printInvoice={printInvoice}
-              setIsLoan={setIsLoan}
-              setPrintInvoice={setPrintInvoice}
-            />
-
-            <CustomerInfoForm
-              isLoan={isLoan}
-              printInvoice={printInvoice}
-              customerInfo={customerInfo}
-              setCustomerInfo={setCustomerInfo}
-            />
+            )}
           </>
-        )}
-
-        {cartItems.length > 0 && (
-          <CartActions
-            onCalculator={() => setShowCalculator(true)}
-            onClose={onClose}
-            onValidate={handleValidateSale}
-            isLoan={isLoan}
-            isValidCustomer={isValidCustomer}
-          />
         )}
       </Card>
 
