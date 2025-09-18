@@ -1,7 +1,6 @@
 package sn.boutique.xamxamboutik.Service.vente;
 
 import sn.boutique.xamxamboutik.Entity.vente.RetourProduit;
-import sn.boutique.xamxamboutik.Web.DTO.Request.AnnulationRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.EchangeRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.RemboursementRequestDTO;
 
@@ -20,11 +19,4 @@ public interface IRetourService {
 
     RetourProduit createEchangeAjustementPrix(EchangeRequestDTO dto);
 
-    RetourProduit createAnnulation(AnnulationRequestDTO dto);
-
-    RetourProduit createAnnulationApresLivraison(AnnulationRequestDTO dto);
-
-    RetourProduit createAnnulationPartielle(AnnulationRequestDTO dto);
-
-    RetourProduit createAnnulationNonConformite(AnnulationRequestDTO dto);
 }

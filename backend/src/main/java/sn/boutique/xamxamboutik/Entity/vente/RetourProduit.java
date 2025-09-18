@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
+import sn.boutique.xamxamboutik.Entity.utilisateur.Utilisateur;
 
 import java.time.LocalDateTime;
 
@@ -32,4 +33,8 @@ public class RetourProduit extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "detail_vente_id", nullable = false)
     private DetailVente detailVente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_retour_id", nullable = false)
+    private Utilisateur utilisateurRetour;
 }

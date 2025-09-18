@@ -36,7 +36,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             JOIN v.detailVentes dv
             JOIN dv.produit p
             JOIN p.categorie c
-            JOIN v.paiement pm
+            JOIN v.paiements pm
             JOIN v.utilisateur u
             WHERE v.date >= :startOfDay
               AND v.date < :endOfDay
@@ -87,7 +87,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             JOIN v.detailVentes dv
             JOIN dv.produit p
             JOIN p.categorie c
-            JOIN v.paiement pm
+            JOIN v.paiements pm
             JOIN v.utilisateur u
             WHERE v.date >= :startDate
               AND v.date < :endDate
@@ -138,7 +138,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             JOIN v.detailVentes dv
             JOIN dv.produit p
             JOIN p.categorie c
-            JOIN v.paiement pm
+            JOIN v.paiements pm
             JOIN v.utilisateur u
             WHERE (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)

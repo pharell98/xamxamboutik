@@ -41,7 +41,7 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
                 u.nom AS utilisateurNom
             FROM Vente v
             LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
+            LEFT JOIN v.paiements p
             LEFT JOIN v.utilisateur u
             WHERE v.numeroFacture = :numeroFacture
             AND v.deleted = false
@@ -70,7 +70,7 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
                 u.nom AS utilisateurNom
             FROM Vente v
             LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
+            LEFT JOIN v.paiements p
             LEFT JOIN v.utilisateur u
             WHERE v.id = :venteId
             AND v.deleted = false
@@ -78,7 +78,13 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
     Optional<FactureProjection> findFactureByVenteId(@Param("venteId") Long venteId);
 
     /**
-     * Récupère les détails des produits d'une vente (uniquement les produits vendus)
+     * Récupère les détails des produits d'une vente pour affichage facture
+     * LOGIQUE: Affiche les produits actuellement valides dans la facture
+     * - VENDU: produits vendus normalement
+     * - RETOURNE_ECHANGE avec montantTotal > 0: nouveaux produits d'échange
+     * EXCLUT: 
+     * - RETOURNE_REMBOURSE: produits remboursés
+     * - RETOURNE_ECHANGE avec montantTotal = 0: anciens produits échangés
      */
     @Query("""
             SELECT 
@@ -95,12 +101,22 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
             JOIN dv.produit p
             WHERE v.id = :venteId
             AND v.deleted = false
-            AND dv.status = 'VENDU'
+            AND (
+                dv.status = 'VENDU' 
+                OR (dv.status = 'RETOURNE_ECHANGE' AND dv.montantTotal > 0)
+            )
+            ORDER BY dv.id ASC
             """)
     List<DetailFactureProjection> findDetailVentesByVenteId(@Param("venteId") Long venteId);
 
+
     /**
-     * Récupère TOUS les détails des produits d'une vente (y compris annulés/retournés)
+     * Récupère les détails pour facture en excluant les produits défectueux retournés
+     * LOGIQUE SPÉCIALE: Exclut complètement les produits défectueux des factures
+     * - VENDU: produits vendus normalement
+     * - RETOURNE_ECHANGE avec montantTotal > 0: nouveaux produits d'échange (non défectueux)
+     * EXCLUT COMPLÈTEMENT:
+     * - Tous les produits liés à des retours défectueux (REMBOURSEMENT_DEFECTUEUX, ECHANGE_DEFECTUEUX)
      */
     @Query("""
             SELECT 
@@ -115,88 +131,18 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
             FROM DetailVente dv
             JOIN dv.vente v
             JOIN dv.produit p
+            LEFT JOIN RetourProduit rp ON rp.detailVente.id = dv.id
             WHERE v.id = :venteId
             AND v.deleted = false
+            AND (
+                (dv.status = 'VENDU' AND (rp.id IS NULL OR rp.typeRetour NOT IN ('REMBOURSEMENT_DEFECTUEUX', 'ECHANGE_DEFECTUEUX')))
+                OR (dv.status = 'RETOURNE_ECHANGE' AND dv.montantTotal > 0)
+            )
+            ORDER BY dv.id ASC
             """)
-    List<DetailFactureProjection> findAllDetailVentesByVenteId(@Param("venteId") Long venteId);
+    List<DetailFactureProjection> findDetailVentesForFactureExcludingDefective(@Param("venteId") Long venteId);
 
-    /**
-     * Recherche de factures avec filtres avancés
-     */
-    @Query("""
-            SELECT 
-                v.id AS venteId,
-                v.numeroFacture AS numeroFacture,
-                v.date AS dateVente,
-                v.montantTotal AS montantTotal,
-                v.montantRestant AS montantRestant,
-                v.estCredit AS estCredit,
-                c.id AS clientId,
-                c.nomComplet AS nomClient,
-                c.telephone AS telephoneClient,
-                p.id AS paiementId,
-                p.modePaiement AS modePaiement,
-                p.montantVerser AS montantVerser,
-                p.datePaiement AS datePaiement,
-                u.id AS utilisateurId,
-                u.nom AS utilisateurNom
-            FROM Vente v
-            LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
-            LEFT JOIN v.utilisateur u
-            WHERE v.deleted = false
-            AND (:numeroFacture IS NULL OR v.numeroFacture LIKE %:numeroFacture%)
-            AND (:dateDebut IS NULL OR v.date >= :dateDebut)
-            AND (:dateFin IS NULL OR v.date < :dateFin)
-            AND (:nomClient IS NULL OR c.nomComplet LIKE %:nomClient%)
-            AND (:telephoneClient IS NULL OR c.telephone LIKE %:telephoneClient%)
-            AND (:modePaiement IS NULL OR p.modePaiement = :modePaiement)
-            AND (:estCredit IS NULL OR v.estCredit = :estCredit)
-            AND (:montantMin IS NULL OR v.montantTotal >= :montantMin)
-            AND (:montantMax IS NULL OR v.montantTotal <= :montantMax)
-            ORDER BY v.date DESC
-            """)
-    Page<FactureProjection> searchFactures(
-            @Param("numeroFacture") String numeroFacture,
-            @Param("dateDebut") LocalDateTime dateDebut,
-            @Param("dateFin") LocalDateTime dateFin,
-            @Param("nomClient") String nomClient,
-            @Param("telephoneClient") String telephoneClient,
-            @Param("modePaiement") String modePaiement,
-            @Param("estCredit") Boolean estCredit,
-            @Param("montantMin") Double montantMin,
-            @Param("montantMax") Double montantMax,
-            Pageable pageable
-    );
 
-    /**
-     * Récupère toutes les ventes avec pagination
-     */
-    @Query("""
-            SELECT 
-                v.id AS venteId,
-                v.numeroFacture AS numeroFacture,
-                v.date AS dateVente,
-                v.montantTotal AS montantTotal,
-                v.montantRestant AS montantRestant,
-                v.estCredit AS estCredit,
-                c.id AS clientId,
-                c.nomComplet AS nomClient,
-                c.telephone AS telephoneClient,
-                p.id AS paiementId,
-                p.modePaiement AS modePaiement,
-                p.montantVerser AS montantVerser,
-                p.datePaiement AS datePaiement,
-                u.id AS utilisateurId,
-                u.nom AS utilisateurNom
-            FROM Vente v
-            LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
-            LEFT JOIN v.utilisateur u
-            WHERE v.deleted = false
-            ORDER BY v.date DESC
-            """)
-    Page<FactureProjection> findAllFactures(Pageable pageable);
 
     /**
      * Récupère toutes les ventes avec leurs détails produits
@@ -220,7 +166,7 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
                 u.nom AS utilisateurNom
             FROM Vente v
             LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
+            LEFT JOIN v.paiements p
             LEFT JOIN v.utilisateur u
             LEFT JOIN v.detailVentes dv
             WHERE v.deleted = false
@@ -256,7 +202,7 @@ public interface FactureRepository extends SoftDeleteRepository<sn.boutique.xamx
                 u.nom AS utilisateurNom
             FROM Vente v
             LEFT JOIN v.client c
-            LEFT JOIN v.paiement p
+            LEFT JOIN v.paiements p
             LEFT JOIN v.utilisateur u
             WHERE v.deleted = false
             AND v.date >= :dateDebut

@@ -45,10 +45,10 @@ public class FactureService implements IFactureService {
                         ErrorCodes.ENTITY_NOT_FOUND
                 ));
 
-        // Récupérer les détails des produits
+        // Récupérer les détails des produits (nouvelle logique intelligente)
         List<DetailFactureProjection> details = factureRepository.findDetailVentesByVenteId(factureData.getVenteId());
 
-        return factureMapper.toFactureResponseDTO(factureData, details, "complete");
+        return factureMapper.toFactureResponseDTO(factureData, details, "smart_display");
     }
 
 
@@ -227,6 +227,20 @@ public class FactureService implements IFactureService {
         });
 
         return response;
+    }
+
+    @Override
+    public FactureResponseDTO getFactureByNumeroExcludingDefective(String numeroFacture) {
+        FactureProjection factureData = factureRepository.findFactureByNumero(numeroFacture)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Facture introuvable (Numéro: " + numeroFacture + ")",
+                        ErrorCodes.ENTITY_NOT_FOUND
+                ));
+
+        // Récupérer les détails en excluant les produits défectueux
+        List<DetailFactureProjection> details = factureRepository.findDetailVentesForFactureExcludingDefective(factureData.getVenteId());
+
+        return factureMapper.toFactureResponseDTO(factureData, details, "excluding_defective");
     }
 
 }

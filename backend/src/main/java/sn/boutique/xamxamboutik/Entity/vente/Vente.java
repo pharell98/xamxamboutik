@@ -22,8 +22,8 @@ import java.util.Set;
         }
 )
 @Data
-@EqualsAndHashCode(callSuper = true, exclude = {"detailVentes", "paiement"})
-@ToString(callSuper = true, exclude = {"detailVentes", "paiement"})
+@EqualsAndHashCode(callSuper = true, exclude = {"detailVentes", "paiements"})
+@ToString(callSuper = true, exclude = {"detailVentes", "paiements"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Vente extends BaseEntity {
@@ -55,7 +55,7 @@ public class Vente extends BaseEntity {
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL)
     private Set<DetailVente> detailVentes = new HashSet<>();
 
-    @OneToOne(mappedBy = "vente", cascade = CascadeType.ALL)
-    private Paiement paiement;
+    @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL)
+    private Set<Paiement> paiements = new HashSet<>();
 
 }

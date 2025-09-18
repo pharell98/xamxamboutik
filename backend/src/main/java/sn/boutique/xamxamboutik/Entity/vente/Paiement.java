@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
-import sn.boutique.xamxamboutik.Entity.finance.Caisse;
 import sn.boutique.xamxamboutik.Enums.ModePaiement;
 
 import java.time.LocalDateTime;
@@ -31,11 +30,7 @@ public class Paiement extends BaseEntity {
     @Column(name = "mode_paiement", nullable = false)
     private ModePaiement modePaiement = ModePaiement.ESPECE;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "vente_id", nullable = false)
     private Vente vente;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "caisse_utilisateur_id", nullable = false)
-    private Caisse caisseUtilisateur;
 }

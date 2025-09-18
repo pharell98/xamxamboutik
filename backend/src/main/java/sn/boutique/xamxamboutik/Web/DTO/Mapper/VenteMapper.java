@@ -17,7 +17,7 @@ public interface VenteMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "date", ignore = true)
     @Mapping(target = "detailVentes", ignore = true)
-    @Mapping(target = "paiement", ignore = true)
+    @Mapping(target = "paiements", ignore = true)
     @Mapping(target = "client", ignore = true)
     @Mapping(target = "utilisateur", ignore = true)
     @Mapping(target = "estCredit", ignore = true)

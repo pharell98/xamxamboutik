@@ -92,25 +92,6 @@ public class FactureMapperImpl {
         return dto;
     }
 
-    public FactureListResponseDTO toFactureListResponseDTOWithDetails(Page<FactureProjection> projectionsPage) {
-        if (projectionsPage == null) {
-            return null;
-        }
-
-        FactureListResponseDTO dto = new FactureListResponseDTO();
-        dto.setTotalElements(projectionsPage.getTotalElements());
-        dto.setTotalPages(projectionsPage.getTotalPages());
-        dto.setCurrentPage(projectionsPage.getNumber());
-        dto.setPageSize(projectionsPage.getSize());
-
-        // Convertir les factures avec détails
-        List<FactureSummaryDTO> factures = projectionsPage.getContent().stream()
-                .map(this::toFactureSummaryDTOWithDetails)
-                .collect(Collectors.toList());
-        dto.setFactures(factures);
-
-        return dto;
-    }
 
     private DetailFactureDTO toDetailFactureDTO(DetailFactureProjection detail) {
         DetailFactureDTO dto = new DetailFactureDTO();
@@ -138,24 +119,4 @@ public class FactureMapperImpl {
         return dto;
     }
 
-    private FactureSummaryDTO toFactureSummaryDTOWithDetails(FactureProjection projection) {
-        FactureSummaryDTO dto = new FactureSummaryDTO();
-        dto.setNumeroFacture(projection.getNumeroFacture());
-        dto.setDateVente(projection.getDateVente());
-        dto.setNomClient(projection.getNomClient());
-        dto.setTelephoneClient(projection.getTelephoneClient());
-        dto.setModePaiement(projection.getModePaiement());
-        dto.setMontantTotal(projection.getMontantTotal());
-        dto.setMontantPayer(projection.getMontantVerser());
-        dto.setMontantRestant(projection.getMontantRestant());
-        dto.setEstCredit(projection.getEstCredit());
-        dto.setUtilisateurId(projection.getUtilisateurId());
-        dto.setUtilisateurNom(projection.getUtilisateurNom());
-
-        // Récupérer les détails des produits pour cette vente
-        // Note: Cette méthode nécessite l'injection du FactureRepository
-        // Pour l'instant, on laisse le champ detailFacture à null
-        // Il sera rempli par le service
-        return dto;
-    }
 }

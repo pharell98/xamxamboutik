@@ -44,7 +44,7 @@ public class FactureController {
     }
 
     /**
-     * Récupère une facture par son numéro
+     * Récupère une facture par son numéro (affichage intelligent)
      */
     @GetMapping("/{numeroFacture}")
     public ResponseEntity<ApiResponse<FactureResponseDTO>> getFactureByNumero(
@@ -52,6 +52,21 @@ public class FactureController {
         try {
             FactureResponseDTO facture = factureService.getFactureByNumero(numeroFacture);
             return ResponseEntity.ok(ApiResponse.success("Facture récupérée avec succès", facture));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Facture introuvable: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Récupère une facture par son numéro en excluant complètement les produits défectueux
+     */
+    @GetMapping("/{numeroFacture}/clean")
+    public ResponseEntity<ApiResponse<FactureResponseDTO>> getFactureByNumeroClean(
+            @PathVariable String numeroFacture) {
+        try {
+            FactureResponseDTO facture = factureService.getFactureByNumeroExcludingDefective(numeroFacture);
+            return ResponseEntity.ok(ApiResponse.success("Facture récupérée avec succès (produits défectueux exclus)", facture));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Facture introuvable: " + e.getMessage()));

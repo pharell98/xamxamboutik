@@ -40,4 +40,9 @@ public interface IFactureService {
      */
     FactureListResponseDTO getFacturesDuMois(Pageable pageable);
 
+    /**
+     * Récupère une facture par son numéro en excluant les produits défectueux
+     */
+    FactureResponseDTO getFactureByNumeroExcludingDefective(String numeroFacture);
+
 }
