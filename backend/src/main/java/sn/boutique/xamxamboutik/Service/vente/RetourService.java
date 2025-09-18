@@ -1,6 +1,8 @@
 package sn.boutique.xamxamboutik.Service.vente;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import sn.boutique.xamxamboutik.Entity.vente.DetailVente;
 import sn.boutique.xamxamboutik.Entity.vente.Paiement;
 import sn.boutique.xamxamboutik.Entity.vente.RetourProduit;
 import sn.boutique.xamxamboutik.Entity.vente.Vente;
+import sn.boutique.xamxamboutik.Enums.ModePaiement;
 import sn.boutique.xamxamboutik.Enums.StatusDetailVente;
 import sn.boutique.xamxamboutik.Enums.TypeRetour;
 import sn.boutique.xamxamboutik.Exception.BaseCustomException;
@@ -22,8 +25,6 @@ import sn.boutique.xamxamboutik.Repository.vente.VenteRepository;
 import sn.boutique.xamxamboutik.Web.DTO.Request.AnnulationRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.EchangeRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.RemboursementRequestDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
@@ -406,7 +407,7 @@ public class RetourService implements IRetourService {
         Paiement remboursement = new Paiement();
         remboursement.setDatePaiement(LocalDateTime.now());
         remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
+        remboursement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
         remboursement.setVente(vente);
         detailVenteRepository.save(detailVente);
         paiementRepository.save(remboursement);
@@ -433,7 +434,7 @@ public class RetourService implements IRetourService {
         Paiement remboursement = new Paiement();
         remboursement.setDatePaiement(LocalDateTime.now());
         remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
+        remboursement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
         remboursement.setVente(vente);
         paiementRepository.save(remboursement);
         updateVenteMontants(vente, -montantRembourse);
@@ -575,7 +576,7 @@ public class RetourService implements IRetourService {
             Paiement ajustement = new Paiement();
             ajustement.setDatePaiement(LocalDateTime.now());
             ajustement.setMontantVerser(montantAjuste);
-            ajustement.setModePaiement(vente.getPaiement().getModePaiement());
+            ajustement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
             ajustement.setVente(vente);
             paiementRepository.save(ajustement);
         }
@@ -605,7 +606,7 @@ public class RetourService implements IRetourService {
         Paiement remboursement = new Paiement();
         remboursement.setDatePaiement(LocalDateTime.now());
         remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
+        remboursement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
         remboursement.setVente(vente);
         detailVenteRepository.save(detailVente);
         paiementRepository.save(remboursement);
@@ -629,7 +630,7 @@ public class RetourService implements IRetourService {
         Paiement remboursement = new Paiement();
         remboursement.setDatePaiement(LocalDateTime.now());
         remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
+        remboursement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
         remboursement.setVente(vente);
         detailVenteRepository.save(detailVente);
         paiementRepository.save(remboursement);
@@ -658,7 +659,7 @@ public class RetourService implements IRetourService {
         Paiement remboursement = new Paiement();
         remboursement.setDatePaiement(LocalDateTime.now());
         remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
+        remboursement.setModePaiement(vente.getPaiement() != null ? vente.getPaiement().getModePaiement() : ModePaiement.ESPECE);
         remboursement.setVente(vente);
         detailVenteRepository.save(detailVente);
         paiementRepository.save(remboursement);

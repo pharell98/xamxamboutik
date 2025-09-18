@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.security.dto;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -7,8 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.io.Serial;
 import java.io.Serializable;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,6 +41,7 @@ public class LoginRequest implements Serializable {
             format = "password"
     )
     private String password;
+
     @Override
     public String toString() {
         return "LoginRequest{login='" + login + "'}";  // Ne pas inclure le mot de passe dans les logs

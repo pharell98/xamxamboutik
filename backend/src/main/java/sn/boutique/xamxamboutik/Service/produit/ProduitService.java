@@ -3,7 +3,10 @@ package sn.boutique.xamxamboutik.Service.produit;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +27,10 @@ import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -130,33 +136,33 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         if (!produitRepository.existsById(produit.getId())) {
             throw new EntityNotFoundException("Produit avec l'ID " + produit.getId() + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND);
         }
-        
-        log.info("DEBUG - ProduitService.update() - Avant sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
-                produit.getId(), produit.getCodeProduit(), produit.getLibelle(), 
+
+        log.info("DEBUG - ProduitService.update() - Avant sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
+                produit.getId(), produit.getCodeProduit(), produit.getLibelle(),
                 produit.getPrixAchat(), produit.getStockDisponible(), produit.getCoupMoyenAcquisition());
-        
+
         // Ne pas modifier le libellé car il a déjà été mis à jour dans updateProductInfo()
         // produit.setLibelle(produit.getLibelle().toLowerCase());
-        
+
         if (produitRepository.existsByLibelleAndDeletedFalseAndIdNot(produit.getLibelle(), produit.getId())) {
             throw new BaseCustomException("Le produit '" + produit.getLibelle() + "' existe déjà.", "DUPLICATE_ENTITY");
         }
-        
+
         // Forcer la sauvegarde en utilisant merge pour s'assurer que les modifications sont persistées
         Produit updated = produitRepository.save(produit);
-        
+
         // Vérifier que les données sont bien sauvegardées en rechargeant depuis la base
         Produit reloaded = produitRepository.findById(produit.getId()).orElse(null);
         if (reloaded != null) {
-            log.info("DEBUG - ProduitService.update() - Après rechargement depuis DB: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
-                    reloaded.getId(), reloaded.getCodeProduit(), reloaded.getLibelle(), 
+            log.info("DEBUG - ProduitService.update() - Après rechargement depuis DB: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
+                    reloaded.getId(), reloaded.getCodeProduit(), reloaded.getLibelle(),
                     reloaded.getPrixAchat(), reloaded.getStockDisponible(), reloaded.getCoupMoyenAcquisition());
         }
-        
-        log.info("DEBUG - ProduitService.update() - Après sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}", 
-                updated.getId(), updated.getCodeProduit(), updated.getLibelle(), 
+
+        log.info("DEBUG - ProduitService.update() - Après sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
+                updated.getId(), updated.getCodeProduit(), updated.getLibelle(),
                 updated.getPrixAchat(), updated.getStockDisponible(), updated.getCoupMoyenAcquisition());
-        
+
         notifyUpdate(updated, "UPDATE");
         return updated;
     }

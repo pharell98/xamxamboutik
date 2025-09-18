@@ -1,8 +1,11 @@
 package sn.boutique.xamxamboutik.Web.DTO.Response.web;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
 import java.time.LocalDateTime;
+
 @Data
 public class ApprovisionnementResponseDTO {
     @Schema(description = "ID unique de l'approvisionnement", example = "1")

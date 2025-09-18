@@ -1,11 +1,14 @@
 package sn.boutique.xamxamboutik.Entity.approvisionnement;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
 @Entity
 @Table(name = "approvisionnements")
 @Data

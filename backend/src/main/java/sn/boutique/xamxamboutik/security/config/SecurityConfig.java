@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +25,7 @@ import sn.boutique.xamxamboutik.security.service.CustomUserDetailsService;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -33,6 +33,7 @@ public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -42,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(SecurityConstants.PublicUrls.SWAGGER_URLS).permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/approvisionnement/**", "/categories/**", "/produits/**","/statistiques/**").hasRole("GESTIONNAIRE")
+                        .requestMatchers("/approvisionnement/**", "/categories/**", "/produits/**", "/statistiques/**").hasRole("GESTIONNAIRE")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -54,6 +55,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var configuration = new org.springframework.web.cors.CorsConfiguration();
@@ -71,6 +73,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         var authProvider = new DaoAuthenticationProvider();
@@ -78,32 +81,35 @@ public class SecurityConfig {
         authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
     private void customUnauthorizedResponse(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String body = """
-            {
-              "success": false,
-              "message": "Vous n'êtes pas connecté ou votre token est invalide",
-              "errorCode": "UNAUTHORIZED"
-            }
-            """;
+                {
+                  "success": false,
+                  "message": "Vous n'êtes pas connecté ou votre token est invalide",
+                  "errorCode": "UNAUTHORIZED"
+                }
+                """;
         response.getWriter().write(body);
     }
+
     private void customForbiddenResponse(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String body = """
-            {
-              "success": false,
-              "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
-              "errorCode": "ACCESS_DENIED"
-            }
-            """;
+                {
+                  "success": false,
+                  "message": "Vous êtes connecté, mais vous n'avez pas le rôle requis pour accéder à cette ressource",
+                  "errorCode": "ACCESS_DENIED"
+                }
+                """;
         response.getWriter().write(body);
     }
 }

@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.security.config.init;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -7,19 +8,23 @@ import org.springframework.stereotype.Component;
 import sn.boutique.xamxamboutik.Entity.utilisateur.Utilisateur;
 import sn.boutique.xamxamboutik.Enums.Role;
 import sn.boutique.xamxamboutik.Repository.utilisateur.UtilisateurRepository;
+
 import java.time.LocalDateTime;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
     private final UtilisateurRepository utilisateurRepository;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) {
         if (utilisateurRepository.count() == 0) {
             initUsers();
         }
     }
+
     private void initUsers() {
         Utilisateur gestionnaire = new Utilisateur();
         gestionnaire.setNom("Admin Gestionnaire");

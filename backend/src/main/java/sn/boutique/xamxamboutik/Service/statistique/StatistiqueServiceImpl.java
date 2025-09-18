@@ -1,10 +1,12 @@
 package sn.boutique.xamxamboutik.Service.statistique;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -17,14 +19,14 @@ public class StatistiqueServiceImpl implements IStatistique {
     @Override
     public double getCumulativeBenefit() {
         String jpql = """
-            SELECT COALESCE(
-                SUM((dv.prixVente - p.coupMoyenAcquisition) * dv.quantiteVendu),
-                0
-            )
-            FROM DetailVente dv
-            JOIN dv.produit p
-            JOIN dv.vente v
-        """;
+                    SELECT COALESCE(
+                        SUM((dv.prixVente - p.coupMoyenAcquisition) * dv.quantiteVendu),
+                        0
+                    )
+                    FROM DetailVente dv
+                    JOIN dv.produit p
+                    JOIN dv.vente v
+                """;
         TypedQuery<Double> query = entityManager.createQuery(jpql, Double.class);
         Double result = query.getSingleResult();
         return (result != null) ? result : 0.0;
@@ -33,15 +35,15 @@ public class StatistiqueServiceImpl implements IStatistique {
     @Override
     public double getBenefitBetweenDates(LocalDateTime startDate, LocalDateTime endDate) {
         String jpql = """
-            SELECT COALESCE(
-                SUM((dv.prixVente - p.coupMoyenAcquisition) * dv.quantiteVendu),
-                0
-            )
-            FROM DetailVente dv
-            JOIN dv.produit p
-            JOIN dv.vente v
-            WHERE v.date BETWEEN :startDate AND :endDate
-        """;
+                    SELECT COALESCE(
+                        SUM((dv.prixVente - p.coupMoyenAcquisition) * dv.quantiteVendu),
+                        0
+                    )
+                    FROM DetailVente dv
+                    JOIN dv.produit p
+                    JOIN dv.vente v
+                    WHERE v.date BETWEEN :startDate AND :endDate
+                """;
         TypedQuery<Double> query = entityManager.createQuery(jpql, Double.class);
         query.setParameter("startDate", startDate);
         query.setParameter("endDate", endDate);

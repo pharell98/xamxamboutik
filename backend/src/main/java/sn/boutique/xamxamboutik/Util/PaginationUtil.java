@@ -1,7 +1,10 @@
 package sn.boutique.xamxamboutik.Util;
+
 import org.springframework.data.domain.Page;
+
 import java.util.HashMap;
 import java.util.Map;
+
 public class PaginationUtil {
     public static Map<String, Object> buildPaginationMap(Page<?> page, Object content) {
         Map<String, Object> data = new HashMap<>();

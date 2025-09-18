@@ -40,41 +40,64 @@ public class ProduitController extends AbstractBaseController<
     private final ProduitService produitService;
     private final ProduitMapper produitMapper;
 
-    @Override protected ProduitService getService() { return produitService; }
-    @Override protected Produit toEntity(ProduitRequestDTO d) { return produitMapper.toEntity(d); }
-    @Override protected ProduitResponseWebDTO toWebResponse(Produit e) { return produitMapper.toResponseWebDTO(e); }
-    @Override protected ProduitResponseMobileDTO toMobileResponse(Produit e) { return produitMapper.toResponseMobileDTO(e); }
-    @Override protected List<ProduitResponseWebDTO> toWebResponseList(List<Produit> l) { return produitMapper.toResponseWebDTOs(l); }
-    @Override protected List<ProduitResponseMobileDTO> toMobileResponseList(List<Produit> l) { return produitMapper.toResponseMobileDTOs(l); }
+    @Override
+    protected ProduitService getService() {
+        return produitService;
+    }
+
+    @Override
+    protected Produit toEntity(ProduitRequestDTO d) {
+        return produitMapper.toEntity(d);
+    }
+
+    @Override
+    protected ProduitResponseWebDTO toWebResponse(Produit e) {
+        return produitMapper.toResponseWebDTO(e);
+    }
+
+    @Override
+    protected ProduitResponseMobileDTO toMobileResponse(Produit e) {
+        return produitMapper.toResponseMobileDTO(e);
+    }
+
+    @Override
+    protected List<ProduitResponseWebDTO> toWebResponseList(List<Produit> l) {
+        return produitMapper.toResponseWebDTOs(l);
+    }
+
+    @Override
+    protected List<ProduitResponseMobileDTO> toMobileResponseList(List<Produit> l) {
+        return produitMapper.toResponseMobileDTOs(l);
+    }
 
     @GetMapping("/produits")
-    public ApiResponse<?> getProduitsProjection(@RequestParam(defaultValue="1") int page,
-                                                @RequestParam(defaultValue="10") int size) {
-        Page<ProduitProjection> pg = produitService.findAllProjection(PageRequest.of(page-1, size));
+    public ApiResponse<?> getProduitsProjection(@RequestParam(defaultValue = "1") int page,
+                                                @RequestParam(defaultValue = "10") int size) {
+        Page<ProduitProjection> pg = produitService.findAllProjection(PageRequest.of(page - 1, size));
         Map<String, Object> data = PaginationUtil.buildPaginationMap(pg, produitMapper.toResponseWebDTOsFromProjection(pg.getContent()));
         return ApiResponse.success("Produits récupérés", data);
     }
 
     @GetMapping("/produits/deleted")
-    public ApiResponse<?> getDeletedProduits(@RequestParam(defaultValue="1") int page,
-                                             @RequestParam(defaultValue="10") int size) {
-        Page<ProduitProjection> pg = produitService.findDeletedProjection(PageRequest.of(page-1, size));
+    public ApiResponse<?> getDeletedProduits(@RequestParam(defaultValue = "1") int page,
+                                             @RequestParam(defaultValue = "10") int size) {
+        Page<ProduitProjection> pg = produitService.findDeletedProjection(PageRequest.of(page - 1, size));
         Map<String, Object> data = PaginationUtil.buildPaginationMap(pg, produitMapper.toResponseWebDTOsFromProjection(pg.getContent()));
         return ApiResponse.success("Produits supprimés récupérés", data);
     }
 
     @GetMapping("/produits/category/{id}")
     public ApiResponse<?> getProduitsByCategory(@PathVariable Long id,
-                                                @RequestParam(defaultValue="1") int page,
-                                                @RequestParam(defaultValue="10") int size) {
-        Page<ProduitProjection> pg = produitService.findByCategoryId(id, PageRequest.of(page-1, size));
+                                                @RequestParam(defaultValue = "1") int page,
+                                                @RequestParam(defaultValue = "10") int size) {
+        Page<ProduitProjection> pg = produitService.findByCategoryId(id, PageRequest.of(page - 1, size));
         Map<String, Object> data = PaginationUtil.buildPaginationMap(pg, produitMapper.toResponseWebDTOsFromProjection(pg.getContent()));
         return ApiResponse.success("Produits par catégorie récupérés", data);
     }
 
     @PostMapping("/produits")
     public ResponseEntity<ApiResponse<?>> saveProduit(@Valid @RequestPart("produit") ProduitRequestDTO dto,
-                                                      @RequestPart(value="file", required=false) MultipartFile file) throws Exception {
+                                                      @RequestPart(value = "file", required = false) MultipartFile file) throws Exception {
         Produit saved = produitService.save(dto, file);
         return ResponseEntity.ok(ApiResponse.success("Produit créé", saved));
     }
@@ -82,7 +105,7 @@ public class ProduitController extends AbstractBaseController<
     @PutMapping("/produits/{id}")
     public ResponseEntity<ApiResponse<?>> updateProduit(@PathVariable Long id,
                                                         @Valid @RequestPart("produit") ProduitRequestDTO dto,
-                                                        @RequestPart(value="file", required=false) MultipartFile file) throws Exception {
+                                                        @RequestPart(value = "file", required = false) MultipartFile file) throws Exception {
         dto.setId(id);
         Produit updated = produitService.update(dto, file);
         return ResponseEntity.ok(ApiResponse.success("Produit mis à jour", updated));
@@ -102,30 +125,29 @@ public class ProduitController extends AbstractBaseController<
 
     @GetMapping("/produits/suggestions")
     public ApiResponse<?> suggestions(@RequestParam String query,
-                                      @RequestParam(defaultValue="1") int page,
-                                      @RequestParam(defaultValue="10") int size) {
-        Page<ProduitProjection> pg = produitService.suggestionsByLibelleProjection(query, PageRequest.of(page-1, size));
+                                      @RequestParam(defaultValue = "1") int page,
+                                      @RequestParam(defaultValue = "10") int size) {
+        Page<ProduitProjection> pg = produitService.suggestionsByLibelleProjection(query, PageRequest.of(page - 1, size));
         Map<String, Object> data = PaginationUtil.buildPaginationMap(pg, produitMapper.toResponseWebDTOsFromProjection(pg.getContent()));
         return ApiResponse.success("Suggestions", data);
     }
 
     @GetMapping("/produits/approvisionnement/suggestions")
     public ApiResponse<?> suggestionsAppro(@RequestParam String query,
-                                           @RequestParam(defaultValue="1") int page,
-                                           @RequestParam(defaultValue="10") int size) {
+                                           @RequestParam(defaultValue = "1") int page,
+                                           @RequestParam(defaultValue = "10") int size) {
         Page<AddApproProductLibelleSearchResponseDTO> pg =
-                produitService.suggestionsForApprovisionnement(query, PageRequest.of(page-1, size));
+                produitService.suggestionsForApprovisionnement(query, PageRequest.of(page - 1, size));
         Map<String, Object> data = PaginationUtil.buildPaginationMap(pg, pg.getContent());
         return ApiResponse.success("Suggestions approvisionnement", data);
     }
 
 
-
     @GetMapping("/products/barcode/{barcode}")
     public ResponseEntity<ApiResponse<?>> findByBarcode(@PathVariable String barcode,
-                                                        @RequestHeader(value="X-Client-Type", defaultValue="web") String clientType) {
+                                                        @RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType) {
         Produit p = produitService.findByCode(barcode)
-                .orElseThrow(() -> new EntityNotFoundException("Produit "+barcode, ErrorCodes.ENTITY_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFoundException("Produit " + barcode, ErrorCodes.ENTITY_NOT_FOUND));
         Object dto = "mobile".equalsIgnoreCase(clientType)
                 ? produitMapper.toResponseMobileDTO(p)
                 : produitMapper.toResponseWebDTO(p);

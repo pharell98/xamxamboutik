@@ -1,6 +1,9 @@
 package sn.boutique.xamxamboutik.Web.DTO.Request;
+
 import lombok.Data;
+
 import java.util.List;
+
 @Data
 public class ApprovisionnementRequestDTO {
     private String codeAppro;       // ex: "APPRO-2025-0001"

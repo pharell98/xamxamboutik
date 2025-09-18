@@ -12,22 +12,18 @@ import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.Approvisionnement;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.DetailAppro;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
-import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
-import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProductProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProjection;
 import sn.boutique.xamxamboutik.Repository.approvisionnement.ApprovisionnementRepository;
 import sn.boutique.xamxamboutik.Repository.approvisionnement.DetailApproRepository;
-import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
-import sn.boutique.xamxamboutik.Service.produit.CategorieService;
 import sn.boutique.xamxamboutik.Service.imageservice.service.ImageBackgroundService;
-import sn.boutique.xamxamboutik.Util.ProduitUtils;
+import sn.boutique.xamxamboutik.Service.produit.CategorieService;
+import sn.boutique.xamxamboutik.Service.produit.IProduitService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ApprovisionnementMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitExistantDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.ApprovisionnementProductDTO;
-import sn.boutique.xamxamboutik.Service.produit.IProduitService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -120,35 +116,35 @@ public class ApprovisionnementService implements IApprovisionnementService {
         if (appro.getDetailAppros().isEmpty()) {
             throw new IllegalStateException("Aucun produit valide — approvisionnement annulé");
         }
-        
-        log.info("DEBUG - Finalisation de l'approvisionnement: code={}, nb détails={}", 
+
+        log.info("DEBUG - Finalisation de l'approvisionnement: code={}, nb détails={}",
                 appro.getCodeAppro(), appro.getDetailAppros().size());
-        
+
         double totalDetails = appro.getDetailAppros().stream()
                 .mapToDouble(d -> d.getPrixAchat() * d.getQuantiteAchat())
                 .sum();
         double frais = Optional.ofNullable(appro.getFraisTransport()).orElse(0.0);
         appro.setMontantAppro(totalDetails + frais);
-        
-        log.info("DEBUG - Calculs: totalDetails={}, frais={}, montantTotal={}", 
+
+        log.info("DEBUG - Calculs: totalDetails={}, frais={}, montantTotal={}",
                 totalDetails, frais, appro.getMontantAppro());
-        
+
         // Sauvegarde explicite avec vérification
         Approvisionnement savedAppro = approvisionnementRepository.save(appro);
-        
-        log.info("DEBUG - Approvisionnement sauvegardé avec succès: ID={}, Code={}, Montant={}", 
+
+        log.info("DEBUG - Approvisionnement sauvegardé avec succès: ID={}, Code={}, Montant={}",
                 savedAppro.getId(), savedAppro.getCodeAppro(), savedAppro.getMontantAppro());
-        
+
         // Vérification que l'approvisionnement a bien été sauvegardé
         Optional<Approvisionnement> verification = approvisionnementRepository.findById(savedAppro.getId());
         if (verification.isPresent()) {
-            log.info("DEBUG - Vérification réussie: approvisionnement trouvé en base avec {} détails", 
+            log.info("DEBUG - Vérification réussie: approvisionnement trouvé en base avec {} détails",
                     verification.get().getDetailAppros().size());
         } else {
             log.error("ERREUR: L'approvisionnement n'a pas été trouvé en base après sauvegarde!");
             throw new RuntimeException("Échec de la persistance de l'approvisionnement");
         }
-        
+
         notifyUpdate();
     }
 
@@ -223,9 +219,9 @@ public class ApprovisionnementService implements IApprovisionnementService {
 
         for (ProduitExistantDTO dto : list) {
             Produit p = produitService.updateStockAndPrice(
-                Long.valueOf(dto.getId()),
-                dto.getQuantite(),
-                dto.getPrixAchat() + fraisParUnite
+                    Long.valueOf(dto.getId()),
+                    dto.getQuantite(),
+                    dto.getPrixAchat() + fraisParUnite
             );
             DetailAppro d = new DetailAppro();
             d.setApprovisionnement(appro);
@@ -288,7 +284,7 @@ public class ApprovisionnementService implements IApprovisionnementService {
             message.put("type", "APPROVISIONNEMENT_CREATED");
             message.put("timestamp", LocalDateTime.now().toString());
             message.put("message", "Nouvel approvisionnement créé");
-            
+
             messagingTemplate.convertAndSend("/topic/approvisionnements", message);
             log.info("Message STOMP envoyé à /topic/approvisionnements: {}", message);
         } else {

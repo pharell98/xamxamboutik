@@ -1,6 +1,5 @@
 package sn.boutique.xamxamboutik.Web.Controller.vente;
 
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,55 +7,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sn.boutique.xamxamboutik.Service.vente.IFactureService;
-import sn.boutique.xamxamboutik.Web.DTO.Request.FactureGenerateRequestDTO;
-import sn.boutique.xamxamboutik.Web.DTO.Request.FactureSearchRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.FactureListResponseDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.FactureResponseDTO;
-import sn.boutique.xamxamboutik.Web.DTO.Response.web.MiniRecuResponseDTO;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("factures")
 @CrossOrigin(origins = "*")
 public class FactureController {
-    
+
     private final IFactureService factureService;
-    
+
     @Autowired
     public FactureController(IFactureService factureService) {
         this.factureService = factureService;
     }
-    
-    /**
-     * Génère une facture complète à partir d'une vente
-     */
-    @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<FactureResponseDTO>> generateFacture(
-            @Valid @RequestBody FactureGenerateRequestDTO request) {
-        try {
-            FactureResponseDTO facture = factureService.generateFacture(request);
-            return ResponseEntity.ok(ApiResponse.success("Facture générée avec succès", facture));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur lors de la génération de la facture: " + e.getMessage()));
-        }
-    }
-    
-    /**
-     * Génère un mini reçu pour imprimante thermique
-     */
-    @PostMapping("/generate-mini-recu")
-    public ResponseEntity<ApiResponse<MiniRecuResponseDTO>> generateMiniRecu(
-            @Valid @RequestBody FactureGenerateRequestDTO request) {
-        try {
-            MiniRecuResponseDTO miniRecu = factureService.generateMiniRecu(request);
-            return ResponseEntity.ok(ApiResponse.success("Mini reçu généré avec succès", miniRecu));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur lors de la génération du mini reçu: " + e.getMessage()));
-        }
-    }
-    
+
+
     /**
      * Récupère toutes les ventes avec pagination
      */
@@ -73,7 +42,7 @@ public class FactureController {
                     .body(ApiResponse.error("Erreur lors de la récupération des ventes: " + e.getMessage()));
         }
     }
-    
+
     /**
      * Récupère une facture par son numéro
      */
@@ -88,52 +57,8 @@ public class FactureController {
                     .body(ApiResponse.error("Facture introuvable: " + e.getMessage()));
         }
     }
-    
-    /**
-     * Récupère une facture par ID de vente
-     */
-    @GetMapping("/vente/{venteId}")
-    public ResponseEntity<ApiResponse<FactureResponseDTO>> getFactureByVenteId(
-            @PathVariable Long venteId) {
-        try {
-            FactureResponseDTO facture = factureService.getFactureByVenteId(venteId);
-            return ResponseEntity.ok(ApiResponse.success("Facture récupérée avec succès", facture));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Facture introuvable: " + e.getMessage()));
-        }
-    }
-    
-    /**
-     * Récupère un mini reçu par numéro de facture
-     */
-    @GetMapping("/{numeroFacture}/mini-recu")
-    public ResponseEntity<ApiResponse<MiniRecuResponseDTO>> getMiniRecuByNumero(
-            @PathVariable String numeroFacture) {
-        try {
-            MiniRecuResponseDTO miniRecu = factureService.getMiniRecuByNumero(numeroFacture);
-            return ResponseEntity.ok(ApiResponse.success("Mini reçu récupéré avec succès", miniRecu));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Mini reçu introuvable: " + e.getMessage()));
-        }
-    }
-    
-    /**
-     * Recherche de factures avec filtres et pagination
-     */
-    @PostMapping("/search")
-    public ResponseEntity<ApiResponse<FactureListResponseDTO>> searchFactures(
-            @Valid @RequestBody FactureSearchRequestDTO request) {
-        try {
-            FactureListResponseDTO result = factureService.searchFactures(request);
-            return ResponseEntity.ok(ApiResponse.success("Recherche effectuée avec succès", result));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur lors de la recherche: " + e.getMessage()));
-        }
-    }
-    
+
+
     /**
      * Vérifie si un numéro de facture existe
      */
@@ -149,42 +74,59 @@ public class FactureController {
                     .body(ApiResponse.error("Erreur lors de la vérification: " + e.getMessage()));
         }
     }
-    
+
     /**
-     * Génère une facture complète à partir d'une vente (endpoint simplifié)
+     * Récupère toutes les factures du jour en cours
      */
-    @PostMapping("/generate-vente/{venteId}")
-    public ResponseEntity<ApiResponse<FactureResponseDTO>> generateFactureSimple(
-            @PathVariable Long venteId) {
+    @GetMapping("/today")
+    public ResponseEntity<ApiResponse<FactureListResponseDTO>> getFacturesDuJour(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         try {
-            FactureGenerateRequestDTO request = new FactureGenerateRequestDTO();
-            request.setVenteId(venteId);
-            request.setTypeFacture(sn.boutique.xamxamboutik.Enums.TypeFacture.COMPLETE);
-            
-            FactureResponseDTO facture = factureService.generateFacture(request);
-            return ResponseEntity.ok(ApiResponse.success("Facture générée avec succès", facture));
+            Pageable pageable = PageRequest.of(page, size);
+            FactureListResponseDTO result = factureService.getFacturesDuJour(pageable);
+            return ResponseEntity.ok(ApiResponse.success("Factures du jour récupérées avec succès", result));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur lors de la génération de la facture: " + e.getMessage()));
+                    .body(ApiResponse.error("Erreur lors de la récupération des factures du jour: " + e.getMessage()));
         }
     }
-    
+
     /**
-     * Génère un mini reçu à partir d'une vente (endpoint simplifié)
+     * Récupère toutes les factures d'une date donnée
      */
-    @PostMapping("/generate-mini-recu-vente/{venteId}")
-    public ResponseEntity<ApiResponse<MiniRecuResponseDTO>> generateMiniRecuSimple(
-            @PathVariable Long venteId) {
+    @GetMapping("/date/{date}")
+    public ResponseEntity<ApiResponse<FactureListResponseDTO>> getFacturesParDate(
+            @PathVariable String date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         try {
-            FactureGenerateRequestDTO request = new FactureGenerateRequestDTO();
-            request.setVenteId(venteId);
-            request.setTypeFacture(sn.boutique.xamxamboutik.Enums.TypeFacture.MINI_RECU);
-            
-            MiniRecuResponseDTO miniRecu = factureService.generateMiniRecu(request);
-            return ResponseEntity.ok(ApiResponse.success("Mini reçu généré avec succès", miniRecu));
+            // Parser la date depuis le format YYYY-MM-DD
+            LocalDate localDate = LocalDate.parse(date);
+            Pageable pageable = PageRequest.of(page, size);
+            FactureListResponseDTO result = factureService.getFacturesParDate(localDate, pageable);
+            return ResponseEntity.ok(ApiResponse.success("Factures de la date récupérées avec succès", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Erreur lors de la récupération des factures par date: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Récupère toutes les factures du mois en cours
+     */
+    @GetMapping("/month")
+    public ResponseEntity<ApiResponse<FactureListResponseDTO>> getFacturesDuMois(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            FactureListResponseDTO result = factureService.getFacturesDuMois(pageable);
+            return ResponseEntity.ok(ApiResponse.success("Factures du mois récupérées avec succès", result));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur lors de la génération du mini reçu: " + e.getMessage()));
+                    .body(ApiResponse.error("Erreur lors de la récupération des factures du mois: " + e.getMessage()));
         }
     }
+
 }

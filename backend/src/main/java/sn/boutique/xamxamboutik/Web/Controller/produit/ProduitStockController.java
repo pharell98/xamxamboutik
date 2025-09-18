@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Web.Controller.produit;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitStockProjection;
 import sn.boutique.xamxamboutik.Service.produit.ProduitStockService;
+import sn.boutique.xamxamboutik.Util.PaginationUtil;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitStockResponseDTO;
-import sn.boutique.xamxamboutik.Util.PaginationUtil;
+
 import java.util.List;
+
 @Tag(name = "ProduitStock", description = "API pour la gestion des produits en rupture de stock")
 @RestController
 @RequestMapping(produces = "application/json")
@@ -20,11 +23,13 @@ import java.util.List;
 public class ProduitStockController {
     private final ProduitStockService produitStockService;
     private final ProduitMapper produitMapper;
+
     @Autowired
     public ProduitStockController(ProduitStockService produitStockService, ProduitMapper produitMapper) {
         this.produitStockService = produitStockService;
         this.produitMapper = produitMapper;
     }
+
     @GetMapping("/stock/rupture")
     @Operation(
             summary = "Récupérer les produits en rupture de stock",

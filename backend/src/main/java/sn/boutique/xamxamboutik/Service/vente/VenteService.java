@@ -22,6 +22,7 @@ import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
 import sn.boutique.xamxamboutik.Repository.vente.DetailVenteRepository;
 import sn.boutique.xamxamboutik.Repository.vente.PaiementRepository;
 import sn.boutique.xamxamboutik.Repository.vente.VenteRepository;
+import sn.boutique.xamxamboutik.Service.user.CurrentUserService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitVenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.VenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.DetailVenteRequestDTO;
@@ -30,12 +31,7 @@ import sn.boutique.xamxamboutik.Web.DTO.Response.web.VenteJourResponseDTO;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
@@ -47,6 +43,7 @@ public class VenteService implements IVenteService {
     private final VenteMapper venteMapper;
     private final ProduitVenteMapper produitVenteMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final CurrentUserService currentUserService;
 
     @Autowired
     public VenteService(
@@ -56,7 +53,8 @@ public class VenteService implements IVenteService {
             ProduitRepository produitRepository,
             VenteMapper venteMapper,
             ProduitVenteMapper produitVenteMapper,
-            SimpMessagingTemplate messagingTemplate
+            SimpMessagingTemplate messagingTemplate,
+            CurrentUserService currentUserService
     ) {
         this.venteRepository = venteRepository;
         this.detailVenteRepository = detailVenteRepository;
@@ -65,16 +63,20 @@ public class VenteService implements IVenteService {
         this.venteMapper = venteMapper;
         this.produitVenteMapper = produitVenteMapper;
         this.messagingTemplate = messagingTemplate;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public Vente createVente(VenteRequestDTO dto) {
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
-        
+
+        // Assigner automatiquement l'utilisateur connecté
+        vente.setUtilisateur(currentUserService.getCurrentUser());
+
         // Génération automatique du numéro de facture
         vente.setNumeroFacture(generateNumeroFacture());
-        
+
         double totalMontant = 0.0;
         vente.setEstCredit(false);
         vente.setMontantRestant(0.0);
@@ -123,6 +125,7 @@ public class VenteService implements IVenteService {
 
     /**
      * Génère automatiquement un numéro de facture au format FAC-JJ-MM-AA-0001
+     *
      * @return Le numéro de facture généré
      */
     private String generateNumeroFacture() {
@@ -130,12 +133,12 @@ public class VenteService implements IVenteService {
         String jour = String.format("%02d", now.getDayOfMonth());
         String mois = String.format("%02d", now.getMonthValue());
         String annee = String.format("%02d", now.getYear() % 100); // Prend les 2 derniers chiffres de l'année
-        
+
         String prefix = "FAC-" + jour + "-" + mois + "-" + annee + "-";
-        
+
         // Récupérer le dernier numéro de facture du jour
         Optional<String> lastNumero = venteRepository.findLastNumeroFactureByPrefix(prefix);
-        
+
         int sequence = 1;
         if (lastNumero.isPresent()) {
             String lastNum = lastNumero.get();
@@ -147,7 +150,7 @@ public class VenteService implements IVenteService {
                 sequence = 1;
             }
         }
-        
+
         return prefix + String.format("%04d", sequence);
     }
 

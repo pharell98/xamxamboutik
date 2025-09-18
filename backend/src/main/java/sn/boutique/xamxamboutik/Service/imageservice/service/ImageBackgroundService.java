@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Service.imageservice.service;
+
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -7,15 +8,18 @@ import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
 import sn.boutique.xamxamboutik.Service.imageservice.ImageStorageService;
+
 @Service
 public class ImageBackgroundService {
     private final ImageStorageService imageStorageService;
     private final ProduitRepository produitRepository;
+
     public ImageBackgroundService(ImageStorageService imageStorageService,
                                   ProduitRepository produitRepository) {
         this.imageStorageService = imageStorageService;
         this.produitRepository = produitRepository;
     }
+
     @Async
     public void uploadImageAsync(Long produitId, byte[] fileData, String originalFilename) {
         try {
@@ -30,6 +34,7 @@ public class ImageBackgroundService {
             System.err.println("❌ [Async] Erreur upload produit " + produitId + ": " + e.getMessage());
         }
     }
+
     @Async
     public void replaceImageAsync(Long produitId, String oldPublicId, byte[] fileData, String originalFilename) {
         int maxRetries = 3;
@@ -65,6 +70,7 @@ public class ImageBackgroundService {
             System.err.println("❌ [Async] Échec du remplacement d'image pour produit " + produitId + " après " + maxRetries + " tentatives.");
         }
     }
+
     @Async
     public void deleteImageAsync(String publicId) {
         try {

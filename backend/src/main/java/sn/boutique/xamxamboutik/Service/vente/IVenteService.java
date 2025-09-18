@@ -10,11 +10,18 @@ import java.time.LocalDate;
 
 public interface IVenteService {
     Vente createVente(VenteRequestDTO dto);
+
     Page<?> getAllProductsBySalesPage(String clientType, Pageable pageable);
+
     Page<VenteJourResponseDTO> getTodaySales(Pageable pageable, Double minAmount, Double maxAmount);
+
     Page<VenteJourResponseDTO> getLast7DaysSales(Pageable pageable, Double minAmount, Double maxAmount);
+
     Page<VenteJourResponseDTO> getMonthSales(Pageable pageable, Double minAmount, Double maxAmount);
+
     Page<VenteJourResponseDTO> getYearSales(Pageable pageable, Double minAmount, Double maxAmount);
+
     Page<VenteJourResponseDTO> getSalesByExactDate(LocalDate date, Pageable pageable, Double minAmount, Double maxAmount);
+
     Page<VenteJourResponseDTO> getAllSales(Pageable pageable, Double minAmount, Double maxAmount);
 }

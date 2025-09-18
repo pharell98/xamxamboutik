@@ -16,6 +16,7 @@ public interface IApprovisionnementService {
 
     /* lecture */
     Page<ApprovisionnementProjection> getAllApprovisionnements(Pageable pageable);
+
     Page<ApprovisionnementProductDTO> getProductsByApprovisionnement(Long approId, Pageable pageable);
 
     /* virtuel */
@@ -23,7 +24,10 @@ public interface IApprovisionnementService {
 
     /* excel */
     Approvisionnement createApprovisionnementExcelBatch(String codeAppro);
+
     void addExcelDetail(Approvisionnement approvisionnement, Produit produit, int quantite, Double prixAchat);
+
     void finalizeAndSaveApprovisionnement(Approvisionnement approvisionnement);
+
     String generateExcelApproCode();
 }

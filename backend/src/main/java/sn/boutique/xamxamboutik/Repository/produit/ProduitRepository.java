@@ -68,23 +68,23 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     Page<AddApproProductLibelleSearchResponseDTO> findApprovisionnementSuggestions(@Param("prefix") String prefix, Pageable pageable);
 
     @Query("""
-           SELECT p.id as id,
-                  p.image as image,
-                  p.libelle as libelle,
-                  p.prixVente as prixVente,
-                  p.prixAchat as prixAchat,
-                  p.stockDisponible as stockDisponible,
-                  c as categorie,
-                  COALESCE(SUM(dv.quantiteVendu), 0) as totalQuantiteVendu,
-                  COUNT(dv) as frequency
-           FROM Produit p
-                LEFT JOIN p.categorie c
-                LEFT JOIN DetailVente dv ON dv.produit = p
-           WHERE p.deleted = false
-             AND p.stockDisponible <> 0
-           GROUP BY p, c, p.createdAt
-           ORDER BY COUNT(dv) DESC, COALESCE(SUM(dv.quantiteVendu), 0) DESC, p.createdAt ASC
-           """)
+            SELECT p.id as id,
+                   p.image as image,
+                   p.libelle as libelle,
+                   p.prixVente as prixVente,
+                   p.prixAchat as prixAchat,
+                   p.stockDisponible as stockDisponible,
+                   c as categorie,
+                   COALESCE(SUM(dv.quantiteVendu), 0) as totalQuantiteVendu,
+                   COUNT(dv) as frequency
+            FROM Produit p
+                 LEFT JOIN p.categorie c
+                 LEFT JOIN DetailVente dv ON dv.produit = p
+            WHERE p.deleted = false
+              AND p.stockDisponible <> 0
+            GROUP BY p, c, p.createdAt
+            ORDER BY COUNT(dv) DESC, COALESCE(SUM(dv.quantiteVendu), 0) DESC, p.createdAt ASC
+            """)
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<ProductVenteProjection> findAllProductsBySales(Pageable pageable);
 

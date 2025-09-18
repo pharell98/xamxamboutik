@@ -14,8 +14,8 @@ import sn.boutique.xamxamboutik.Exception.BaseCustomException;
 import sn.boutique.xamxamboutik.Exception.DuplicateEntityException;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
-import sn.boutique.xamxamboutik.Repository.produit.CategorieRepository;
 import sn.boutique.xamxamboutik.Repository.Projection.CategorieProjection;
+import sn.boutique.xamxamboutik.Repository.produit.CategorieRepository;
 import sn.boutique.xamxamboutik.Service.base.AbstractBaseService;
 
 import java.util.Optional;
@@ -83,7 +83,7 @@ public class CategorieService extends AbstractBaseService<Categorie> {
 
     @Override
     @Transactional
-    public Categorie save(Categorie entity) throws DuplicateEntityException, BaseCustomException {
+    public Categorie save(Categorie entity) throws BaseCustomException {
         requireNonNull(entity, "La catégorie est requise.");
         requireNonNull(entity.getLibelle(), "Le libellé de la catégorie est requis.");
         entity.setLibelle(entity.getLibelle().toLowerCase());
@@ -97,7 +97,7 @@ public class CategorieService extends AbstractBaseService<Categorie> {
 
     @Override
     @Transactional
-    public Categorie update(Categorie entity) throws EntityNotFoundException, BaseCustomException {
+    public Categorie update(Categorie entity) throws BaseCustomException {
         requireNonNull(entity, "La catégorie est requise.");
         requireNonNull(entity.getId(), "L'ID de la catégorie est requis.");
         Categorie existing = categorieRepository.findById(entity.getId())
@@ -116,7 +116,7 @@ public class CategorieService extends AbstractBaseService<Categorie> {
 
     @Override
     @Transactional
-    public void deleteById(Long id) throws EntityNotFoundException, BaseCustomException {
+    public void deleteById(Long id) throws BaseCustomException {
         requireNonNull(id, "L'ID de la catégorie est requis.");
         Categorie cat = categorieRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Catégorie avec l'ID " + id + " non trouvée.", ErrorCodes.ENTITY_NOT_FOUND));
@@ -128,7 +128,7 @@ public class CategorieService extends AbstractBaseService<Categorie> {
     }
 
     @Transactional
-    public Categorie restore(Long id) throws EntityNotFoundException, BaseCustomException {
+    public Categorie restore(Long id) throws BaseCustomException {
         requireNonNull(id, "L'ID de la catégorie est requis.");
         Categorie cat = categorieRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Catégorie avec l'ID " + id + " non trouvée.", ErrorCodes.ENTITY_NOT_FOUND));

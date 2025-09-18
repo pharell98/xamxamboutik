@@ -1,19 +1,24 @@
 package sn.boutique.xamxamboutik.Service.imageservice.service;
+
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Service.imageservice.ImageStorageService;
+
 import java.io.IOException;
 import java.util.Map;
+
 @Service
 public class CloudinaryImageStorageService implements ImageStorageService {
     private final Cloudinary cloudinary;
+
     @Autowired
     public CloudinaryImageStorageService(Cloudinary cloudinary) {
         this.cloudinary = cloudinary;
     }
+
     @Override
     public String uploadImage(MultipartFile file) throws Exception {
         try {
@@ -24,6 +29,7 @@ public class CloudinaryImageStorageService implements ImageStorageService {
             throw new Exception("Erreur lors de l'upload de l'image sur Cloudinary", e);
         }
     }
+
     @Override
     public String uploadImage(byte[] data) throws Exception {
         try {
@@ -34,6 +40,7 @@ public class CloudinaryImageStorageService implements ImageStorageService {
             throw new Exception("Erreur lors de l'upload de l'image sur Cloudinary", e);
         }
     }
+
     @Override
     public String modifyImage(String publicId, MultipartFile file) throws Exception {
         try {
@@ -46,6 +53,7 @@ public class CloudinaryImageStorageService implements ImageStorageService {
             throw new Exception("Erreur lors de la modification de l'image sur Cloudinary", e);
         }
     }
+
     @Override
     public String modifyImage(String publicId, byte[] data) throws Exception {
         try {
@@ -58,6 +66,7 @@ public class CloudinaryImageStorageService implements ImageStorageService {
             throw new Exception("Erreur lors de la modification de l'image sur Cloudinary", e);
         }
     }
+
     @Override
     public void deleteImage(String publicId) throws Exception {
         try {

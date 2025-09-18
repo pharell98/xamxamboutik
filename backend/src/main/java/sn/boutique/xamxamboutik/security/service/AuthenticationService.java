@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.security.service;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,11 +17,13 @@ import sn.boutique.xamxamboutik.security.dto.TokenResponse;
 import sn.boutique.xamxamboutik.security.jwt.JwtTokenProvider;
 import sn.boutique.xamxamboutik.security.model.AuthenticatedUser;
 import sn.boutique.xamxamboutik.security.model.RefreshToken;
-import sn.boutique.xamxamboutik.security.repository.RefreshTokenRepository;
 import sn.boutique.xamxamboutik.security.model.UserAuthInfo;
+import sn.boutique.xamxamboutik.security.repository.RefreshTokenRepository;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,6 +33,7 @@ public class AuthenticationService {
     private final CustomUserDetailsService userDetailsService;
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
+
     public TokenResponse authenticate(LoginRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -59,6 +63,7 @@ public class AuthenticationService {
             throw new CustomAuthenticationException(SecurityConstants.ErrorMessages.INVALID_CREDENTIALS);
         }
     }
+
     private void saveRefreshToken(UserAuthInfo user, String refreshToken) {
         Utilisateur utilisateur = ((AuthenticatedUser) user).getUtilisateur();
         RefreshToken token = RefreshToken.builder()
@@ -68,6 +73,7 @@ public class AuthenticationService {
                 .build();
         refreshTokenRepository.save(token);
     }
+
     public TokenResponse refreshToken(String refreshToken) {
         try {
             if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -101,6 +107,7 @@ public class AuthenticationService {
             throw new TokenException(SecurityConstants.ErrorMessages.TOKEN_INVALID);
         }
     }
+
     public void logout(String refreshToken) {
         Optional<RefreshToken> storedTokenOpt = refreshTokenRepository.findByToken(refreshToken);
         if (storedTokenOpt.isPresent()) {

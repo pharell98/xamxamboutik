@@ -1,7 +1,5 @@
 package sn.boutique.xamxamboutik.Entity.base;
-import sn.boutique.xamxamboutik.Entity.interfaces.Auditable;
-import sn.boutique.xamxamboutik.Entity.interfaces.Identifiable;
-import sn.boutique.xamxamboutik.Entity.interfaces.SoftDeletable;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +8,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import sn.boutique.xamxamboutik.Entity.interfaces.Auditable;
+import sn.boutique.xamxamboutik.Entity.interfaces.Identifiable;
+import sn.boutique.xamxamboutik.Entity.interfaces.SoftDeletable;
+
 import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @MappedSuperclass

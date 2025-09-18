@@ -1,8 +1,11 @@
 package sn.boutique.xamxamboutik.security.model;
+
 import jakarta.persistence.*;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.utilisateur.Utilisateur;
+
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

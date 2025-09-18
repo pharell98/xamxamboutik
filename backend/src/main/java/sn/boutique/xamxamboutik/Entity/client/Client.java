@@ -1,14 +1,20 @@
 package sn.boutique.xamxamboutik.Entity.client;
-import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import sn.boutique.xamxamboutik.Entity.vente.Vente;
+
 import java.util.HashSet;
 import java.util.Set;
+
 @Entity
 @Table(name = "clients")
 @Data

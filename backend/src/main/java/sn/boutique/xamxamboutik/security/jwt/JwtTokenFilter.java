@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.security.jwt;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,15 +14,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import sn.boutique.xamxamboutik.Exception.TokenException;
 import sn.boutique.xamxamboutik.security.constants.SecurityConstants;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
     private final ObjectMapper objectMapper; // Pour écrire du JSON en cas de besoin
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

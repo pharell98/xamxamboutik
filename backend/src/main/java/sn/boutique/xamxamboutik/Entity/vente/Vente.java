@@ -1,9 +1,11 @@
 package sn.boutique.xamxamboutik.Entity.vente;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import sn.boutique.xamxamboutik.Entity.client.Client;
+import sn.boutique.xamxamboutik.Entity.utilisateur.Utilisateur;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -15,7 +17,8 @@ import java.util.Set;
         indexes = {
                 @Index(name = "idx_vente_date", columnList = "date"),
                 @Index(name = "idx_vente_client_id", columnList = "client_id"),
-                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture")
+                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture"),
+                @Index(name = "idx_vente_utilisateur_id", columnList = "utilisateur_id")
         }
 )
 @Data
@@ -45,9 +48,14 @@ public class Vente extends BaseEntity {
     @JoinColumn(name = "client_id")
     private Client client;
 
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private Utilisateur utilisateur;
+
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL)
     private Set<DetailVente> detailVentes = new HashSet<>();
 
     @OneToOne(mappedBy = "vente", cascade = CascadeType.ALL)
     private Paiement paiement;
+
 }

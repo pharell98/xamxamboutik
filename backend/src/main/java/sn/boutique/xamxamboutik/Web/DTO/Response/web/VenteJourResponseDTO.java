@@ -17,4 +17,6 @@ public class VenteJourResponseDTO {
     private String dateVente;
     private Double montantTotal;
     private StatusDetailVente status;
+    private Long utilisateurId;
+    private String utilisateurNom;
 }

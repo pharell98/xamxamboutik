@@ -1,5 +1,7 @@
 package sn.boutique.xamxamboutik.Web.DTO.Request;
+
 import lombok.Data;
+
 @Data
 public class DetailVenteRequestDTO {
     private Long produitId;

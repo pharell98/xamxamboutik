@@ -18,4 +18,6 @@ public class FactureSummaryDTO {
     private Double montantRestant;
     private Boolean estCredit;
     private List<DetailFactureDTO> detailFacture;
+    private Long utilisateurId;
+    private String utilisateurNom;
 }

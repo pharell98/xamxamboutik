@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Exception;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -9,8 +10,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
+
 import java.util.HashMap;
 import java.util.Map;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +27,7 @@ public class GlobalExceptionHandler {
         HttpStatus status = mapErrorCodeToStatus(ex.getErrorCode());
         return new ResponseEntity<>(apiResponse, status);
     }
+
     @ExceptionHandler(CustomAuthenticationException.class)
     public ResponseEntity<ApiResponse<Object>> handleAuthenticationException(CustomAuthenticationException ex) {
         ApiResponse<Object> response = new ApiResponse<>(
@@ -33,6 +37,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
+
     @ExceptionHandler(TokenException.class)
     public ResponseEntity<ApiResponse<Object>> handleTokenException(TokenException ex) {
         String userMessage;
@@ -49,6 +54,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, ex.getStatus());
     }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex) {
         ApiResponse<Object> response = new ApiResponse<>(
@@ -58,6 +64,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         ApiResponse<Object> response = new ApiResponse<>(
@@ -67,6 +74,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -80,6 +88,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception ex) {
         ApiResponse<Object> apiResponse = new ApiResponse<>(
@@ -89,6 +98,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     private HttpStatus mapErrorCodeToStatus(String errorCode) {
         Map<String, HttpStatus> errorMapping = new HashMap<>();
         errorMapping.put(ErrorCodes.ENTITY_NOT_FOUND, HttpStatus.NOT_FOUND);

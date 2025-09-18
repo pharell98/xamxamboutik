@@ -1,12 +1,17 @@
 package sn.boutique.xamxamboutik.Entity.statistique;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
+
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "statistiques")
 @Data

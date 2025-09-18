@@ -14,15 +14,17 @@ import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.Approvisionnement;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProjection;
 import sn.boutique.xamxamboutik.Service.approvisionnement.ApprovisionnementService;
+import sn.boutique.xamxamboutik.Service.approvisionnement.IExcelApproImportService;
 import sn.boutique.xamxamboutik.Util.PaginationUtil;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ApprovisionnementMapper;
-import sn.boutique.xamxamboutik.Service.approvisionnement.IExcelApproImportService;
-import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementExcelRequestDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.ApprovisionnementProductDTO;
+
 import java.util.List;
 import java.util.Map;
+
 import static java.util.Objects.requireNonNull;
 
 @Slf4j
@@ -63,7 +65,8 @@ public class ApprovisionnementController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
     ) {
-        if (page < 1 || size < 1) throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
+        if (page < 1 || size < 1)
+            throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
         Page<ApprovisionnementProjection> pagedApprovisionnements = approvisionnementService.getAllApprovisionnements(PageRequest.of(page - 1, size));
         Map<String, Object> response = PaginationUtil.buildPaginationMap(
                 pagedApprovisionnements,
@@ -83,7 +86,8 @@ public class ApprovisionnementController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         requireNonNull(approId, "L'ID de l'approvisionnement ne peut pas être nul");
-        if (page < 1 || size < 1) throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
+        if (page < 1 || size < 1)
+            throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
         Page<ApprovisionnementProductDTO> productPage = approvisionnementService.getProductsByApprovisionnement(approId, PageRequest.of(page - 1, size));
         Map<String, Object> response = PaginationUtil.buildPaginationMap(productPage, productPage.getContent());
         return ResponseEntity.ok(ApiResponse.success("Produits de l'approvisionnement récupérés avec succès", response));
