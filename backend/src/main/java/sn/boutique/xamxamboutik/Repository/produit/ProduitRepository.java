@@ -57,7 +57,15 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     <T> Page<T> findByCategorie_Id(@Param("categorieId") Long categorieId, Pageable pageable, Class<T> type);
 
-    @Query("SELECT p FROM Produit p WHERE p.stockDisponible < p.seuilRuptureStock")
+    @Query("""
+            SELECT p FROM Produit p 
+            WHERE p.deleted = false 
+            AND (
+                p.stockDisponible = 0 
+                OR (p.seuilRuptureStock IS NOT NULL AND p.stockDisponible <= p.seuilRuptureStock)
+            )
+            ORDER BY p.stockDisponible ASC, p.libelle ASC
+            """)
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<ProduitStockProjection> findProduitsEnRupture(Pageable pageable);
 
@@ -110,4 +118,19 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     @Query("SELECT p FROM Produit p WHERE p.deleted = false AND LOWER(p.libelle) = LOWER(:libelle)")
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Optional<Produit> findByLibelleAndDeletedFalse(@Param("libelle") String libelle);
+
+    /**
+     * Requête de débogage pour vérifier les seuils de rupture
+     */
+    @Query("""
+            SELECT p.id, p.libelle, p.stockDisponible, p.seuilRuptureStock,
+                   CASE WHEN p.seuilRuptureStock IS NULL THEN 'SEUIL_NULL'
+                        WHEN p.stockDisponible <= p.seuilRuptureStock THEN 'EN_RUPTURE'
+                        ELSE 'OK' END as statut
+            FROM Produit p 
+            WHERE p.deleted = false
+            ORDER BY p.stockDisponible ASC
+            """)
+    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
+    Page<Object[]> debugStockStatus(Pageable pageable);
 }
