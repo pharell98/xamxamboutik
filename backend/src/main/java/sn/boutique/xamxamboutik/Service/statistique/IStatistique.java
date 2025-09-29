@@ -2,6 +2,10 @@ package sn.boutique.xamxamboutik.Service.statistique;
 
 import java.time.LocalDateTime;
 
+/**
+ * Interface pour les services de statistiques
+ * Définit les contrats pour les calculs statistiques
+ */
 public interface IStatistique {
     /**
      * Calcule le bénéfice cumulatif total en excluant les produits retournés/remboursés

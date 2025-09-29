@@ -18,6 +18,7 @@ import sn.boutique.xamxamboutik.Entity.produit.Produit;
 import sn.boutique.xamxamboutik.Exception.BaseCustomException;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
+import sn.boutique.xamxamboutik.Repository.Projection.ProduitEchangeProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitProjection;
 import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
 import sn.boutique.xamxamboutik.Service.base.AbstractBaseService;
@@ -28,6 +29,7 @@ import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -242,6 +244,11 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     @Override
     public boolean existsById(Long id) {
         return produitRepository.existsById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProduitEchangeProjection> findProduitsEchange() {
+        return produitRepository.findProduitsEchange();
     }
 
     private Produit buildProduit(ProduitRequestDTO dto) {

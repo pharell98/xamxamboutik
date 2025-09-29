@@ -10,8 +10,8 @@ import {
   faShoppingCart,
   faTrash,
   faTimes,
-  faList,
-  faReceipt
+  faFileInvoice,
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 
 import { useProductContext } from 'providers/ProductProvider';
@@ -21,7 +21,13 @@ import venteServiceV1 from 'services/vente.service.v1';
 import InvoiceGenerator from '../facture/InvoiceGenerator';
 import QuantityController from '../QuantityController';
 import CalculatorModal from './CalculatorModal';
-import Sales from '../allSales/Sales';
+import InvoiceAccordion from '../facture/InvoiceAccordion';
+import { 
+  isValidQuantity, 
+  normalizeQuantity, 
+  getInvalidCartItems, 
+  getValidationErrorMessage 
+} from '../../validatore/cardShema';
 
 // Constants
 const COMPANY_INFO = {
@@ -74,21 +80,21 @@ const useCartCalculations = (cartItems, modifiedPrices) => {
 };
 
 // Components
-const CartHeader = ({ showSales, onToggleView }) => (
+const CartHeader = ({ showInvoices, onToggleView }) => (
   <div className="cart-header mb-3 d-flex justify-content-between align-items-center">
     <h5 className="mb-0 fw-bold">
-      <FontAwesomeIcon icon={showSales ? faReceipt : faShoppingCart} className="me-2" />
-      {showSales ? 'Historique des Ventes' : 'Votre Panier'}
+      <FontAwesomeIcon icon={showInvoices ? faFileInvoice : faShoppingCart} className="me-2" />
+      {showInvoices ? 'Mes Factures' : 'Votre Panier'}
     </h5>
     <Button
       variant="outline-primary"
       size="sm"
       onClick={onToggleView}
       className="d-flex align-items-center gap-2"
-      title={showSales ? 'Afficher le panier' : 'Afficher les ventes'}
+      title={showInvoices ? 'Afficher le panier' : 'Afficher les factures'}
     >
-      <FontAwesomeIcon icon={showSales ? faShoppingCart : faList} />
-      {showSales ? 'Panier' : 'Ventes'}
+      <FontAwesomeIcon icon={showInvoices ? faShoppingCart : faFileInvoice} />
+      {showInvoices ? 'Panier' : 'Factures'}
     </Button>
   </div>
 );
@@ -120,6 +126,7 @@ const CartItem = ({
 }) => {
   const customPrice = modifiedPrices[item.id];
   const unitPrice = customPrice ?? Math.floor(item.totalPrice / item.quantity);
+  const hasInvalidQuantity = !isValidQuantity(item.quantity);
 
   return (
     <Card
@@ -176,10 +183,12 @@ const CartItem = ({
           <div className="col-6 col-md-4 d-flex justify-content-end">
             <Form.Control
               type="number"
-              min="0"
+              min="1"
               max="999999"
               step="1"
-              className="text-end input-spin-none"
+              className={`text-end input-spin-none ${
+                hasInvalidQuantity ? 'border-danger' : ''
+              }`}
               style={{ 
                 width: '100px',
                 WebkitAppearance: 'none',
@@ -192,6 +201,12 @@ const CartItem = ({
                 Math.min(parseInt(e.target.value, 10) || 0, 999999)
               )}
             />
+            {hasInvalidQuantity && (
+              <div className="text-danger small mt-1">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="me-1" />
+                Quantité requise
+              </div>
+            )}
           </div>
         </div>
       </Card.Body>
@@ -348,7 +363,7 @@ const CartSection = ({ onClose, show = true }) => {
   const [paymentMode, setPaymentMode] = useState('espece');
   const [printInvoice, setPrintInvoice] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
-  const [showSales, setShowSales] = useState(false);
+  const [showInvoices, setShowInvoices] = useState(false);
 
   // Custom hooks
   const paymentModes = usePaymentModes();
@@ -360,6 +375,14 @@ const CartSection = ({ onClose, show = true }) => {
     return customerInfo.fullName.trim() !== '' && customerInfo.phoneNumber.trim() !== '';
   }, [isLoan, printInvoice, customerInfo]);
 
+  // Validation optimisée avec schéma centralisé
+  const hasValidQuantities = useMemo(() => {
+    return cartItems.every(item => 
+      isValidQuantity(item.quantity) && 
+      item.quantity <= (item.quantiteDisponible || Infinity)
+    );
+  }, [cartItems]);
+
   // Handlers
   const handlePriceChange = useCallback((productId, newPrice) => {
     setModifiedPrices(prev => ({ ...prev, [productId]: newPrice }));
@@ -369,13 +392,8 @@ const CartSection = ({ onClose, show = true }) => {
     const item = cartItems.find(item => item.id === productId);
     if (!item) return;
 
-    // Validation
-    if (!newQuantity || newQuantity <= 0 || !Number.isInteger(newQuantity)) {
-      newQuantity = 1;
-    }
-
     const maxQuantity = item.quantiteDisponible || Infinity;
-    const validQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
+    const validQuantity = normalizeQuantity(newQuantity, maxQuantity);
 
     productsDispatch({
       type: 'UPDATE_CART_ITEM_QUANTITY',
@@ -511,6 +529,10 @@ const CartSection = ({ onClose, show = true }) => {
     }
   }, [validateCart, cartItems, modifiedPrices, paymentMode, totalCost, printInvoice, customerInfo, addToast, productsDispatch, onClose]);
 
+  const handleToggleView = useCallback(() => {
+    setShowInvoices(!showInvoices);
+  }, [showInvoices]);
+
   if (!show) return null;
 
   return (
@@ -520,12 +542,23 @@ const CartSection = ({ onClose, show = true }) => {
         style={{ maxHeight: '75vh', overflowY: 'auto' }}
       >
         <CartHeader 
-          showSales={showSales} 
-          onToggleView={() => setShowSales(!showSales)} 
+          showInvoices={showInvoices}
+          onToggleView={handleToggleView}
         />
 
-        {showSales ? (
-          <Sales />
+        {/* Alerte de validation si des quantités sont invalides */}
+        {!showInvoices && cartItems.length > 0 && !hasValidQuantities && (
+          <div className="alert alert-warning d-flex align-items-center mb-3" role="alert">
+            <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+            <div>
+              <strong>Attention :</strong> Certaines quantités sont invalides ou vides. 
+              Tous les champs quantité doivent contenir un nombre entier positif.
+            </div>
+          </div>
+        )}
+
+        {showInvoices ? (
+          <InvoiceAccordion />
         ) : (
           <>
             {cartItems.length === 0 ? (

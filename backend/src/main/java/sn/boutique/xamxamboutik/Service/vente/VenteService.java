@@ -23,6 +23,7 @@ import sn.boutique.xamxamboutik.Repository.vente.DetailVenteRepository;
 import sn.boutique.xamxamboutik.Repository.vente.PaiementRepository;
 import sn.boutique.xamxamboutik.Repository.vente.VenteRepository;
 import sn.boutique.xamxamboutik.Service.user.CurrentUserService;
+import sn.boutique.xamxamboutik.Service.statistique.CaisseInternalService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitVenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.VenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.DetailVenteRequestDTO;
@@ -44,6 +45,7 @@ public class VenteService implements IVenteService {
     private final ProduitVenteMapper produitVenteMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final CurrentUserService currentUserService;
+    private final CaisseInternalService caisseInternalService;
 
     @Autowired
     public VenteService(
@@ -54,7 +56,8 @@ public class VenteService implements IVenteService {
             VenteMapper venteMapper,
             ProduitVenteMapper produitVenteMapper,
             SimpMessagingTemplate messagingTemplate,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            CaisseInternalService caisseInternalService
     ) {
         this.venteRepository = venteRepository;
         this.detailVenteRepository = detailVenteRepository;
@@ -64,10 +67,14 @@ public class VenteService implements IVenteService {
         this.produitVenteMapper = produitVenteMapper;
         this.messagingTemplate = messagingTemplate;
         this.currentUserService = currentUserService;
+        this.caisseInternalService = caisseInternalService;
     }
 
     @Override
     public Vente createVente(VenteRequestDTO dto) {
+        // IMPORTANT: Ouverture automatique de la caisse avant toute vente
+        caisseInternalService.ouvrirCaisseAutomatiquement();
+        
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
 
@@ -130,6 +137,10 @@ public class VenteService implements IVenteService {
         vente.getPaiements().add(paiement);
 
         Vente savedVente = venteRepository.save(vente);
+        
+        // IMPORTANT: Mise à jour en temps réel des montants de caisse après chaque vente
+        caisseInternalService.updateVentesJournalieresRealtime();
+        
         notifyUpdate(savedVente);
         return savedVente;
     }

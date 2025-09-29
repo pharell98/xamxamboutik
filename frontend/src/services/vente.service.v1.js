@@ -2,6 +2,7 @@ import apiClient from './apiClient';
 
 const VENTE_ENDPOINT = '/ventes';
 const RETOUR_ENDPOINT = '/retours';
+const ECHANGE_ENDPOINT = '/echange';
 
 const venteServiceV1 = {
   createVente: async venteData => {
@@ -79,24 +80,21 @@ const venteServiceV1 = {
     }
   },
 
-  createRemboursement: async data => {
+  // Liste des produits éligibles pour échange (affichage libellé, envoi ID)
+  getEchangeProductList: async () => {
     try {
-      const response = await apiClient.post(
-        `${RETOUR_ENDPOINT}/remboursement`,
-        data
-      );
+      const response = await apiClient.get(`${ECHANGE_ENDPOINT}/productList`);
       return response.data;
     } catch (error) {
       console.error(
-        '[venteServiceV1] Erreur lors de la création du remboursement:',
+        '[venteServiceV1] Erreur lors de la récupération des produits pour échange:',
         error
       );
-      const errorMessage =
-        error.response?.data?.message ||
-        'Erreur lors du remboursement. Veuillez réessayer.';
-      throw new Error(errorMessage);
+      throw error;
     }
   },
+
+  // Generic remboursement endpoint removed per v3 API contracts
 
   createRemboursementBonEtat: async data => {
     try {
@@ -136,21 +134,7 @@ const venteServiceV1 = {
     }
   },
 
-  createEchange: async data => {
-    try {
-      const response = await apiClient.post(`${RETOUR_ENDPOINT}/echange`, data);
-      return response.data;
-    } catch (error) {
-      console.error(
-        "[venteServiceV1] Erreur lors de la création de l'échange:",
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        "Erreur lors de l'échange. Veuillez réessayer.";
-      throw new Error(errorMessage);
-    }
-  },
+  // Generic echange endpoint removed per v3 API contracts
 
   createEchangeDefectueux: async data => {
     try {
@@ -209,81 +193,7 @@ const venteServiceV1 = {
     }
   },
 
-  createAnnulation: async data => {
-    try {
-      const response = await apiClient.post(
-        `${RETOUR_ENDPOINT}/annulation`,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "[venteServiceV1] Erreur lors de la création de l'annulation:",
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        "Erreur lors de l'annulation. Veuillez réessayer.";
-      throw new Error(errorMessage);
-    }
-  },
-
-  createAnnulationApresLivraison: async data => {
-    try {
-      const response = await apiClient.post(
-        `${RETOUR_ENDPOINT}/annulation/apres-livraison`,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "[venteServiceV1] Erreur lors de la création de l'annulation après livraison:",
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        "Erreur lors de l'annulation après livraison. Veuillez réessayer.";
-      throw new Error(errorMessage);
-    }
-  },
-
-  createAnnulationPartielle: async data => {
-    try {
-      const response = await apiClient.post(
-        `${RETOUR_ENDPOINT}/annulation/partielle`,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "[venteServiceV1] Erreur lors de la création de l'annulation partielle:",
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        "Erreur lors de l'annulation partielle. Veuillez réessayer.";
-      throw new Error(errorMessage);
-    }
-  },
-
-  createAnnulationNonConformite: async data => {
-    try {
-      const response = await apiClient.post(
-        `${RETOUR_ENDPOINT}/annulation/non-conformite`,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        "[venteServiceV1] Erreur lors de la création de l'annulation pour non-conformité:",
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message ||
-        "Erreur lors de l'annulation pour non-conformité. Veuillez réessayer.";
-      throw new Error(errorMessage);
-    }
-  }
+  // All annulation endpoints removed per v3 API contracts
 };
 
 export default venteServiceV1;

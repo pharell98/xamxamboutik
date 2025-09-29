@@ -12,10 +12,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
 import sn.boutique.xamxamboutik.Repository.Projection.ProductVenteProjection;
+import sn.boutique.xamxamboutik.Repository.Projection.ProduitEchangeProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitStockProjection;
 import sn.boutique.xamxamboutik.Repository.base.SoftDeleteRepository;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -133,4 +135,8 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
             """)
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<Object[]> debugStockStatus(Pageable pageable);
+
+    @Query("SELECT p.id as id, p.libelle as libelle, p.prixVente as prixVente FROM Produit p WHERE p.deleted = false")
+    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
+    List<ProduitEchangeProjection> findProduitsEchange();
 }

@@ -10,13 +10,24 @@ import sn.boutique.xamxamboutik.Enums.StatusDetailVente;
 
 import java.time.LocalDateTime;
 
+/**
+ * Service métier pour les calculs de statistiques
+ * Contient UNIQUEMENT la logique de calcul sans exposition d'API
+ * Implémente l'interface IStatistique pour les contrats
+ * 
+ * Principe : Responsabilité unique - Logique métier uniquement
+ */
 @Service
-public class StatistiqueServiceImpl implements IStatistique {
-    private static final Logger logger = LoggerFactory.getLogger(StatistiqueServiceImpl.class);
+public class StatistiqueBusinessService implements IStatistique {
+    private static final Logger logger = LoggerFactory.getLogger(StatistiqueBusinessService.class);
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Calcule le bénéfice cumulatif total en excluant les produits retournés/remboursés
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public double getCumulativeBenefit() {
         String jpql = """
@@ -41,6 +52,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return (result != null) ? result : 0.0;
     }
 
+    /**
+     * Calcule le bénéfice entre deux dates en excluant les produits retournés/remboursés
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public double getBenefitBetweenDates(LocalDateTime startDate, LocalDateTime endDate) {
         String jpql = """
@@ -68,6 +83,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return (result != null) ? result : 0.0;
     }
 
+    /**
+     * Récupère la date de la première vente (non supprimée)
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public LocalDateTime getFirstSaleDate() {
         String jpql = "SELECT MIN(v.date) FROM Vente v WHERE v.deleted = false";
@@ -77,6 +96,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return result != null ? result : LocalDateTime.now();
     }
 
+    /**
+     * Récupère la date de la dernière vente (non supprimée)
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public LocalDateTime getLastSaleDate() {
         String jpql = "SELECT MAX(v.date) FROM Vente v WHERE v.deleted = false";
@@ -86,6 +109,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return result != null ? result : LocalDateTime.now();
     }
 
+    /**
+     * Calcule le chiffre d'affaires total (montants des ventes après retours)
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public double getCumulativeRevenue() {
         String jpql = """
@@ -99,6 +126,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return (result != null) ? result : 0.0;
     }
 
+    /**
+     * Calcule le chiffre d'affaires entre deux dates
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public double getRevenueBetweenDates(LocalDateTime startDate, LocalDateTime endDate) {
         String jpql = """
@@ -115,6 +146,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return (result != null) ? result : 0.0;
     }
 
+    /**
+     * Compte le nombre total de ventes effectuées
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public long getTotalSalesCount() {
         String jpql = "SELECT COUNT(v) FROM Vente v WHERE v.deleted = false";
@@ -124,6 +159,10 @@ public class StatistiqueServiceImpl implements IStatistique {
         return (result != null) ? result : 0L;
     }
 
+    /**
+     * Compte le nombre de produits vendus (après déduction des retours)
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
     @Override
     public long getTotalProductsSold() {
         String jpql = """

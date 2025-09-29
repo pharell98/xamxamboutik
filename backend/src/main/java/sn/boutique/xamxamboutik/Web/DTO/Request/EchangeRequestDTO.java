@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import sn.boutique.xamxamboutik.Enums.TypeRetour;
 
 @Data
 public class EchangeRequestDTO {
@@ -19,6 +18,4 @@ public class EchangeRequestDTO {
 
     @NotNull(message = "ID du produit de remplacement requis")
     private Long produitRemplacementId;
-
-    private TypeRetour sousType;
 }

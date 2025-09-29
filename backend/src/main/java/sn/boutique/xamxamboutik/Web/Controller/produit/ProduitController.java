@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
+import sn.boutique.xamxamboutik.Repository.Projection.ProduitEchangeProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitProjection;
 import sn.boutique.xamxamboutik.Service.produit.ProduitService;
 import sn.boutique.xamxamboutik.Util.PaginationUtil;
@@ -21,6 +22,7 @@ import sn.boutique.xamxamboutik.Web.DTO.Request.UpdateStockRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.mobile.ProduitResponseMobileDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitEchangeResponseDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitResponseWebDTO;
 
 import java.util.List;
@@ -158,5 +160,12 @@ public class ProduitController extends AbstractBaseController<
     public ResponseEntity<ApiResponse<?>> updateStock(@Valid @RequestBody UpdateStockRequestDTO dto) {
         Produit updated = produitService.updateStockAndPrice(dto.getProduitId(), dto.getQuantite(), dto.getPrixAchat());
         return ResponseEntity.ok(ApiResponse.success("Stock mis à jour", produitMapper.toResponseWebDTO(updated)));
+    }
+
+    @GetMapping("/echange/productList")
+    public ApiResponse<?> getProduitsEchange() {
+        List<ProduitEchangeProjection> produits = produitService.findProduitsEchange();
+        List<ProduitEchangeResponseDTO> data = produitMapper.toProduitEchangeResponseDTOs(produits);
+        return ApiResponse.success("Liste des produits pour échange récupérée", data);
     }
 }
