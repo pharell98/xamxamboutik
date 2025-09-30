@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import sn.boutique.xamxamboutik.Service.statistique.CaisseInternalService;
 
-import java.util.Map;
+
 
 /**
  * Scheduler pour la gestion automatique de la caisse
