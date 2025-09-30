@@ -1,4 +1,4 @@
-package sn.boutique.xamxamboutik.config;
+package sn.boutique.xamxamboutik.Config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
