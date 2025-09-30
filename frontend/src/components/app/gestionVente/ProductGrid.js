@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
-import Flex from 'components/common/Flex';
-import { Link } from 'react-router-dom';
-import { Button, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Col } from 'react-bootstrap';
 import classNames from 'classnames';
+
+import Flex from 'components/common/Flex';
+import { useProductContext } from 'providers/ProductProvider';
 import useProductHook from './useProductHook';
 import ProductImage from './ProductImage';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useProductContext } from 'providers/ProductProvider';
+import {
+  normalizeProduct,
+  ProductPrice,
+  ProductTitle,
+  ProductCategory,
+  ProductPurchasePrice,
+  ProductStock,
+  AddToCartButton,
+  ProductDetails,
+  productPropTypes
+} from './shared/ProductComponents';
 
+/**
+ * Composant carte produit en mode grille
+ */
 const ProductGrid = ({ product, ...rest }) => {
+  const validatedProduct = normalizeProduct(product);
   const {
     id,
     libelle,
@@ -18,101 +32,83 @@ const ProductGrid = ({ product, ...rest }) => {
     prixAchat,
     stockDisponible,
     categorieLibelle
-  } = product;
+  } = validatedProduct;
 
-  const {
-    productsState: { cartItems }
-  } = useProductContext();
-  const isInCart = cartItems.some(item => item.id === id);
-
-  const isInStock = stockDisponible > 0;
+  const { isInShoppingCart } = useProductContext();
   const { handleAddToCart } = useProductHook(product);
+
+  const isInCart = isInShoppingCart(id);
+  const isInStock = stockDisponible > 0;
+
+  const handleCardClick = useCallback(() => {
+    if (isInStock && !isInCart) {
+      handleAddToCart(1);
+    }
+  }, [isInStock, isInCart, handleAddToCart]);
+
+  const handleKeyDown = useCallback((e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && isInStock && !isInCart) {
+      e.preventDefault();
+      handleCardClick();
+    }
+  }, [handleCardClick, isInStock, isInCart]);
+
+  const cardClassName = classNames('border rounded-1 p-2 product-card fade-in', {
+    'bg-light': isInCart,
+    'cursor-pointer': isInStock && !isInCart,
+    'cursor-not-allowed': !isInStock
+  });
+
+  const cardStyle = {
+    height: 'auto',
+    transition: 'all 0.2s ease',
+    ...(isInStock && !isInCart && {
+      cursor: 'pointer'
+    })
+  };
 
   return (
     <Col className="mb-2" {...rest}>
       <Flex
         direction="column"
-        className={classNames('border rounded-1 p-2', {
-          'bg-light': isInCart
-        })}
-        style={{ height: 'auto' }}
+        className={cardClassName}
+        data-product-id={id}
+        style={cardStyle}
+        onClick={handleCardClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
       >
-        <ProductImage libelle={libelle} id={id} image={image} layout="grid" />
-        <h5
-          className="fs-md-7 text-warning mt-2 mb-2"
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          XOF {prixVente}
-        </h5>
-        <h5
-          className="fs-9 mb-2"
-          style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {libelle}
-        </h5>
-        <div className="d-none d-md-block">
-          <p
-            className="fs-9 mb-1"
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <Link to="#!" className="text-500">
-              {categorieLibelle}
-            </Link>
-          </p>
-          <p
-            className="fs-9 mb-1"
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Achat : <strong>XOF {prixAchat}</strong>
-          </p>
-          <p
-            className="fs-9 mb-2"
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Stock:{' '}
-            <strong
-              className={classNames({
-                'text-success': isInStock,
-                'text-danger': !isInStock
-              })}
-            >
-              {isInStock ? `${stockDisponible} dispo` : 'Rupture'}
-            </strong>
-          </p>
+        {/* Image */}
+        <div className="product-image mb-2">
+          <ProductImage 
+            libelle={libelle} 
+            id={id} 
+            image={image} 
+            layout="grid"
+            enableZoom={true}
+          />
         </div>
-        <div className="mt-auto">
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip style={{ position: 'fixed' }}>Vendre</Tooltip>}
-          >
-            <Button
-              variant="falcon-default"
-              size="sm"
-              onClick={() => handleAddToCart(1, true)}
-            >
-              <FontAwesomeIcon icon="cart-plus" />
-            </Button>
-          </OverlayTrigger>
+        
+        {/* Prix */}
+        <ProductPrice price={prixVente} />
+        
+        {/* Titre */}
+        <ProductTitle title={libelle} />
+        
+        {/* Détails (cachés sur mobile) */}
+        <ProductDetails>
+          <ProductCategory category={categorieLibelle} />
+          <ProductPurchasePrice price={prixAchat} />
+          <ProductStock stock={stockDisponible} />
+        </ProductDetails>
+        
+        {/* Actions */}
+        <div className="mt-auto product-actions">
+          <AddToCartButton 
+            onAddToCart={handleAddToCart} 
+            isInStock={isInStock} 
+          />
         </div>
       </Flex>
     </Col>
@@ -120,15 +116,7 @@ const ProductGrid = ({ product, ...rest }) => {
 };
 
 ProductGrid.propTypes = {
-  product: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    libelle: PropTypes.string.isRequired,
-    image: PropTypes.string,
-    prixVente: PropTypes.number.isRequired,
-    prixAchat: PropTypes.number.isRequired,
-    stockDisponible: PropTypes.number.isRequired,
-    categorieLibelle: PropTypes.string.isRequired
-  })
+  product: PropTypes.shape(productPropTypes)
 };
 
 export default React.memo(ProductGrid);

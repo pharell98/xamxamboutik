@@ -3,6 +3,7 @@ import { Card, Col, Row } from 'react-bootstrap';
 import AdvanceTable from 'components/common/advance-table/AdvanceTable';
 import AdvanceTablePagination from 'components/common/advance-table/AdvanceTablePagination';
 import useAdvanceTable from 'hooks/useAdvanceTable';
+import useResponsive from 'hooks/useResponsive';
 import AdvanceTableProvider from 'providers/AdvanceTableProvider';
 import apiServiceV1 from 'services/api.service.v1';
 import { useStompClient } from 'contexts/StompContext';
@@ -27,12 +28,7 @@ const ruptureFiltersConfig = [
   }
 ];
 
-const getRuptureColumns = () => [
-  {
-    accessorKey: 'codeProduit',
-    header: 'Code',
-    cell: ({ row: { original } }) => original.codeProduit || '—'
-  },
+const getRuptureColumns = (getColumnStyles) => [
   {
     accessorKey: 'image',
     header: 'Image',
@@ -41,42 +37,135 @@ const getRuptureColumns = () => [
         <img
           src={original.image}
           alt={original.libelle}
-          style={{ width: 50, height: 50, objectFit: 'cover' }}
+          style={{ width: 40, height: 40, objectFit: 'cover' }}
+          className="rounded"
         />
       ) : (
-        '—'
-      )
+        <div 
+          style={{ 
+            width: 40, 
+            height: 40, 
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <i className="fas fa-image text-muted" style={{ fontSize: '0.8rem' }}></i>
+        </div>
+      ),
+    enableSorting: false,
+    meta: {
+      headerProps: {
+        style: getColumnStyles(50, 40, 45),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(50, 40, 45),
+        className: 'text-center'
+      }
+    }
+  },
+  {
+    accessorKey: 'codeProduit',
+    header: 'Code',
+    cell: ({ row: { original } }) => (
+      <div className="text-start fw-medium text-truncate">
+        {original.codeProduit || '—'}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(100, 70, 85),
+        className: 'text-start'
+      },
+      cellProps: {
+        style: getColumnStyles(100, 70, 85)
+      }
+    }
   },
   {
     accessorKey: 'libelle',
-    header: 'Produit',
-    cell: ({ row: { original } }) => original.libelle || '—'
-  },
-  {
-    accessorKey: 'prixAchat',
-    header: "Prix d'achat",
-    cell: ({ row: { original } }) => original.prixAchat || '—'
-  },
-  {
-    accessorKey: 'statut',
-    header: 'Statut',
-    cell: ({ row: { original } }) =>
-      original.stockDisponible <= 0 ? (
-        <SubtleBadge bg="danger">Rupture</SubtleBadge>
-      ) : (
-        <SubtleBadge bg="warning">Stock faible</SubtleBadge>
-      )
+    header: 'Nom du Produit',
+    cell: ({ row: { original } }) => (
+      <div className="text-start fw-medium text-truncate" title={original.libelle}>
+        {original.libelle || '—'}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(180, 120, 150),
+        className: 'text-start'
+      },
+      cellProps: {
+        style: getColumnStyles(180, 120, 150)
+      }
+    }
   },
   {
     accessorKey: 'stockDisponible',
     header: 'Stock',
     cell: ({ row: { original } }) => (
-      <strong
-        style={{ color: original.stockDisponible <= 0 ? 'red' : 'orange' }}
-      >
-        {original.stockDisponible}
-      </strong>
-    )
+      <div className="text-center">
+        <span
+          className={`fw-bold ${
+            original.stockDisponible <= 0 ? 'text-danger' : 'text-warning'
+          }`}
+        >
+          {original.stockDisponible}
+        </span>
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(70, 50, 60),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(70, 50, 60)
+      }
+    }
+  },
+  {
+    accessorKey: 'statut',
+    header: 'Statut',
+    cell: ({ row: { original } }) => (
+      <div className="text-center">
+        {original.stockDisponible <= 0 ? (
+          <SubtleBadge bg="danger" className="fs-10">Rupture</SubtleBadge>
+        ) : (
+          <SubtleBadge bg="warning" className="fs-10">Faible</SubtleBadge>
+        )}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(90, 70, 80),
+        className: 'text-center'
+      },
+      cellProps: {
+        style: getColumnStyles(90, 70, 80)
+      }
+    }
+  },
+  {
+    accessorKey: 'prixAchat',
+    header: "Prix d'Achat",
+    cell: ({ row: { original } }) => (
+      <div className="text-end fw-medium">
+        {original.prixAchat ? `${original.prixAchat} FCFA` : '—'}
+      </div>
+    ),
+    meta: {
+      headerProps: {
+        style: getColumnStyles(130, 100, 115),
+        className: 'text-end'
+      },
+      cellProps: {
+        style: getColumnStyles(130, 100, 115)
+      }
+    }
   }
 ];
 
@@ -84,10 +173,9 @@ const RuptureStock = () => {
   const [refresh, setRefresh] = useState(0);
   const [filters, setFilters] = useState({ state: 'all' });
   const [rowSelection, setRowSelection] = useState({});
-  const { stompClient, connected, subscribe, unsubscribe, isConnected } =
-    useStompClient();
+  const { data } = useStompClient();
   const { addToast } = useToast();
-  const [subscriptionId] = useState(`ruptureStock-${Date.now()}`); // ID unique pour la souscription
+  const { isMobile, isTablet } = useResponsive();
 
   const handleFiltersChange = useCallback((name, value) => {
     setFilters(prev => ({
@@ -97,60 +185,38 @@ const RuptureStock = () => {
     setRefresh(prev => prev + 1);
   }, []);
 
-  useEffect(() => {
-    if (!stompClient || !connected) {
-      return;
+  // Ajuster les largeurs de colonnes selon la taille d'écran
+  const getColumnStyles = (baseWidth, mobileWidth = null, tabletWidth = null) => {
+    let width = baseWidth;
+    if (isMobile && mobileWidth) {
+      width = mobileWidth;
+    } else if (isTablet && tabletWidth) {
+      width = tabletWidth;
     }
-
-    let retryCount = 0;
-    const maxRetries = 5;
-
-    const attemptSubscription = () => {
-      if (retryCount >= maxRetries) {
-        console.error(
-          `Échec de la souscription à /topic/ruptureStock après ${maxRetries} tentatives.`
-        );
-        addToast({
-          title: 'Erreur WebSocket',
-          message:
-            "Impossible de s'abonner aux mises à jour des stocks après plusieurs tentatives.",
-          type: 'error'
-        });
-        return;
-      }
-
-      if (isConnected()) {
-        const subscribed = subscribe(
-          '/topic/ruptureStock',
-          () => {
-            setRefresh(prev => prev + 1);
-          },
-          subscriptionId
-        );
-        if (!subscribed) {
-          retryCount++;
-          setTimeout(attemptSubscription, 1000);
-        }
-      } else {
-        retryCount++;
-        setTimeout(attemptSubscription, 1000);
-      }
+    return {
+      width: `${width}px`,
+      minWidth: `${width}px`,
+      maxWidth: `${width}px`
     };
+  };
 
-    attemptSubscription();
+  // Écouter les messages WebSocket pour les ruptures de stock
+  useEffect(() => {
+    if (Array.isArray(data) && data.length > 0) {
+      const latestMessage = data[data.length - 1];
 
-    return () => {
-      unsubscribe(subscriptionId);
-    };
-  }, [
-    stompClient,
-    connected,
-    subscribe,
-    unsubscribe,
-    isConnected,
-    addToast,
-    subscriptionId
-  ]);
+      // Vérifier si c'est un message de rupture de stock
+      if (
+        latestMessage &&
+        (latestMessage.type === 'STOCK_UPDATED' ||
+          latestMessage.type === 'PRODUCT_UPDATED' ||
+          latestMessage.message?.includes('stock') ||
+          latestMessage.message?.includes('rupture'))
+      ) {
+        setRefresh(prev => prev + 1);
+      }
+    }
+  }, [data]);
 
   const fetchRuptureStock = useCallback(async (pageIndex, pageSize) => {
     const response = await apiServiceV1.getRuptureStockProducts(
@@ -163,11 +229,11 @@ const RuptureStock = () => {
 
   const table = useAdvanceTable({
     data: [],
-    columns: getRuptureColumns(),
-    selection: true,
+    columns: getRuptureColumns(getColumnStyles),
+    selection: !isMobile, // Désactiver la sélection sur mobile pour économiser l'espace
     sortable: true,
     pagination: true,
-    perPage: 10,
+    perPage: isMobile ? 5 : isTablet ? 8 : 10, // Moins d'éléments par page sur mobile
     serverPagination: true,
     fetchData: fetchRuptureStock,
     state: { rowSelection },
@@ -212,13 +278,13 @@ const RuptureStock = () => {
   }, [table.getRowModel().rows]);
 
   return (
-    <Row className="mb-3">
-      <Col md={12}>
+    <Row className="mb-2 g-0">
+      <Col xs={12} className="px-0">
         <AdvanceTableProvider {...table}>
-          <Card>
-            <Card.Header className="bg-body-tertiary">
-              <Row className="align-items-center">
-                <Col md={4} className="d-flex">
+          <Card className="shadow-sm inventory-table border-0">
+            <Card.Header className="bg-body-tertiary p-1 p-md-2">
+              <Row className="align-items-center g-1 g-md-2">
+                <Col xs={12} md={4} className="d-flex bulk-actions px-1">
                   <BulkActionsAndSearchBar
                     onBulkDelete={() => {}}
                     filtersConfig={ruptureFiltersConfig}
@@ -229,21 +295,25 @@ const RuptureStock = () => {
                     hideSearchBar={true}
                   />
                 </Col>
-                <Col md={8}>
-                  <CriticalStockHeader refresh={refresh} />
+                <Col xs={12} md={8} className="px-1">
+                  <div className="actions-container">
+                    <CriticalStockHeader refresh={refresh} />
+                  </div>
                 </Col>
               </Row>
             </Card.Header>
-            <Card.Body className="p-1">
-              <AdvanceTable
-                tableProps={{
-                  size: 'sm',
-                  striped: true,
-                  className: 'fs-10 mb-0 overflow-hidden'
-                }}
-              />
+            <Card.Body className="p-0">
+              <div className="table-responsive">
+                <AdvanceTable
+                  tableProps={{
+                    size: 'sm',
+                    striped: true,
+                    className: 'fs-10 mb-0 table-fixed-layout'
+                  }}
+                />
+              </div>
             </Card.Body>
-            <Card.Footer>
+            <Card.Footer className="p-1 p-md-2">
               <AdvanceTablePagination />
             </Card.Footer>
           </Card>

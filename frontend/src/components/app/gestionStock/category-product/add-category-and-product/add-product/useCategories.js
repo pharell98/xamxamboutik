@@ -73,6 +73,12 @@ const useCategories = () => {
         } avec succès.`,
         type: 'success'
       });
+
+      // Déclencher un événement pour rafraîchir les tables
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('category-updated'));
+      }, 1000);
+
       setSelectedCategory(null);
       setEditModeCategory(false);
     } catch (error) {
@@ -85,6 +91,7 @@ const useCategories = () => {
       let serverMessage;
       // Check for duplicate entity error based on backend response
       if (
+        error.response?.data?.errorCode === 'ENTITE_DUPLIQUEE' ||
         error.response?.data?.code === 'DUPLICATE_ENTITY' ||
         error.response?.data?.message?.toLowerCase().includes('existe déjà') ||
         error.response?.data?.error?.toLowerCase().includes('existe déjà')

@@ -5,11 +5,11 @@ import CustomerLog from './CustomerLog';
 
 const CustomersDetails = () => {
   return (
-    <>
+    <div className="vente-mobile">
       <CustomerDetailsHeader />
       <CustomerInfo />
       <CustomerLog />
-    </>
+    </div>
   );
 };
 

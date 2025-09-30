@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ProductListItem from './ProductListItem';
+import { useAppContext } from 'providers/AppProvider';
 
 const ProductList = ({
   localFields,
@@ -10,12 +11,18 @@ const ProductList = ({
   handleCompleteProduct,
   currentEditProduct
 }) => {
+  const {
+    config: { isDark }
+  } = useAppContext();
   if (!localFields.length) {
     return null;
   }
 
   return (
-    <div className="mb-4">
+    <div
+      className={`mb-4 ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`}
+      style={{ borderRadius: 8 }}
+    >
       {localFields.map((product, index) => (
         <ProductListItem
           key={String(product.id)}

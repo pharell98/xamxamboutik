@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card } from 'react-bootstrap';
 import { useFormContext } from 'react-hook-form';
 import CardHeader from './CardHeader';
@@ -9,10 +9,22 @@ import NewProductDetails from './NewProductDetails';
 import TotalAndValidation from './TotalAndValidation';
 import { useApproDetail } from './hooks/useApproDetail';
 import ExcelProductImport from '../excelSupply/ExcelProductImport';
+import { useAppContext } from 'providers/AppProvider';
 
 const ApproDetail = () => {
   const { control } = useFormContext();
   const [showImport, setShowImport] = useState(false);
+  const {
+    config: { isDark }
+  } = useAppContext();
+
+  // Callbacks mémorisés déclarés en haut du composant
+  const handleToggleImport = useCallback(() => setShowImport(true), []);
+  const handleFeeChange = useCallback(value => setTransportFee(value), []);
+  const handleResetDone = useCallback(
+    () => setShouldResetBaseFields(false),
+    []
+  );
 
   const {
     isLoading,
@@ -35,20 +47,29 @@ const ApproDetail = () => {
     clearAllProducts
   } = useApproDetail({ control });
 
-  const handleImportSuccess = importedProducts => {
-    importedProducts.forEach(product => {
-      handleAddProduct({
-        codeProduit: product.codeProduit,
-        libelle: product.libelle,
-        prixAchat: product.prixAchat,
-        prixVente: product.prixVente,
-        stockDisponible: product.stockDisponible,
-        seuilRuptureStock: product.seuilRuptureStock,
-        categorieName: product.categorieName,
-        imageURL: product.imageURL
+  const handleImportSuccess = useCallback(
+    importedProducts => {
+      importedProducts.forEach(product => {
+        handleAddProduct({
+          codeProduit: product.codeProduit,
+          libelle: product.libelle,
+          prixAchat: product.prixAchat,
+          prixVente: product.prixVente,
+          stockDisponible: product.stockDisponible,
+          seuilRuptureStock: product.seuilRuptureStock,
+          categorieName: product.categorieName,
+          imageURL: product.imageURL
+        });
       });
-    });
-  };
+    },
+    [handleAddProduct]
+  );
+
+  // Fonction pour déclencher le rafraîchissement de la table
+  const triggerTableRefresh = useCallback(() => {
+    // Émettre un événement personnalisé pour déclencher le rafraîchissement
+    window.dispatchEvent(new CustomEvent('approvisionnement-created'));
+  }, []);
 
   if (isLoading) {
     return <div>Chargement...</div>;
@@ -64,18 +85,23 @@ const ApproDetail = () => {
   }
 
   return (
-    <Card className="mb-3">
+    <Card
+      className={`mb-3 shadow-sm ${
+        isDark ? 'bg-dark text-light' : 'bg-white text-dark'
+      }`}
+      style={{ borderRadius: 8 }}
+    >
       <CardHeader
         localFields={localFields}
         clearAllProducts={clearAllProducts}
         isLoading={isLoading}
-        onToggleImport={() => setShowImport(true)}
+        onToggleImport={handleToggleImport}
       />
 
       <Card.Body>
         <TransportFeeForm
           initialFee={transportFee}
-          onFeeChange={value => setTransportFee(value)}
+          onFeeChange={handleFeeChange}
         />
 
         <ProductList
@@ -92,7 +118,7 @@ const ApproDetail = () => {
           onSelectExistingProduct={handleSelectSuggestedProduct}
           showAdditionalFields={showAdditionalFields}
           shouldResetBaseFields={shouldResetBaseFields}
-          onResetDone={() => setShouldResetBaseFields(false)}
+          onResetDone={handleResetDone}
         />
 
         {showAdditionalFields && currentNewProduct && !currentEditProduct && (
@@ -115,4 +141,4 @@ const ApproDetail = () => {
   );
 };
 
-export default ApproDetail;
+export default React.memo(ApproDetail);

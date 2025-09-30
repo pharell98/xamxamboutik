@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { basicInformationSchema } from 'components/app/validatore/basicInformationSchema';
 import { generateProductCode } from 'helpers/generateProductCode';
 import ProductUpload from 'components/common/ProductUpload';
+import { useAppContext } from 'providers/AppProvider';
 
 /* ---- MUI (MatChip‑like Autocomplete & ToggleButtonGroup) ---- */
 import {
@@ -40,6 +41,10 @@ const ProductForm = ({
   initialValues = defaultInitialValues,
   isEditMode = false
 }) => {
+  const {
+    config: { isDark }
+  } = useAppContext();
+
   /* ----------------------------- RHF ----------------------------- */
   const mergedInitialValues = useMemo(
     () => ({ ...defaultInitialValues, ...initialValues }),
@@ -168,20 +173,42 @@ const ProductForm = ({
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <Card className="mb-0 shadow-sm">
+        <Card className="mb-0 shadow-sm text-body">
           <Card.Header
             as="h6"
-            className="bg-body-tertiary d-flex justify-content-between align-items-center"
+            className="bg-body-tertiary d-flex flex-column flex-md-row justify-content-between align-items-center"
           >
-            {buttonLabel}
+            <span className="mb-2 mb-md-0">{buttonLabel}</span>
             <ToggleButtonGroup
               value="product"
               exclusive
               onChange={(_, newForm) => newForm && onSwitchForm(newForm)}
               size="small"
+              className="d-flex"
+              style={{ height: '38px' }}
             >
-              <ToggleButton value="product">Produit</ToggleButton>
-              <ToggleButton value="stock">Stock</ToggleButton>
+              <ToggleButton
+                value="product"
+                sx={{
+                  ...(isDark ? { color: '#fff' } : { color: '#212529' }),
+                  height: '38px',
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0
+                }}
+              >
+                Produit
+              </ToggleButton>
+              <ToggleButton
+                value="stock"
+                sx={{
+                  ...(isDark ? { color: '#fff' } : { color: '#212529' }),
+                  height: '38px',
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0
+                }}
+              >
+                Stock
+              </ToggleButton>
             </ToggleButtonGroup>
           </Card.Header>
 
@@ -242,19 +269,17 @@ const ProductForm = ({
               </Col>
             </Row>
 
-            {/* ---------- Catégorie (Autocomplete) & Prix d’achat ---------- */}
+            {/* ---------- Catégorie (Autocomplete) & Prix d'achat ---------- */}
             <Row className="mt-3">
               <Col md="6">
                 <Form.Group>
                   <Form.Label className="fw-bold mb-1">Catégorie:</Form.Label>
-
-                  {/* Autocomplete (type MatChip/Angular‑like) */}
                   <Controller
                     name="categorieProduit"
                     control={control}
                     render={({ field }) => (
                       <Autocomplete
-                        disablePortal /* menu plus léger */
+                        disablePortal
                         options={categories}
                         getOptionLabel={opt => opt.libelle || ''}
                         isOptionEqualToValue={(opt, val) =>
@@ -269,12 +294,59 @@ const ProductForm = ({
                           field.onChange(newVal ? newVal.id : '')
                         }
                         fullWidth
-                        sx={{
-                          '& .MuiInputBase-root': {
-                            height: '38px', // même hauteur que Form.Control
-                            paddingRight: '8px'
-                          }
-                        }}
+                        sx={
+                          isDark
+                            ? {
+                                '& .MuiInputBase-root': {
+                                  height: '38px',
+                                  paddingRight: '8px',
+                                  backgroundColor: 'var(--bs-body-bg)',
+                                  color: 'var(--bs-body-color)',
+                                  borderRadius: '0.375rem',
+                                  border:
+                                    '1px solid var(--bs-border-color, #495057)',
+                                  boxShadow: 'none'
+                                },
+                                '& .MuiInputBase-input': {
+                                  color: 'var(--bs-body-color)'
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  border: 'none'
+                                },
+                                '& .Mui-focused .MuiOutlinedInput-notchedOutline':
+                                  {
+                                    border: '1px solid var(--bs-primary)'
+                                  },
+                                '& .MuiAutocomplete-endAdornment': {
+                                  color: 'var(--bs-body-color)'
+                                }
+                              }
+                            : {
+                                '& .MuiInputBase-root': {
+                                  height: '38px',
+                                  paddingRight: '8px',
+                                  backgroundColor: 'var(--bs-body-bg)',
+                                  color: 'var(--bs-body-color)',
+                                  borderRadius: '0.375rem',
+                                  border:
+                                    '1px solid var(--bs-border-color, #ced4da)',
+                                  boxShadow: 'none'
+                                },
+                                '& .MuiInputBase-input': {
+                                  color: 'var(--bs-body-color)'
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  border: 'none'
+                                },
+                                '& .Mui-focused .MuiOutlinedInput-notchedOutline':
+                                  {
+                                    border: '1px solid var(--bs-primary)'
+                                  },
+                                '& .MuiAutocomplete-endAdornment': {
+                                  color: 'var(--bs-body-color)'
+                                }
+                              }
+                        }
                         renderInput={params => (
                           <TextField
                             {...params}
@@ -282,6 +354,9 @@ const ProductForm = ({
                             size="small"
                             error={!!errors.categorieProduit}
                             helperText={errors.categorieProduit?.message}
+                            InputLabelProps={
+                              isDark ? { style: { color: '#fff' } } : {}
+                            }
                           />
                         )}
                       />
@@ -292,7 +367,7 @@ const ProductForm = ({
 
               <Col md="6">
                 <Form.Group>
-                  <Form.Label className="fw-bold">Prix d’achat:</Form.Label>
+                  <Form.Label className="fw-bold">Prix d'achat:</Form.Label>
                   <Form.Control
                     type="number"
                     placeholder="0"

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -9,11 +9,13 @@ import {
   Spinner,
   Tooltip
 } from 'react-bootstrap';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import venteServiceV1 from 'services/vente.service.v1';
-import { FaBan, FaExchangeAlt, FaUndo } from 'react-icons/fa';
+import { FaExchangeAlt, FaUndo } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import ActionInput from './ActionInput';
+import apiServiceV1 from 'services/api.service.v1';
+import { Autocomplete, TextField } from '@mui/material';
 
 const SaleActionForm = ({
   detailVenteId,
@@ -31,8 +33,46 @@ const SaleActionForm = ({
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
+    control,
+    setValue
   } = useForm({ mode: 'onChange' });
+
+  // Autocomplete produits remplacement (par libellé)
+  const [productQuery, setProductQuery] = useState('');
+  const [productOptions, setProductOptions] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isProductListOpen, setIsProductListOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        // Récupère la page côté backend puis filtre côté client par libellé
+        const data = await venteServiceV1.getEchangeProductList();
+        if (!active) return;
+        const content = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        const options = !productQuery
+          ? content
+          : content.filter(p =>
+              (p.libelle || '')
+                .toLowerCase()
+                .includes(productQuery.trim().toLowerCase())
+            );
+        setProductOptions(options);
+      } catch (e) {
+        setProductOptions([]);
+      } finally {
+        if (active) setIsLoadingProducts(false);
+      }
+    };
+    const handle = setTimeout(fetchProducts, 300);
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [productQuery]);
 
   // Vérification initiale du statut pour désactiver le formulaire si nécessaire
   const isActionDisabled = status !== 'VENDU';
@@ -125,10 +165,10 @@ const SaleActionForm = ({
         },
         {
           name: 'produitRemplacementId',
-          label: 'ID du produit de remplacement',
+          label: 'Produit de remplacement',
           type: 'number',
-          placeholder: 'ID produit (ex. 456)',
-          tooltip: 'Identifiant du produit à utiliser comme remplacement.'
+          placeholder: 'Rechercher un produit…',
+          tooltip: 'Sélectionnez le produit de remplacement par libellé.'
         }
       ]
     },
@@ -161,10 +201,10 @@ const SaleActionForm = ({
         },
         {
           name: 'produitRemplacementId',
-          label: 'ID du produit de remplacement',
+          label: 'Produit de remplacement',
           type: 'number',
-          placeholder: 'ID produit (ex. 456)',
-          tooltip: 'Identifiant du produit à utiliser comme remplacement.'
+          placeholder: 'Rechercher un produit…',
+          tooltip: 'Sélectionnez le produit de remplacement par libellé.'
         }
       ]
     },
@@ -196,92 +236,10 @@ const SaleActionForm = ({
         },
         {
           name: 'produitRemplacementId',
-          label: 'ID du produit de remplacement',
+          label: 'Produit de remplacement',
           type: 'number',
-          placeholder: 'ID produit (ex. 456)',
-          tooltip: 'Identifiant du produit à utiliser comme remplacement.'
-        }
-      ]
-    },
-    annulationApresLivraison: {
-      title: 'Annulation - Après livraison',
-      icon: <FaBan className="me-1" />,
-      description: 'Annuler une vente après livraison avec retour du produit.',
-      endpoint: venteServiceV1.createAnnulationApresLivraison,
-      fields: [
-        {
-          name: 'motif',
-          label: "Motif de l'annulation",
-          type: 'select',
-          options: [
-            "Changement d'avis",
-            'Erreur de livraison',
-            'Produit non souhaité'
-          ],
-          placeholder: 'Sélectionner un motif',
-          tooltip: "Choisissez la raison de l'annulation après livraison."
-        },
-        {
-          name: 'quantiteRetour',
-          label: 'Quantité à annuler',
-          type: 'number',
-          placeholder: 'Quantité (ex. 1)',
-          tooltip: "Nombre d'unités à annuler."
-        }
-      ]
-    },
-    annulationPartielle: {
-      title: 'Annulation - Partielle',
-      icon: <FaBan className="me-1" />,
-      description: 'Annuler une partie de la vente avec retour partiel.',
-      endpoint: venteServiceV1.createAnnulationPartielle,
-      fields: [
-        {
-          name: 'motif',
-          label: "Motif de l'annulation",
-          type: 'select',
-          options: [
-            'Erreur de quantité',
-            'Produit non souhaité',
-            'Changement partiel'
-          ],
-          placeholder: 'Sélectionner un motif',
-          tooltip: "Choisissez la raison de l'annulation partielle."
-        },
-        {
-          name: 'quantiteRetour',
-          label: 'Quantité à annuler',
-          type: 'number',
-          placeholder: 'Quantité (ex. 1)',
-          tooltip: "Nombre d'unités à annuler."
-        }
-      ]
-    },
-    annulationNonConformite: {
-      title: 'Annulation - Non-conformité',
-      icon: <FaBan className="me-1" />,
-      description:
-        'Annuler une vente pour un produit non conforme à la commande.',
-      endpoint: venteServiceV1.createAnnulationNonConformite,
-      fields: [
-        {
-          name: 'motif',
-          label: "Motif de l'annulation",
-          type: 'select',
-          options: [
-            'Mauvais produit livré',
-            'Spécifications incorrectes',
-            'Produit endommagé'
-          ],
-          placeholder: 'Sélectionner un motif',
-          tooltip: "Choisissez la raison de l'annulation pour non-conformité."
-        },
-        {
-          name: 'quantiteRetour',
-          label: 'Quantité à annuler',
-          type: 'number',
-          placeholder: 'Quantité (ex. 1)',
-          tooltip: "Nombre d'unités à annuler."
+          placeholder: 'Rechercher un produit…',
+          tooltip: 'Sélectionnez le produit de remplacement par libellé.'
         }
       ]
     }
@@ -301,7 +259,7 @@ const SaleActionForm = ({
       addToast({
         title: 'Erreur',
         message:
-          'Action non disponible : le produit a déjà été retourné, échangé ou annulé.',
+          'Action non disponible : le produit a déjà été retourné ou échangé.',
         type: 'error',
         icon: 'exclamation-circle'
       });
@@ -349,7 +307,7 @@ const SaleActionForm = ({
       });
     } finally {
       setIsSubmitting(false);
-      }
+    }
   };
 
   return (
@@ -431,8 +389,7 @@ const SaleActionForm = ({
           <Card.Body>
             {isActionDisabled ? (
               <div className="disabled-message">
-                Action non disponible : le produit a déjà été retourné, échangé
-                ou annulé.
+                Action non disponible : le produit a déjà été retourné ou échangé.
                 <br />
                 Note : Pour permettre des retours partiels, le backend doit
                 fournir la quantité restante à retourner.
@@ -445,50 +402,101 @@ const SaleActionForm = ({
                 <Form onSubmit={handleSubmit(onFormSubmit)} noValidate>
                   {actionConfigs[selectedAction].fields.map(field => (
                     <Form.Group key={field.name} className="position-relative">
-                      <ActionInput
-                        label={field.label}
-                        name={field.name}
-                        type={field.type}
-                        options={field.options}
-                        placeholder={field.placeholder}
-                        errors={errors}
-                        formGroupProps={{ className: 'mb-0' }}
-                        formControlProps={{
-                          ...register(field.name, {
-                            required: `${field.label} est obligatoire`,
-                            ...(field.type === 'number' && {
-                              min: {
-                                value: 1,
-                                message: 'La quantité doit être supérieure à 0'
-                              },
-                              max: {
-                                value: quantiteVendu,
-                                message: `La quantité ne peut pas dépasser ${quantiteVendu}`
-                              }
-                            })
-                          }),
-                          'aria-describedby': `${field.name}-tooltip`
-                        }}
-                        ref={field.name === 'motif' ? motifRef : null}
-                      />
-                      <Overlay
-                        target={motifRef.current}
-                        show={field.name === 'motif' && !watch(field.name)}
-                        placement="right"
-                      >
-                        <Tooltip id={`${field.name}-tooltip`}>
-                          {field.tooltip}
-                        </Tooltip>
-                      </Overlay>
-                      {errors[field.name] && (
-                        <Form.Text className="text-danger fs-10">
-                          {errors[field.name].message}
-                        </Form.Text>
-                      )}
-                      {!errors[field.name] && watch(field.name) && (
-                        <Form.Text className="text-success fs-10">
-                          Valide
-                        </Form.Text>
+                      {field.name === 'produitRemplacementId' ? (
+                        <>
+                          <Form.Label className="fw-medium text-dark">
+                            {field.label}
+                          </Form.Label>
+                          <Controller
+                            name="produitRemplacementId"
+                            control={control}
+                            rules={{ required: `${field.label} est obligatoire` }}
+                            render={({ field: ctrlField }) => (
+                              <Autocomplete
+                                options={productOptions}
+                                loading={isLoadingProducts}
+                                open={isProductListOpen}
+                                onOpen={() => setIsProductListOpen(true)}
+                                onClose={() => setIsProductListOpen(false)}
+                                openOnFocus
+                                filterOptions={x => x}
+                                getOptionLabel={opt => opt?.libelle || ''}
+                                isOptionEqualToValue={(opt, val) => String(opt?.id) === String(val?.id)}
+                                onInputChange={(_, val) => setProductQuery(val)}
+                                onChange={(_, val) => {
+                                  const selectedId = val ? Number(val.id) : '';
+                                  ctrlField.onChange(selectedId);
+                                  setValue('produitRemplacementId', selectedId);
+                                }}
+                                renderOption={(props, option) => (
+                                  <li {...props} key={option.id}>
+                                    <span style={{ flex: 1 }}>{option.libelle}</span>
+                                    <span style={{ color: '#6c757d' }}>
+                                      {option.prixVente != null ? `${option.prixVente} CFA` : ''}
+                                    </span>
+                                  </li>
+                                )}
+                                renderInput={params => (
+                                  <TextField
+                                    {...params}
+                                    placeholder={field.placeholder}
+                                    size="small"
+                                    error={!!errors.produitRemplacementId}
+                                    helperText={errors.produitRemplacementId?.message}
+                                  />
+                                )}
+                              />
+                            )}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <ActionInput
+                            label={field.label}
+                            name={field.name}
+                            type={field.type}
+                            options={field.options}
+                            placeholder={field.placeholder}
+                            errors={errors}
+                            formGroupProps={{ className: 'mb-0' }}
+                            formControlProps={{
+                              ...register(field.name, {
+                                required: `${field.label} est obligatoire`,
+                                ...(field.type === 'number' && {
+                                  min: {
+                                    value: 1,
+                                    message: 'La quantité doit être supérieure à 0'
+                                  },
+                                  max: {
+                                    value: quantiteVendu,
+                                    message: `La quantité ne peut pas dépasser ${quantiteVendu}`
+                                  }
+                                })
+                              }),
+                              'aria-describedby': `${field.name}-tooltip`
+                            }}
+                            ref={field.name === 'motif' ? motifRef : null}
+                          />
+                          <Overlay
+                            target={motifRef.current}
+                            show={field.name === 'motif' && !watch(field.name)}
+                            placement="right"
+                          >
+                            <Tooltip id={`${field.name}-tooltip`}>
+                              {field.tooltip}
+                            </Tooltip>
+                          </Overlay>
+                          {errors[field.name] && (
+                            <Form.Text className="text-danger fs-10">
+                              {errors[field.name].message}
+                            </Form.Text>
+                          )}
+                          {!errors[field.name] && watch(field.name) && (
+                            <Form.Text className="text-success fs-10">
+                              Valide
+                            </Form.Text>
+                          )}
+                        </>
                       )}
                     </Form.Group>
                   ))}
@@ -534,10 +542,7 @@ SaleActionForm.propTypes = {
     'remboursementDefectueux',
     'echangeDefectueux',
     'echangeChangementPreference',
-    'echangeAjustementPrix',
-    'annulationApresLivraison',
-    'annulationPartielle',
-    'annulationNonConformite'
+    'echangeAjustementPrix'
   ]).isRequired,
   quantiteVendu: PropTypes.number.isRequired,
   status: PropTypes.string.isRequired

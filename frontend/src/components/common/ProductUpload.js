@@ -15,6 +15,26 @@ const ACCEPTED_FILE_TYPES = {
   'image/png': ['.png']
 };
 
+// Fonction utilitaire pour garantir que currentImage est toujours un objet
+function getImageObject(img) {
+  if (!img) return null;
+  if (typeof img === 'object') return img;
+  // Meilleure gestion des chemins d'image
+  let preview = '';
+  if (img.startsWith('http')) {
+    preview = img;
+  } else if (img.startsWith('/uploads/')) {
+    preview = img;
+  } else {
+    preview = `/uploads/${img}`;
+  }
+  return {
+    name: typeof img === 'string' ? img : 'image',
+    preview,
+    size: 0
+  };
+}
+
 /**
  * Composant permettant de sélectionner une image (drag&drop ou clic),
  * de la redimensionner à 98x76 (optionnel), et de renvoyer le fichier via onImageUpload().
@@ -31,7 +51,7 @@ const ProductUpload = ({
 
   // Synchroniser l'état interne avec la prop currentImage
   useEffect(() => {
-    setFile(currentImage);
+    setFile(getImageObject(currentImage));
   }, [currentImage]);
 
   // Redimensionner l'image en 98x76 via Canvas

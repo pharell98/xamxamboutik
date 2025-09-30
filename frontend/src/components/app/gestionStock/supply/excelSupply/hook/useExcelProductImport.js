@@ -6,8 +6,21 @@ import validateHeaders from '../HeaderValidator';
 import apiServiceV1 from '../../../../../../services/api.service.v1';
 import { useToast } from '../../../../../common/Toast';
 
+// Mapping des nouveaux headers vers les anciens noms pour la compatibilité
+const HEADER_MAPPING = {
+  'code produit': 'codeProduit',
+  libelle: 'libelle',
+  'prix achat': 'prixAchat',
+  'prix vente': 'prixVente',
+  'stock disponible': 'stockDisponible',
+  'seuil rupture stock': 'seuilRuptureStock',
+  'categorie produit': 'categorieProduit',
+  'image url': 'imageURL'
+};
+
 const useExcelProductImport = ({ onImportSuccess } = {}) => {
   const [data, setData] = useState([]);
+  const [modifiedData, setModifiedData] = useState([]); // Nouvel état pour les données modifiées
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
 
@@ -16,8 +29,11 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
       return rawData;
     }
 
-    const headers = rawData[0];
-    const rows = rawData.slice(1).map((row, index) => {
+    // Nettoyer les données avant la génération des codes
+    const cleanedData = cleanData(rawData);
+
+    const headers = cleanedData[0];
+    const rows = cleanedData.slice(1).map((row, index) => {
       const product = headers.reduce((acc, key, idx) => {
         acc[key] = row[idx] !== undefined ? row[idx] : '';
         return acc;
@@ -25,18 +41,19 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
       // Generate code if missing but required fields present
       const hasCode =
-        product.codeProduit && String(product.codeProduit).trim() !== '';
+        product['code produit'] &&
+        String(product['code produit']).trim() !== '';
       const hasFields =
         product.libelle &&
         String(product.libelle).trim() !== '' &&
-        product.categorieProduit &&
-        String(product.categorieProduit).trim() !== '';
+        product['categorie produit'] &&
+        String(product['categorie produit']).trim() !== '';
 
       if (!hasCode && hasFields) {
         try {
-          product.codeProduit = generateProductCode({
+          product['code produit'] = generateProductCode({
             productName: String(product.libelle).trim(),
-            productCategory: String(product.categorieProduit).trim()
+            productCategory: String(product['categorie produit']).trim()
           });
         } catch (error) {
           addToast({
@@ -53,9 +70,42 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
     return [headers, ...rows];
   };
 
+  // Fonction pour régénérer les codes des données modifiées
+  const regenerateCodesForModifiedData = modifiedData => {
+    if (!modifiedData || modifiedData.length < 2) {
+      return modifiedData;
+    }
+
+    return generateCodesForData(modifiedData);
+  };
+
+  // Fonction pour nettoyer les espaces inutiles
+  const cleanData = rawData => {
+    if (!rawData || rawData.length < 2) return rawData;
+
+    const headers = rawData[0];
+    const rows = rawData.slice(1).map(row =>
+      row.map(cell => {
+        if (cell === null || cell === undefined) return '';
+        if (typeof cell === 'string') {
+          // Supprimer les espaces avant et après, et remplacer les espaces multiples par un seul espace
+          return cell.trim().replace(/\s+/g, ' ');
+        }
+        // Pour les nombres, les convertir en string puis nettoyer
+        if (typeof cell === 'number') {
+          return cell.toString().trim();
+        }
+        return cell;
+      })
+    );
+
+    return [headers, ...rows];
+  };
+
   const formatProductData = rawData => {
     if (!rawData || rawData.length < 2) return [];
 
+    // Les données sont déjà nettoyées avant d'arriver ici
     const headers = rawData[0];
     // Remove completely empty rows
     const rows = rawData
@@ -70,23 +120,39 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         return acc;
       }, {});
 
-      product.categorieName = String(product.categorieProduit || '').trim();
-      product.categorieId = 0;
-      product.imageURL = product.imageURL
-        ? String(product.imageURL).trim()
-        : '';
-      product.useImageURL = !!product.imageURL;
-      product.prixAchat = product.prixAchat ? Number(product.prixAchat) : 0;
-      product.prixVente = product.prixVente ? Number(product.prixVente) : 0;
-      product.stockDisponible = product.stockDisponible
-        ? Number(product.stockDisponible)
-        : 0;
-      product.seuilRuptureStock = product.seuilRuptureStock
-        ? Number(product.seuilRuptureStock)
-        : 0;
-      product.id = null;
+      // Mapper les nouveaux headers vers les anciens noms pour le backend
+      const mappedProduct = {};
+      Object.keys(product).forEach(newKey => {
+        const oldKey = HEADER_MAPPING[newKey];
+        if (oldKey) {
+          mappedProduct[oldKey] = product[newKey];
+        }
+      });
 
-      return product;
+      // Format adapté pour ApprovisionnementExcelRequestDTO
+      mappedProduct.categorieName = String(
+        mappedProduct.categorieProduit || ''
+      ).trim();
+      mappedProduct.categorieId = 0;
+      mappedProduct.imageURL = mappedProduct.imageURL
+        ? String(mappedProduct.imageURL).trim()
+        : '';
+      mappedProduct.useImageURL = !!mappedProduct.imageURL;
+      mappedProduct.prixAchat = mappedProduct.prixAchat
+        ? Number(mappedProduct.prixAchat)
+        : 0.0;
+      mappedProduct.prixVente = mappedProduct.prixVente
+        ? Number(mappedProduct.prixVente)
+        : 0.0;
+      mappedProduct.stockDisponible = mappedProduct.stockDisponible
+        ? Number(mappedProduct.stockDisponible)
+        : 0;
+      mappedProduct.seuilRuptureStock = mappedProduct.seuilRuptureStock
+        ? Number(mappedProduct.seuilRuptureStock)
+        : 0;
+      mappedProduct.id = null;
+
+      return mappedProduct;
     });
   };
 
@@ -107,6 +173,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         type: 'warning'
       });
       setData(uploadedData || []);
+      setModifiedData(uploadedData || []); // Initialiser aussi les données modifiées
       return;
     }
 
@@ -121,11 +188,23 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
       return;
     }
 
-    setData(generateCodesForData(uploadedData));
+    const processedData = generateCodesForData(uploadedData);
+    setData(processedData);
+    setModifiedData(processedData); // Initialiser les données modifiées avec les données traitées
+  };
+
+  // Fonction pour mettre à jour les données modifiées
+  const updateModifiedData = newData => {
+    // Régénérer les codes si les champs libelle ou categorie produit ont été modifiés
+    const processedData = regenerateCodesForModifiedData(newData);
+    setModifiedData(processedData);
   };
 
   const sendToBackend = async () => {
-    if (!data || data.length < 2) {
+    // Utiliser les données modifiées au lieu des données originales
+    const dataToSend = modifiedData.length > 0 ? modifiedData : data;
+
+    if (!dataToSend || dataToSend.length < 2) {
       addToast({
         title: 'Attention',
         message: 'Pas de données à importer.',
@@ -136,7 +215,35 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
     setLoading(true);
     try {
-      const formattedData = formatProductData(data);
+      // === LOG AVANCÉ DES DONNÉES ===
+      // Log du nettoyage des espaces
+      const cleanedData = cleanData(dataToSend);
+      // Comparaison avant/après nettoyage
+      if (dataToSend.length > 1 && cleanedData.length > 1) {
+        for (
+          let i = 1;
+          i < Math.min(dataToSend.length, cleanedData.length);
+          i++
+        ) {
+          const originalRow = dataToSend[i];
+          const cleanedRow = cleanedData[i];
+          let hasChanges = false;
+
+          for (
+            let j = 0;
+            j < Math.min(originalRow.length, cleanedRow.length);
+            j++
+          ) {
+            if (originalRow[j] !== cleanedRow[j]) {
+              if (!hasChanges) {
+                hasChanges = true;
+              }
+            }
+          }
+        }
+      }
+      // Utiliser les données nettoyées pour le formatage
+      const formattedData = formatProductData(cleanedData);
       if (formattedData.length === 0) {
         addToast({
           title: 'Info',
@@ -146,7 +253,16 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         return false;
       }
 
+      // Log détaillé de chaque produit
+      formattedData.forEach((product, index) => {});
+
       const result = await apiServiceV1.bulkImportProducts(formattedData);
+
+      // === LOG DE LA RÉPONSE ===
+      if (result && typeof result === 'object') {
+        if (result.data) {
+        }
+      }
       const { erreurs = [], produitsEnregistres = [] } = result.data || {};
 
       if (erreurs.length > 0) {
@@ -166,10 +282,16 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         type: 'success'
       });
 
+      // Déclencher un seul rafraîchissement après un délai
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('approvisionnement-created'));
+      }, 1500);
+
       if (onImportSuccess) {
         onImportSuccess(produitsEnregistres);
       }
       setData([]);
+      setModifiedData([]); // Réinitialiser aussi les données modifiées
       return true;
     } catch (error) {
       const resp = error.response?.data;
@@ -185,7 +307,7 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
         addToast({
           title: 'Erreur',
           message:
-            resp?.message || error.message || 'Erreur lors de l’importation.',
+            resp?.message || error.message || "Erreur lors de l'importation.",
           type: 'error'
         });
       }
@@ -197,10 +319,12 @@ const useExcelProductImport = ({ onImportSuccess } = {}) => {
 
   return {
     data,
+    modifiedData, // Exposer les données modifiées
     loading,
     handleDataUpload,
     sendToBackend,
-    setData
+    setData,
+    updateModifiedData // Exposer la fonction de mise à jour
   };
 };
 

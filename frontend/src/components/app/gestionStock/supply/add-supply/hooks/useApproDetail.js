@@ -536,7 +536,7 @@ export function useApproDetail({ control }) {
     });
 
     for (let pair of formData.entries()) {
-      }
+    }
 
     try {
       await submitApprovisionnement(formData);
@@ -554,6 +554,14 @@ export function useApproDetail({ control }) {
         message: 'Approvisionnement enregistré avec succès',
         type: 'success'
       });
+
+      // Le backend enverra automatiquement une notification WebSocket
+      // via la méthode notifyUpdate() dans ApprovisionnementService
+
+      // Déclencher un rafraîchissement après un délai
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('approvisionnement-created'));
+      }, 1500);
     } catch (error) {
       console.error(
         "Erreur lors de la création de l'approvisionnement :",

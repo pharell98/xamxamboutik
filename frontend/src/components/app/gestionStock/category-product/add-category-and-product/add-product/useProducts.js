@@ -42,6 +42,12 @@ const useProducts = () => {
         }" ${editModeProduct ? 'mis à jour' : 'créé'} avec succès.`,
         type: 'success'
       });
+
+      // Déclencher un événement pour rafraîchir les tables
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('product-updated'));
+      }, 1000);
+
       setSelectedProduct(null);
       setEditModeProduct(false);
     } catch (error) {

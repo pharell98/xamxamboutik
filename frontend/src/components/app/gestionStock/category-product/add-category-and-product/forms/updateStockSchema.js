@@ -13,13 +13,15 @@ import {
 } from '@mui/material';
 import apiServiceV1 from 'services/api.service.v1';
 import { useToast } from 'components/common/Toast';
+import { useAppContext } from 'providers/AppProvider';
+import { useStompClient } from 'contexts/StompContext';
 
 /***********************************
  * UpdateStockForm
  * ---------------------------------
- * • Sélection d’un produit (auto-complétion)
+ * • Sélection d'un produit (auto-complétion)
  * • Quantité positive ou négative
- * • Prix d’achat optionnel (nécessaire seulement pour les ajouts)
+ * • Prix d'achat optionnel (nécessaire seulement pour les ajouts)
  * • Validation RHF + Yup
  * • Feedback Toast + reset form
  ***********************************/
@@ -43,8 +45,8 @@ const updateStockSchema = yup.object({
     .when('quantite', (quantite, schema) =>
       quantite > 0
         ? schema
-            .required('Le prix d’achat est requis pour une entrée de stock.')
-            .min(0, 'Le prix d’achat doit être positif.')
+            .required("Le prix d'achat est requis pour une entrée de stock.")
+            .min(0, "Le prix d'achat doit être positif.")
         : schema.notRequired()
     )
 });
@@ -68,6 +70,23 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
   } = methods;
 
   const { addToast } = useToast();
+  const {
+    config: { isDark }
+  } = useAppContext();
+  
+  const { data: stompData } = useStompClient();
+
+  // Écouter les notifications de mise à jour de stock
+  useEffect(() => {
+    if (stompData && stompData.length > 0) {
+      const lastMessage = stompData[stompData.length - 1];
+      if (lastMessage && lastMessage.action === 'UPDATE' && lastMessage.type === 'STOCK_UPDATE') {
+        console.log('[UpdateStockForm] Notification de mise à jour de stock reçue:', lastMessage);
+        // Rafraîchir les données si nécessaire
+        onSuccess?.();
+      }
+    }
+  }, [stompData, onSuccess]);
 
   const onSubmit = async data => {
     try {
@@ -83,6 +102,14 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
         type: 'success'
       });
       reset(defaultValues);
+      
+      // Déclencher un événement personnalisé pour rafraîchir les composants
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('stock-updated', {
+          detail: { produitId: data.produit.id, produitLibelle: data.produit.libelle }
+        }));
+      }, 1000);
+      
       onSuccess?.();
     } catch (error) {
       const msg =
@@ -95,7 +122,7 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm" style={{ height: '420px' }}>
           <Card.Header
             as="h6"
             className="bg-body-tertiary d-flex justify-content-between align-items-center"
@@ -106,9 +133,31 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
               exclusive
               onChange={(_, newForm) => newForm && onSwitchForm(newForm)}
               size="small"
+              className="d-flex"
+              style={{ height: '38px' }}
             >
-              <ToggleButton value="product">Produit</ToggleButton>
-              <ToggleButton value="stock">Stock</ToggleButton>
+              <ToggleButton
+                value="product"
+                sx={{
+                  height: '38px',
+                  color: isDark ? '#fff' : '#212529',
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0
+                }}
+              >
+                Produit
+              </ToggleButton>
+              <ToggleButton
+                value="stock"
+                sx={{
+                  height: '38px',
+                  color: isDark ? '#fff' : '#212529',
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0
+                }}
+              >
+                Stock
+              </ToggleButton>
             </ToggleButtonGroup>
           </Card.Header>
           <Card.Body>
@@ -126,6 +175,7 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
                         onSelect={onChange}
                         error={!!errors.produit}
                         helperText={errors.produit?.message}
+                        isDark={isDark}
                       />
                     )}
                   />
@@ -157,7 +207,7 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
               <Col md="6">
                 <Form.Group>
                   <Form.Label className="fw-bold">
-                    Prix d’achat (optionnel) :
+                    Prix d'achat (optionnel) :
                   </Form.Label>
                   <Controller
                     name="prixAchat"
@@ -195,7 +245,13 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
   );
 };
 
-const ProductAutocomplete = ({ selected, onSelect, error, helperText }) => {
+const ProductAutocomplete = ({
+  selected,
+  onSelect,
+  error,
+  helperText,
+  isDark
+}) => {
   const [options, setOptions] = React.useState([]);
   const [inputValue, setInputValue] = React.useState('');
 
@@ -225,6 +281,55 @@ const ProductAutocomplete = ({ selected, onSelect, error, helperText }) => {
       onChange={(_, newVal) => onSelect(newVal)}
       onInputChange={(_, newInput) => setInputValue(newInput)}
       fullWidth
+      sx={
+        isDark
+          ? {
+              '& .MuiInputBase-root': {
+                height: '38px',
+                paddingRight: '8px',
+                backgroundColor: 'var(--bs-body-bg)',
+                color: 'var(--bs-body-color)',
+                borderRadius: '0.375rem',
+                border: '1px solid var(--bs-border-color, #495057)',
+                boxShadow: 'none'
+              },
+              '& .MuiInputBase-input': {
+                color: 'var(--bs-body-color)'
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                border: 'none'
+              },
+              '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid var(--bs-primary)'
+              },
+              '& .MuiAutocomplete-endAdornment': {
+                color: 'var(--bs-body-color)'
+              }
+            }
+          : {
+              '& .MuiInputBase-root': {
+                height: '38px',
+                paddingRight: '8px',
+                backgroundColor: 'var(--bs-body-bg)',
+                color: 'var(--bs-body-color)',
+                borderRadius: '0.375rem',
+                border: '1px solid var(--bs-border-color, #ced4da)',
+                boxShadow: 'none'
+              },
+              '& .MuiInputBase-input': {
+                color: 'var(--bs-body-color)'
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                border: 'none'
+              },
+              '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid var(--bs-primary)'
+              },
+              '& .MuiAutocomplete-endAdornment': {
+                color: 'var(--bs-body-color)'
+              }
+            }
+      }
       renderInput={params => (
         <TextField
           {...params}
@@ -232,6 +337,7 @@ const ProductAutocomplete = ({ selected, onSelect, error, helperText }) => {
           size="small"
           error={error}
           helperText={helperText}
+          InputLabelProps={isDark ? { style: { color: '#fff' } } : {}}
         />
       )}
     />
@@ -242,7 +348,8 @@ ProductAutocomplete.propTypes = {
   selected: PropTypes.object,
   onSelect: PropTypes.func.isRequired,
   error: PropTypes.bool,
-  helperText: PropTypes.string
+  helperText: PropTypes.string,
+  isDark: PropTypes.bool
 };
 
 UpdateStockForm.propTypes = {

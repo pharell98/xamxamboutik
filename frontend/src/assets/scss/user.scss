@@ -9,3 +9,7 @@
 @import 'theme/variables';
 @import '~bootstrap/scss/variables';
 @import '~bootstrap/scss/variables-dark';
+
+// Import des styles personnalisés
+@import 'inventory-mobile';
+@import 'vente-mobile';

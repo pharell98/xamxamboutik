@@ -7,6 +7,7 @@ import ProductManagement from './add-category-and-product/add-product/ProductMan
 import useProducts from './add-category-and-product/add-product/useProducts';
 import useCategories from '../../../../hooks/useCategories';
 import PageHeader from '../../../common/PageHeader';
+import { useAppContext } from 'providers/AppProvider';
 
 const PageCategoryAndProduct = () => {
   const {
@@ -26,7 +27,11 @@ const PageCategoryAndProduct = () => {
     handleSaveProduct
   } = useProducts();
 
-  // Lorsqu'on clique pour éditer un produit, on normalise l’objet pour l’édition.
+  const {
+    config: { isDark, isFluid, isRTL }
+  } = useAppContext();
+
+  // Lorsqu'on clique pour éditer un produit, on normalise l'objet pour l'édition.
   // On conserve le libellé de la catégorie dans "categorieLibelle" pour permettre la recherche.
   const handleEditProduct = async product => {
     try {
@@ -67,14 +72,18 @@ const PageCategoryAndProduct = () => {
   };
 
   return (
-    <>
+    <Container
+      fluid={isFluid}
+      className={isDark ? 'bg-dark text-light py-3' : 'bg-white text-dark py-3'}
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <Row className="g-3">
         <PageHeader
           title="Ajout/Liste Produit & Catégorie"
           titleTag="h5"
           className="mb-3"
         />
-        <Col lg={4}>
+        <Col xs={12} md={6} lg={4}>
           <CategoryManagement
             selectedCategory={selectedCategory}
             editModeCategory={editModeCategory}
@@ -91,7 +100,7 @@ const PageCategoryAndProduct = () => {
             setEditModeProduct={setEditModeProduct}
           />
         </Col>
-        <Col lg={8}>
+        <Col xs={12} md={6} lg={8}>
           <Container fluid>
             <Categories
               onEdit={category => {
@@ -103,7 +112,7 @@ const PageCategoryAndProduct = () => {
           </Container>
         </Col>
       </Row>
-    </>
+    </Container>
   );
 };
 

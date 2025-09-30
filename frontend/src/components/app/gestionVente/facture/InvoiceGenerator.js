@@ -4,49 +4,61 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import apiServiceSettings from '../../../../services/api.service.settings';
 
-// Charger une image comme data URL
-const loadImage = url => {
+// Constants
+const COLORS = {
+  BLACK: [0, 0, 0],
+  GRAY: [128, 128, 128],
+  LIGHT_GRAY: [240, 240, 240]
+};
+
+const FONT_SIZES = {
+  TITLE: 18,
+  HEADER: 14,
+  SUBTITLE: 11,
+  NORMAL: 9,
+  SMALL: 8
+};
+
+const MARGINS = {
+  LEFT: 15,
+  RIGHT: 195,
+  TOP: 10
+};
+
+/**
+ * Charge une image et la convertit en data URL
+ */
+const loadImage = async (url) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (error) {
+        reject(error);
+      }
     };
-    img.onerror = () =>
-      reject(new Error(`Échec du chargement de l'image: ${url}`));
+    img.onerror = () => reject(new Error(`Échec du chargement: ${url}`));
     img.src = url;
   });
 };
 
-const InvoiceGenerator = {
-  generateInvoice: async (
-    saleData,
-    cartItems,
-    customerInfo = {},
-    companyInfo = {}
-  ) => {
-    const doc = new jsPDF();
-
-    // Récupérer les paramètres depuis le backend
-    let settings;
-    try {
-      settings = await apiServiceSettings.getSettings();
-      if (!settings) {
-        throw new Error('Aucune donnée de paramètres reçue');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des paramètres:', error);
-      settings = {};
-    }
-
-    // Informations de l'entreprise (uniquement depuis l'API)
-    const company = {
-      name: settings.shopName || '',
+/**
+ * Récupère les paramètres de l'entreprise depuis l'API
+ */
+const getCompanySettings = async () => {
+  try {
+    const settings = await apiServiceSettings.getSettings();
+    if (!settings) throw new Error('Aucune donnée reçue');
+    
+    return {
+      name: settings.shopName || 'Boutique',
       address: settings.street || '',
       city: settings.country || '',
       region: settings.region || '',
@@ -54,270 +66,363 @@ const InvoiceGenerator = {
       neighborhood: settings.neighborhood || '',
       phone: settings.phone || '',
       email: settings.email || '',
-      website: settings.websiteUrl || ''
+      website: settings.websiteUrl || '',
+      logo: settings.logo || null
     };
-
-    // Charger le logo
-    let logoDataUrl = null;
-    if (settings.logo) {
-      try {
-        logoDataUrl = await loadImage(settings.logo);
-      } catch (error) {
-        console.error('Erreur lors du chargement du logo:', error);
-      }
-    }
-
-    // Fonction pour dessiner l'en-tête
-    const drawHeader = () => {
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-
-      // Afficher le logo ou un placeholder si absent
-      if (logoDataUrl) {
-        try {
-          doc.addImage(logoDataUrl, 'PNG', 15, 10, 30, 12);
-        } catch (error) {
-          console.error("Erreur lors de l'ajout de l'image au PDF:", error);
-          doc.setDrawColor(0, 0, 0);
-          doc.roundedRect(15, 10, 30, 12, 3, 3, 'S');
-          doc.setFontSize(10);
-          doc.text('Logo', 30, 18, { align: 'center' });
-        }
-      } else {
-        doc.setDrawColor(0, 0, 0);
-        doc.roundedRect(15, 10, 30, 12, 3, 3, 'S');
-        doc.setFontSize(10);
-        doc.text('Logo', 30, 18, { align: 'center' });
-      }
-
-      doc.setFontSize(14);
-      doc.text(company.name.toUpperCase(), 50, 15);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.text(`${company.address}, ${company.neighborhood}`, 50, 22);
-      doc.text(
-        `${company.department}, ${company.region}, ${company.city}`,
-        50,
-        28
-      );
-      doc.text(`Tél: ${company.phone}`, 50, 34);
-      doc.text(`Email: ${company.email}`, 50, 40);
-
-      // Titre facture
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text('FACTURE', 195, 18, { align: 'right' });
-
-      // Détails facture
-      const currentDate = format(new Date(), 'dd/MM/yyyy', { locale: fr });
-      const invoiceNumber = `INV-${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, '0')}`;
-      const customerId =
-        customerInfo.id || `CUST-${Math.floor(Math.random() * 1000)}`;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Date: ${currentDate}`, 195, 25, { align: 'right' });
-      doc.text(`N° Facture: ${invoiceNumber}`, 195, 31, { align: 'right' });
-      doc.text(`N° Client: ${customerId}`, 195, 37, { align: 'right' });
-
-      // Ligne de séparation
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.3);
-      doc.line(15, 45, 195, 45);
+  } catch (error) {
+    console.error('Erreur récupération paramètres:', error);
+    return {
+      name: 'Boutique',
+      address: '',
+      city: '',
+      region: '',
+      department: '',
+      neighborhood: '',
+      phone: '',
+      email: '',
+      website: '',
+      logo: null
     };
-
-    // Fonction pour dessiner les informations client
-    const drawCustomerInfo = () => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('Facturé à:', 15, 55);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.text(customerInfo.fullName || '', 15, 62);
-      doc.text(customerInfo.phoneNumber || '', 15, 68);
-    };
-
-    // Fonction pour dessiner le tableau des informations de paiement
-    const drawPaymentTable = startY => {
-      const paymentHeader = [
-        'N° BDC',
-        'Date Expédition',
-        'Vendeur',
-        'Modalités'
-      ];
-      const paymentData = [
-        '',
-        format(new Date(), 'dd/MM/yyyy', { locale: fr }),
-        '',
-        saleData.modePaiement.toUpperCase()
-      ];
-
-      doc.autoTable({
-        startY,
-        head: [paymentHeader],
-        body: [paymentData],
-        theme: 'grid',
-        headStyles: {
-          textColor: [0, 0, 0],
-          fontStyle: 'bold',
-          halign: 'center',
-          lineWidth: 0.2,
-          lineColor: [0, 0, 0]
-        },
-        styles: {
-          fontSize: 8,
-          cellPadding: 3,
-          textColor: [0, 0, 0],
-          lineWidth: 0.2,
-          lineColor: [0, 0, 0]
-        }
-      });
-    };
-
-    // Fonction pour dessiner le pied de page
-    const drawFooter = finalY => {
-      doc.setLineWidth(0.3);
-      doc.line(15, finalY + 15, 195, finalY + 15);
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(9);
-      doc.text('Merci pour votre confiance !', 105, finalY + 25, {
-        align: 'center'
-      });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      const contactText = `Contactez-nous: ${company.phone} | ${company.email}${
-        company.website ? ` | ${company.website}` : ''
-      }`;
-      doc.text(contactText, 105, finalY + 32, { align: 'center' });
-    };
-
-    // Dessiner la première page
-    drawHeader();
-    drawCustomerInfo();
-    drawPaymentTable(80);
-
-    // Tableau des produits
-    const itemsTableHead = [
-      'N°',
-      'Description',
-      'Qté',
-      'Prix Unitaire',
-      'Total'
-    ];
-    const maxItems = 15;
-    let subTotal = 0;
-    const itemsPerPage = [];
-    for (let i = 0; i < cartItems.length; i += maxItems) {
-      itemsPerPage.push(cartItems.slice(i, i + maxItems));
-    }
-
-    for (let page = 0; page < itemsPerPage.length; page++) {
-      if (page > 0) {
-        doc.addPage();
-        drawHeader();
-        drawCustomerInfo();
-        drawPaymentTable(80);
-      }
-
-      const itemsTableBody = [];
-      const pageItems = itemsPerPage[page];
-
-      for (let i = 0; i < pageItems.length; i++) {
-        const item = pageItems[i];
-        const unitPrice =
-          item.prixVente || parseInt(item.totalPrice / item.quantity, 10) || 0;
-        const quantity = item.quantity || item.quantiteVendu || 1;
-        const totalPrice = unitPrice * quantity;
-
-        subTotal += totalPrice;
-
-        itemsTableBody.push([
-          `${page * maxItems + i + 1}`,
-          (item.libelle || 'Produit').replace(/[\n\r]/g, ' ').substring(0, 30),
-          quantity.toString(),
-          `XOF ${unitPrice.toFixed(0)}`,
-          `XOF ${totalPrice.toFixed(0)}`
-        ]);
-      }
-
-      doc.autoTable({
-        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 80,
-        head: [itemsTableHead],
-        body: itemsTableBody,
-        theme: 'grid',
-        headStyles: {
-          textColor: [0, 0, 0],
-          fontStyle: 'bold',
-          halign: 'center',
-          lineWidth: 0.2,
-          lineColor: [0, 0, 0]
-        },
-        columnStyles: {
-          0: { cellWidth: 14.4, halign: 'center' },
-          1: { cellWidth: 72, halign: 'left' },
-          2: { cellWidth: 21.6, halign: 'center' },
-          3: { cellWidth: 36, halign: 'right' },
-          4: { cellWidth: 36, halign: 'right' }
-        },
-        styles: {
-          fontSize: 8,
-          cellPadding: 3,
-          textColor: [0, 0, 0],
-          lineWidth: 0.2,
-          lineColor: [0, 0, 0],
-          overflow: 'ellipsize'
-        }
-      });
-
-      // Ajouter le total et la signature uniquement sur la dernière page
-      if (page === itemsPerPage.length - 1) {
-        const finalY = doc.lastAutoTable.finalY;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Total:', 150, finalY + 8);
-        doc.text(`XOF ${subTotal.toFixed(0)}`, 195, finalY + 8, {
-          align: 'right'
-        });
-
-        // Signature
-        const signatureY = finalY + 15;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text('Signature:', 15, signatureY);
-        doc.setLineWidth(0.3);
-        doc.line(40, signatureY, 80, signatureY); // Ligne pour la signature
-
-        // Pied de page
-        drawFooter(signatureY);
-      } else {
-        // Pied de page sur les pages intermédiaires
-        drawFooter(doc.lastAutoTable.finalY);
-      }
-    }
-
-    return doc;
-  },
-
-  downloadInvoice: async (
-    saleData,
-    cartItems,
-    customerInfo = {},
-    companyInfo = {}
-  ) => {
-    const doc = await InvoiceGenerator.generateInvoice(
-      saleData,
-      cartItems,
-      customerInfo,
-      companyInfo
-    );
-    const fileName = `facture_${format(new Date(), 'yyyyMMdd')}_${Math.floor(
-      Math.random() * 1000
-    )}.pdf`;
-    doc.save(fileName);
-    return fileName;
   }
 };
 
-export default InvoiceGenerator;
+/**
+ * Classe pour générer des factures PDF
+ */
+class InvoiceGenerator {
+  constructor() {
+    this.doc = new jsPDF();
+    this.currentY = MARGINS.TOP;
+  }
+
+  /**
+   * Dessine le logo ou un placeholder
+   */
+  async drawLogo(logoUrl) {
+    const logoX = MARGINS.LEFT;
+    const logoY = MARGINS.TOP;
+    const logoWidth = 30;
+    const logoHeight = 12;
+
+    if (logoUrl) {
+      try {
+        const logoDataUrl = await loadImage(logoUrl);
+        this.doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        return;
+      } catch (error) {
+        console.error('Erreur chargement logo:', error);
+      }
+    }
+
+    // Placeholder si pas de logo
+    this.doc.setDrawColor(...COLORS.BLACK);
+    this.doc.roundedRect(logoX, logoY, logoWidth, logoHeight, 3, 3, 'S');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text('Logo', logoX + logoWidth/2, logoY + logoHeight/2 + 2, { align: 'center' });
+  }
+
+  /**
+   * Dessine l'en-tête de la facture
+   */
+  drawHeader(company, invoiceData) {
+    // Nom de l'entreprise
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.HEADER);
+    this.doc.text(company.name.toUpperCase(), 50, 15);
+
+    // Adresse de l'entreprise
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    let addressY = 22;
+    if (company.address) {
+      this.doc.text(`${company.address}, ${company.neighborhood}`, 50, addressY);
+      addressY += 6;
+    }
+    if (company.department) {
+      this.doc.text(`${company.department}, ${company.region}, ${company.city}`, 50, addressY);
+      addressY += 6;
+    }
+    if (company.phone) {
+      this.doc.text(`Tél: ${company.phone}`, 50, addressY);
+      addressY += 6;
+    }
+    if (company.email) {
+      this.doc.text(`Email: ${company.email}`, 50, addressY);
+    }
+
+    // Titre et détails facture
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.TITLE);
+    this.doc.text('FACTURE', MARGINS.RIGHT, 18, { align: 'right' });
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text(`Date: ${invoiceData.date}`, MARGINS.RIGHT, 25, { align: 'right' });
+    this.doc.text(`N° Facture: ${invoiceData.number}`, MARGINS.RIGHT, 31, { align: 'right' });
+    this.doc.text(`N° Client: ${invoiceData.customerId}`, MARGINS.RIGHT, 37, { align: 'right' });
+
+    // Ligne de séparation
+    this.doc.setDrawColor(...COLORS.BLACK);
+    this.doc.setLineWidth(0.3);
+    this.doc.line(MARGINS.LEFT, 45, MARGINS.RIGHT, 45);
+  }
+
+  /**
+   * Dessine les informations client
+   */
+  drawCustomerInfo(customerInfo) {
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.SUBTITLE);
+    this.doc.text('Facturé à:', MARGINS.LEFT, 55);
+    
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text(customerInfo.fullName || 'Client', MARGINS.LEFT, 62);
+    this.doc.text(customerInfo.phoneNumber || '', MARGINS.LEFT, 68);
+  }
+
+  /**
+   * Dessine le tableau des informations de paiement
+   */
+  drawPaymentInfo(saleData, startY) {
+    const paymentData = [
+      ['', format(new Date(), 'dd/MM/yyyy', { locale: fr }), '', saleData.modePaiement.toUpperCase()]
+    ];
+
+    // Vérifier si autoTable existe
+    if (typeof this.doc.autoTable !== 'function') {
+      console.error('autoTable non disponible, utilisation du fallback');
+      this.drawPaymentInfoFallback(saleData, startY);
+      return startY + 20;
+    }
+
+    try {
+      this.doc.autoTable({
+        startY,
+        head: [['N° BDC', 'Date Expédition', 'Vendeur', 'Modalités']],
+        body: paymentData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: COLORS.LIGHT_GRAY,
+          textColor: COLORS.BLACK,
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: FONT_SIZES.SMALL
+        },
+        styles: {
+          fontSize: FONT_SIZES.SMALL,
+          cellPadding: 3,
+          textColor: COLORS.BLACK
+        }
+      });
+      return this.doc.lastAutoTable.finalY;
+    } catch (error) {
+      console.error('Erreur autoTable:', error);
+      this.drawPaymentInfoFallback(saleData, startY);
+      return startY + 20;
+    }
+  }
+
+  /**
+   * Fallback pour dessiner les infos de paiement sans autoTable
+   */
+  drawPaymentInfoFallback(saleData, startY) {
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text('Informations de paiement:', MARGINS.LEFT, startY);
+    
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.text(`Mode: ${saleData.modePaiement.toUpperCase()}`, MARGINS.LEFT, startY + 8);
+    this.doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy', { locale: fr })}`, MARGINS.LEFT, startY + 16);
+  }
+
+  /**
+   * Dessine le tableau des produits
+   */
+  drawProductsTable(cartItems, startY) {
+    if (typeof this.doc.autoTable !== 'function') {
+      return this.drawProductsTableFallback(cartItems, startY);
+    }
+
+    const tableData = cartItems.map((item, index) => {
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const quantity = item.quantity || item.quantiteVendu || 1;
+      const totalPrice = unitPrice * quantity;
+
+      return [
+        (index + 1).toString(),
+        (item.libelle || 'Produit').substring(0, 30),
+        quantity.toString(),
+        `${unitPrice.toLocaleString()} XOF`,
+        `${totalPrice.toLocaleString()} XOF`
+      ];
+    });
+
+    try {
+      this.doc.autoTable({
+        startY,
+        head: [['N°', 'Description', 'Qté', 'Prix Unitaire', 'Total']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: COLORS.LIGHT_GRAY,
+          textColor: COLORS.BLACK,
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: FONT_SIZES.SMALL
+        },
+        columnStyles: {
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 70, halign: 'left' },
+          2: { cellWidth: 20, halign: 'center' },
+          3: { cellWidth: 40, halign: 'right' },
+          4: { cellWidth: 40, halign: 'right' }
+        },
+        styles: {
+          fontSize: FONT_SIZES.SMALL,
+          cellPadding: 3,
+          textColor: COLORS.BLACK
+        }
+      });
+      return this.doc.lastAutoTable.finalY;
+    } catch (error) {
+      console.error('Erreur tableau produits:', error);
+      return this.drawProductsTableFallback(cartItems, startY);
+    }
+  }
+
+  /**
+   * Fallback pour dessiner le tableau des produits sans autoTable
+   */
+  drawProductsTableFallback(cartItems, startY) {
+    let currentY = startY + 10;
+    
+    // En-tête
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text('Produits commandés:', MARGINS.LEFT, currentY);
+    currentY += 10;
+
+    // Produits
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(FONT_SIZES.SMALL);
+    
+    cartItems.forEach((item, index) => {
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const quantity = item.quantity || item.quantiteVendu || 1;
+      const totalPrice = unitPrice * quantity;
+
+      this.doc.text(`${index + 1}. ${item.libelle || 'Produit'}`, MARGINS.LEFT, currentY);
+      this.doc.text(`Qté: ${quantity}`, MARGINS.LEFT + 100, currentY);
+      this.doc.text(`${totalPrice.toLocaleString()} XOF`, MARGINS.RIGHT - 30, currentY, { align: 'right' });
+      currentY += 6;
+    });
+
+    return currentY + 10;
+  }
+
+  /**
+   * Dessine le total et la signature
+   */
+  drawTotal(total, startY) {
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setFontSize(FONT_SIZES.SUBTITLE);
+    this.doc.text('Total:', 150, startY);
+    this.doc.text(`${total.toLocaleString()} XOF`, MARGINS.RIGHT, startY, { align: 'right' });
+
+    // Signature
+    const signatureY = startY + 15;
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text('Signature:', MARGINS.LEFT, signatureY);
+    this.doc.setLineWidth(0.3);
+    this.doc.line(40, signatureY, 80, signatureY);
+
+    return signatureY;
+  }
+
+  /**
+   * Dessine le pied de page
+   */
+  drawFooter(company, startY) {
+    const footerY = startY + 15;
+    
+    this.doc.setLineWidth(0.3);
+    this.doc.line(MARGINS.LEFT, footerY, MARGINS.RIGHT, footerY);
+    
+    this.doc.setFont('helvetica', 'italic');
+    this.doc.setFontSize(FONT_SIZES.NORMAL);
+    this.doc.text('Merci pour votre confiance !', 105, footerY + 10, { align: 'center' });
+    
+    if (company.phone || company.email) {
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(FONT_SIZES.SMALL);
+      const contactText = `Contactez-nous: ${company.phone || ''} | ${company.email || ''}`;
+      this.doc.text(contactText, 105, footerY + 17, { align: 'center' });
+    }
+  }
+
+  /**
+   * Génère la facture complète
+   */
+  async generate(saleData, cartItems, customerInfo = {}) {
+    const company = await getCompanySettings();
+    
+    // Données de la facture
+    const invoiceData = {
+      date: format(new Date(), 'dd/MM/yyyy', { locale: fr }),
+      number: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+      customerId: customerInfo.id || `CUST-${Math.floor(Math.random() * 1000)}`
+    };
+
+    // Calculer le total
+    const total = cartItems.reduce((acc, item) => {
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const quantity = item.quantity || item.quantiteVendu || 1;
+      return acc + (unitPrice * quantity);
+    }, 0);
+
+    // Dessiner la facture
+    await this.drawLogo(company.logo);
+    this.drawHeader(company, invoiceData);
+    this.drawCustomerInfo(customerInfo);
+    
+    let currentY = this.drawPaymentInfo(saleData, 80);
+    currentY = this.drawProductsTable(cartItems, currentY + 10);
+    currentY = this.drawTotal(total, currentY + 10);
+    this.drawFooter(company, currentY);
+
+    return this.doc;
+  }
+}
+
+// Export des fonctions utilitaires
+const InvoiceGeneratorUtils = {
+  /**
+   * Génère et télécharge une facture
+   */
+  async downloadInvoice(saleData, cartItems, customerInfo = {}, companyInfo = {}) {
+    try {
+      const generator = new InvoiceGenerator();
+      const doc = await generator.generate(saleData, cartItems, customerInfo);
+      
+      const fileName = `facture_${format(new Date(), 'yyyyMMdd')}_${Math.floor(Math.random() * 1000)}.pdf`;
+      doc.save(fileName);
+      
+      return fileName;
+    } catch (error) {
+      console.error('Erreur génération facture:', error);
+      throw new Error('Impossible de générer la facture');
+    }
+  },
+
+  /**
+   * Génère une facture sans la télécharger
+   */
+  async generateInvoice(saleData, cartItems, customerInfo = {}, companyInfo = {}) {
+    const generator = new InvoiceGenerator();
+    return await generator.generate(saleData, cartItems, customerInfo);
+  }
+};
+
+export default InvoiceGeneratorUtils;

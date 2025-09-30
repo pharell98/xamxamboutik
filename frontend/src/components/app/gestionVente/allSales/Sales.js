@@ -94,7 +94,7 @@ const Sales = ({ onEdit }) => {
               (sale.libelleProduit || '').toLowerCase().includes(term) ||
               (sale.categorieProduit || '').toLowerCase().includes(term)
           );
-          }
+        }
 
         // Ajouter une clé unique pour éviter la duplication
         items = items.map(item => ({

@@ -1,10 +1,115 @@
 import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Card, Col, Form, Image, Row } from 'react-bootstrap';
+import { Button, Card, Col, Form, Image, Row, Alert } from 'react-bootstrap';
 import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faStore, 
+  faEnvelope, 
+  faPhone, 
+  faMapMarkerAlt, 
+  faSave,
+  faEdit,
+  faCheckCircle,
+  faExclamationTriangle,
+  faInfoCircle
+} from '@fortawesome/free-solid-svg-icons';
 import ProductUpload from '../../common/ProductUpload';
 import { shopSettingsSchema } from '../validatore/validatorsParametrage';
+
+// Styles CSS personnalisés
+const customStyles = `
+  .settings-form-card {
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  
+  .settings-form-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+  
+  .form-control-custom {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .form-control-custom:focus {
+    background-color: #ffffff !important;
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+  }
+  
+  .form-control-custom.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+  }
+  
+  .section-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .btn-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .btn-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-warning-custom {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .btn-warning-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(240, 147, 251, 0.4);
+  }
+  
+  .icon-container {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .icon-container:hover {
+    transform: scale(1.1);
+  }
+  
+  .alert-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+  }
+  
+  .card-header-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+`;
 
 const defaultInitialValues = {
   shopName: '',
@@ -16,10 +121,6 @@ const defaultInitialValues = {
   department: '',
   neighborhood: '',
   street: '',
-  facebookUrl: '',
-  instagramUrl: '',
-  twitterUrl: '',
-  websiteUrl: '',
   id: null
 };
 
@@ -43,7 +144,7 @@ const ShopSettingsForm = ({
     setValue,
     reset,
     watch,
-    formState: { errors }
+    formState: { errors, isSubmitting, isDirty }
   } = methods;
 
   useEffect(() => {
@@ -77,296 +178,272 @@ const ShopSettingsForm = ({
   }, [mergedInitialValues.logo]);
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <Card className="shadow-sm border-0 rounded">
-          <Card.Header as="h6" className="bg-body-tertiary rounded-top">
-            {isEditMode || initialValues?.id
-              ? 'Modifier les paramètres'
-              : 'Ajouter les paramètres'}
-          </Card.Header>
-          <Card.Body className="p-4">
-            <h6 className="fw-bold mb-3 text-primary">
-              Informations générales
-            </h6>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Nom de la boutique :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez le nom de la boutique"
-                    isInvalid={!!errors.shopName}
-                    className="rounded"
-                    {...register('shopName')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.shopName?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Logo de la boutique (optionnel) :
-                  </Form.Label>
-                  <Row>
-                    <Col xs={6}>
-                      <ProductUpload
-                        onImageUpload={file =>
-                          setValue('logo', file, { shouldValidate: true })
-                        }
-                        acceptedTypes={{
-                          'image/jpeg': ['.jpg', '.jpeg'],
-                          'image/png': ['.png'],
-                          'image/svg+xml': ['.svg']
-                        }}
+    <>
+      <style>{customStyles}</style>
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <Card className="settings-form-card border-0 rounded-3 overflow-hidden fade-in-up">
+            <Card.Body className="p-4">
+              {/* Section Informations générales */}
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold d-flex align-items-center">
+                        <FontAwesomeIcon icon={faStore} className="text-primary me-2" />
+                        Nom de la boutique
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez le nom de votre boutique"
+                        isInvalid={!!errors.shopName}
+                        className="form-control-custom rounded-3"
+                        {...register('shopName')}
                       />
-                    </Col>
-                    <Col xs={6}>
-                      {currentImage?.url && (
-                        <Card className="shadow-sm border-0">
-                          <Card.Body className="p-2 text-center">
-                            <Image
-                              src={currentImage.url}
-                              alt="Logo Preview"
-                              style={{
-                                width: 100,
-                                height: 100,
-                                objectFit: 'cover'
-                              }}
-                              onError={e => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                            <Card.Text className="mt-2 text-muted">
-                              Aperçu du logo
-                            </Card.Text>
-                          </Card.Body>
-                        </Card>
-                      )}
-                    </Col>
-                  </Row>
-                </Form.Group>
-              </Col>
-            </Row>
-            <hr className="my-4" />
-            <h6 className="fw-bold mb-3 text-primary">
-              Informations de contact
-            </h6>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">Adresse e-mail :</Form.Label>
-                  <Form.Control
-                    type="email"
-                    placeholder="exemple@boutique.com"
-                    isInvalid={!!errors.email}
-                    className="rounded"
-                    {...register('email')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.email?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Numéro de téléphone :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="+1234567890"
-                    isInvalid={!!errors.phone}
-                    className="rounded"
-                    {...register('phone')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.phone?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Pays (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez le pays"
-                    isInvalid={!!errors.country}
-                    className="rounded"
-                    {...register('country')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.country?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Région (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez la région"
-                    isInvalid={!!errors.region}
-                    className="rounded"
-                    {...register('region')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.region?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Département (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez le département"
-                    isInvalid={!!errors.department}
-                    className="rounded"
-                    {...register('department')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.department?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Quartier (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez le quartier"
-                    isInvalid={!!errors.neighborhood}
-                    className="rounded"
-                    {...register('neighborhood')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.neighborhood?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">Rue (optionnel) :</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Entrez la rue"
-                    isInvalid={!!errors.street}
-                    className="rounded"
-                    {...register('street')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.street?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Facebook (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="url"
-                    placeholder="https://facebook.com/votreboutique"
-                    isInvalid={!!errors.facebookUrl}
-                    className="rounded"
-                    {...register('facebookUrl')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.facebookUrl?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Instagram (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="url"
-                    placeholder="https://instagram.com/votreboutique"
-                    isInvalid={!!errors.instagramUrl}
-                    className="rounded"
-                    {...register('instagramUrl')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.instagramUrl?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Twitter (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="url"
-                    placeholder="https://twitter.com/votreboutique"
-                    isInvalid={!!errors.twitterUrl}
-                    className="rounded"
-                    {...register('twitterUrl')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.twitterUrl?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="fw-bold">
-                    Site web (optionnel) :
-                  </Form.Label>
-                  <Form.Control
-                    type="url"
-                    placeholder="https://www.votreboutique.com"
-                    isInvalid={!!errors.websiteUrl}
-                    className="rounded"
-                    {...register('websiteUrl')}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.websiteUrl?.message}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-            <div className="d-flex justify-content-center mt-4">
-              <Button
-                variant={
-                  isEditMode || initialValues?.id ? 'warning' : 'primary'
-                }
-                type="submit"
-                className="px-4 rounded"
-                style={{ transition: 'all 0.2s ease-in-out' }}
-              >
-                {isEditMode || initialValues?.id ? 'Modifier' : 'Ajouter'}
-              </Button>
-            </div>
-          </Card.Body>
-        </Card>
-      </form>
-    </FormProvider>
+                      <Form.Control.Feedback type="invalid">
+                        {errors.shopName?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Logo de la boutique
+                      </Form.Label>
+                      <Row className="g-2">
+                        <Col xs={6}>
+                          <ProductUpload
+                            onImageUpload={file =>
+                              setValue('logo', file, { shouldValidate: true })
+                            }
+                            acceptedTypes={{
+                              'image/jpeg': ['.jpg', '.jpeg'],
+                              'image/png': ['.png'],
+                              'image/svg+xml': ['.svg']
+                            }}
+                          />
+                        </Col>
+                        <Col xs={6}>
+                          {currentImage?.url && (
+                            <Card className="shadow-sm border-0 rounded-3">
+                              <Card.Body className="p-2 text-center">
+                                <Image
+                                  src={currentImage.url}
+                                  alt="Logo Preview"
+                                  style={{
+                                    width: 80,
+                                    height: 80,
+                                    objectFit: 'cover',
+                                    borderRadius: '8px'
+                                  }}
+                                  onError={e => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                                <small className="text-muted d-block mt-2">
+                                  Aperçu du logo
+                                </small>
+                              </Card.Body>
+                            </Card>
+                          )}
+                        </Col>
+                      </Row>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+
+              <hr className="my-4" />
+
+              {/* Section Informations de contact */}
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold d-flex align-items-center">
+                        <FontAwesomeIcon icon={faEnvelope} className="text-info me-2" />
+                        Adresse e-mail
+                      </Form.Label>
+                      <Form.Control
+                        type="email"
+                        placeholder="exemple@boutique.com"
+                        isInvalid={!!errors.email}
+                        className="form-control-custom rounded-3"
+                        {...register('email')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.email?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold d-flex align-items-center">
+                        <FontAwesomeIcon icon={faPhone} className="text-success me-2" />
+                        Numéro de téléphone
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="+1234567890"
+                        isInvalid={!!errors.phone}
+                        className="form-control-custom rounded-3"
+                        {...register('phone')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.phone?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+
+              <hr className="my-4" />
+
+              {/* Section Adresse */}
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <div className="d-flex align-items-center mb-3">
+                  <div className="bg-warning bg-opacity-10 p-2 rounded me-2 icon-container">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="text-warning" />
+                  </div>
+                  <h6 className="fw-bold mb-0 section-header">
+                    Adresse de la boutique
+                  </h6>
+                </div>
+                
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Pays
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez le pays"
+                        isInvalid={!!errors.country}
+                        className="form-control-custom rounded-3"
+                        {...register('country')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.country?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Région
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez la région"
+                        isInvalid={!!errors.region}
+                        className="form-control-custom rounded-3"
+                        {...register('region')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.region?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Département
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez le département"
+                        isInvalid={!!errors.department}
+                        className="form-control-custom rounded-3"
+                        {...register('department')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.department?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Quartier
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez le quartier"
+                        isInvalid={!!errors.neighborhood}
+                        className="form-control-custom rounded-3"
+                        {...register('neighborhood')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.neighborhood?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  <Col md={12}>
+                    <Form.Group>
+                      <Form.Label className="fw-semibold">
+                        Rue
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Entrez la rue"
+                        isInvalid={!!errors.street}
+                        className="form-control-custom rounded-3"
+                        {...register('street')}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.street?.message}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Alert d'information */}
+              <Alert variant="info" className="alert-custom border-0 rounded-3 fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <div className="d-flex align-items-center">
+                  <FontAwesomeIcon icon={faInfoCircle} className="me-2" />
+                  <div>
+                    <strong>Information :</strong> Tous les champs marqués avec un astérisque (*) sont obligatoires. 
+                    Les autres champs sont optionnels et peuvent être remplis plus tard.
+                  </div>
+                </div>
+              </Alert>
+
+              {/* Boutons d'action */}
+              <div className="d-flex justify-content-center mt-4 fade-in-up" style={{ animationDelay: '0.5s' }}>
+                <Button
+                  variant={isEditMode || initialValues?.id ? 'warning' : 'primary'}
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-5 py-2 rounded-3 fw-semibold ${
+                    isEditMode || initialValues?.id ? 'btn-warning-custom' : 'btn-custom'
+                  }`}
+                  style={{ 
+                    minWidth: '150px'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon 
+                        icon={isEditMode || initialValues?.id ? faEdit : faSave} 
+                        className="me-2" 
+                      />
+                      {isEditMode || initialValues?.id ? 'Modifier' : 'Enregistrer'}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        </form>
+      </FormProvider>
+    </>
   );
 };
 

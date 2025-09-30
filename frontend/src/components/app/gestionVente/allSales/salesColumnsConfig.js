@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dropdown } from 'react-bootstrap';
-import { FaBan, FaExchangeAlt, FaUndo } from 'react-icons/fa';
+import { FaExchangeAlt, FaUndo } from 'react-icons/fa';
 
 function cellWrapperClass(/* sale */) {
   return 'py-2 d-flex align-items-center justify-content-center';
@@ -276,46 +276,7 @@ export const getSalesColumns = (
                   >
                     <FaExchangeAlt className="me-2" /> Échange - Ajustement prix
                   </Dropdown.Item>
-                  <Dropdown.Header>Annulations</Dropdown.Header>
-                  <Dropdown.Item
-                    onClick={() => {
-                      setSelectedSale({
-                        detailVenteId: sale.detailVenteId,
-                        quantiteVendu: sale.quantiteVendu,
-                        status: sale.status
-                      });
-                      setSelectedAction('annulationApresLivraison');
-                      setShowActionForm(true);
-                    }}
-                  >
-                    <FaBan className="me-2" /> Annulation - Après livraison
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    onClick={() => {
-                      setSelectedSale({
-                        detailVenteId: sale.detailVenteId,
-                        quantiteVendu: sale.quantiteVendu,
-                        status: sale.status
-                      });
-                      setSelectedAction('annulationPartielle');
-                      setShowActionForm(true);
-                    }}
-                  >
-                    <FaBan className="me-2" /> Annulation - Partielle
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    onClick={() => {
-                      setSelectedSale({
-                        detailVenteId: sale.detailVenteId,
-                        quantiteVendu: sale.quantiteVendu,
-                        status: sale.status
-                      });
-                      setSelectedAction('annulationNonConformite');
-                      setShowActionForm(true);
-                    }}
-                  >
-                    <FaBan className="me-2" /> Annulation - Non-conformité
-                  </Dropdown.Item>
+                  {/* Annulation actions removed per v3 API */}
                 </Dropdown.Menu>
               </Dropdown>
             ) : (

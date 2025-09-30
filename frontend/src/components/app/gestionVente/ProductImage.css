@@ -1,0 +1,141 @@
+/* Styles pour ProductImage avec effets de zoom optimisés */
+
+.product-image-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform-origin: center;
+  /* Optimisation pour les animations */
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.product-image-container:hover {
+  z-index: 5;
+}
+
+.product-image-container.grid-layout:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container.list-layout:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.product-image {
+  object-fit: contain;
+  object-position: center;
+  padding: 4px;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  /* Amélioration de la qualité d'image */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.product-image:hover {
+  background-color: #ffffff;
+  padding: 2px;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(transparent 70%, rgba(0,0,0,0.1));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-image-container:hover .image-overlay {
+  opacity: 1;
+}
+
+.product-image-container:hover .zoom-icon {
+  opacity: 1 !important;
+}
+
+.clickable-image {
+  cursor: zoom-in !important;
+}
+
+.clickable-image:hover {
+  filter: brightness(1.1);
+}
+
+/* Animation d'apparition pour les nouvelles images */
+.product-image {
+  animation: fadeInImage 0.5s ease-in;
+}
+
+@keyframes fadeInImage {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Amélioration pour les écrans tactiles */
+@media (hover: none) {
+  .product-image-container:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .product-image-container:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Amélioration des performances sur mobile */
+@media (max-width: 768px) {
+  .product-image-container {
+    will-change: auto;
+  }
+  
+  .product-image-container:hover {
+    transform: none;
+  }
+}
+
+/* Styles pour le mode sombre */
+[data-bs-theme="dark"] .product-image {
+  background-color: #2d3748;
+}
+
+[data-bs-theme="dark"] .product-image:hover {
+  background-color: #4a5568;
+}
+
+/* Focus pour l'accessibilité */
+.product-image-container:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Optimisation des images de fallback */
+.product-image[src*="no-image.svg"],
+.product-image[src*="default"] {
+  opacity: 0.7;
+  filter: grayscale(20%);
+}
+
+.product-image[src*="no-image.svg"]:hover,
+.product-image[src*="default"]:hover {
+  opacity: 0.9;
+  filter: grayscale(0%);
+}

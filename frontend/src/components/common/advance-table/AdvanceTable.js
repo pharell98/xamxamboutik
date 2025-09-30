@@ -55,7 +55,14 @@ const AdvanceTable = ({
             </tr>
           ) : (
             getRowModel().rows.map(row => (
-              <tr key={row.id} className={rowClassName}>
+              <tr
+                key={row.id}
+                className={
+                  typeof rowClassName === 'function'
+                    ? rowClassName(row)
+                    : rowClassName
+                }
+              >
                 {row.getVisibleCells().map(cell => (
                   <td key={cell.id} {...cell.column.columnDef.meta?.cellProps}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -73,7 +80,7 @@ const AdvanceTable = ({
 AdvanceTable.propTypes = {
   headerClassName: PropTypes.string,
   bodyClassName: PropTypes.string,
-  rowClassName: PropTypes.string,
+  rowClassName: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   tableProps: PropTypes.object
 };
 

@@ -93,6 +93,10 @@ import {
   faExclamationCircle,
   faExclamationTriangle,
   faExternalLinkAlt,
+  faBox,
+  faPlusCircle,
+  faTruck,
+  faReceipt,
   faEye,
   faFileAlt,
   faFileArchive,
@@ -467,5 +471,9 @@ library.add(
   faCameraRetro,
   faUtensils,
   faAdjust,
-  faColumns
+  faColumns,
+  faBox,
+  faPlusCircle,
+  faTruck,
+  faReceipt
 );

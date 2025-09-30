@@ -15,7 +15,7 @@ import { useToast } from 'components/common/Toast';
 import Loading from '../../../../../common/Loading';
 import { debounce } from 'lodash';
 
-const Products = ({ onEdit, isEditing }) => {
+const Products = ({ onEdit }) => {
   const [refresh, setRefresh] = useState(0);
   const [filters, setFilters] = useState({ category: '', state: 'all' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,11 +62,47 @@ const Products = ({ onEdit, isEditing }) => {
   }, [addToast]);
 
   useEffect(() => {
-    const lastUpdate = data[data.length - 1];
-    if (lastUpdate?.action) {
-      debouncedSetRefresh();
+    if (Array.isArray(data) && data.length > 0) {
+      const latestMessage = data[data.length - 1];
+
+      // Vérifier si c'est un message de produit
+      if (
+        latestMessage &&
+        (latestMessage.type === 'PRODUCT_CREATED' ||
+          latestMessage.type === 'PRODUCT_UPDATED' ||
+          latestMessage.type === 'PRODUCT_DELETED' ||
+          latestMessage.type === 'STOCK_UPDATE' ||
+          latestMessage.action === 'product_update' ||
+          latestMessage.action === 'UPDATE' ||
+          latestMessage.message?.includes('produit') ||
+          latestMessage.message?.includes('product') ||
+          latestMessage === 'update') // Accepter aussi les strings simples
+      ) {
+        console.log('[Products] Message WebSocket reçu, rafraîchissement des données:', latestMessage);
+        debouncedSetRefresh();
+      }
     }
-  }, [data]);
+  }, [data, debouncedSetRefresh]);
+
+  // Écouter les événements personnalisés pour les produits
+  useEffect(() => {
+    const handleProductUpdated = () => {
+      debouncedSetRefresh();
+    };
+
+    const handleStockUpdated = () => {
+      console.log('[Products] Événement stock-updated reçu, rafraîchissement des données');
+      debouncedSetRefresh();
+    };
+
+    window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('stock-updated', handleStockUpdated);
+
+    return () => {
+      window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('stock-updated', handleStockUpdated);
+    };
+  }, [debouncedSetRefresh]);
 
   const handleFiltersChange = useCallback((name, value) => {
     setFilters(prev => ({
@@ -109,6 +145,11 @@ const Products = ({ onEdit, isEditing }) => {
         message: `Produit "${productToDelete.libelle}" supprimé avec succès.`,
         type: 'success'
       });
+
+      // Déclencher un événement pour rafraîchir les tables
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('product-updated'));
+      }, 1000);
     } catch (error) {
       console.error('[Products] Erreur lors de la suppression :', error);
       const serverMessage =
@@ -134,6 +175,12 @@ const Products = ({ onEdit, isEditing }) => {
           message: `Produit "${product.libelle}" restauré avec succès.`,
           type: 'success'
         });
+
+        // Déclencher un événement pour rafraîchir les tables
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('product-updated'));
+        }, 1000);
+
         setRefresh(prev => prev + 1);
       } catch (error) {
         console.error('[Products] Erreur lors de la restauration :', error);
@@ -245,7 +292,7 @@ const Products = ({ onEdit, isEditing }) => {
   return (
     <>
       <Row className="mb-3">
-        <Col md={12}>
+        <Col md="12">
           <AdvanceTableProvider {...table}>
             <Card className="mb-3">
               <Card.Header className="bg-body-tertiary">
@@ -306,8 +353,7 @@ const Products = ({ onEdit, isEditing }) => {
 };
 
 Products.propTypes = {
-  onEdit: PropTypes.func.isRequired,
-  isEditing: PropTypes.bool.isRequired
+  onEdit: PropTypes.func.isRequired
 };
 
 export default Products;

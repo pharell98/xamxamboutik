@@ -160,7 +160,20 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback(toast => {
-    setToasts(prev => [...prev, { ...toast, id: Date.now() }]);
+    setToasts(prev => {
+      // Éviter les doublons en vérifiant le titre et le message
+      const isDuplicate = prev.some(
+        existingToast =>
+          existingToast.title === toast.title &&
+          existingToast.message === toast.message
+      );
+
+      if (isDuplicate) {
+        return prev;
+      }
+
+      return [...prev, { ...toast, id: Date.now() + Math.random() }];
+    });
   }, []);
 
   const removeToast = useCallback(id => {

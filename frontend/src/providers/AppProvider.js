@@ -8,8 +8,9 @@ import { configReducer } from 'reducers/configReducer';
 export const AppContext = createContext(settings);
 
 const AppProvider = ({ children }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const configState = {
-    isFluid: getItemFromStore('isFluid', settings.isFluid),
+    isFluid: isMobile ? true : getItemFromStore('isFluid', settings.isFluid),
     isRTL: getItemFromStore('isRTL', settings.isRTL),
     isDark: getItemFromStore('isDark', settings.isDark),
     theme: getItemFromStore('theme', settings.theme),

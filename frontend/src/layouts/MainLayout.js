@@ -5,6 +5,7 @@ import NavbarTop from 'components/navbar/top/NavbarTop';
 import NavbarVertical from 'components/navbar/vertical/NavbarVertical';
 import Footer from 'components/footer/Footer';
 import ProductProvider from 'providers/ProductProvider';
+import useAutoCloseSidebar from 'hooks/useAutoCloseSidebar';
 
 import { useAppContext } from 'providers/AppProvider';
 
@@ -15,6 +16,9 @@ const MainLayout = () => {
   const {
     config: { isFluid, navbarPosition }
   } = useAppContext();
+
+  // Utiliser le hook pour fermer automatiquement la sidebar sur les pages de vente
+  useAutoCloseSidebar();
 
   useEffect(() => {
     setTimeout(() => {

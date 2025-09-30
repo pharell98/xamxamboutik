@@ -1,45 +1,69 @@
-// CalculatorModal.js
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalculator } from '@fortawesome/free-solid-svg-icons';
 
 const CalculatorModal = ({ show, onClose, totalCost }) => {
   const [montantRecu, setMontantRecu] = useState('');
 
-  const montantRendu = Math.max(
-    0,
-    (parseInt(montantRecu, 10) || 0) - totalCost
-  );
+  const montantRendu = useMemo(() => {
+    const recu = parseFloat(montantRecu) || 0;
+    return Math.max(0, recu - totalCost);
+  }, [montantRecu, totalCost]);
+
+  const handleMontantChange = (e) => {
+    const value = e.target.value;
+    // Allow only positive numbers
+    if (value === '' || (!isNaN(value) && parseFloat(value) >= 0)) {
+      setMontantRecu(value);
+    }
+  };
 
   const handleClose = () => {
+    setMontantRecu('');
     onClose();
   };
 
   return (
     <Modal show={show} onHide={handleClose} backdrop="static" centered>
       <Modal.Header closeButton>
-        <Modal.Title>Calculatrice</Modal.Title>
+        <Modal.Title>
+          <FontAwesomeIcon icon={faCalculator} className="me-2" />
+          Calculatrice
+        </Modal.Title>
       </Modal.Header>
 
-      {/* AJOUT d'un style pour le scroll dans le Modal.Body */}
-      <Modal.Body style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+      <Modal.Body>
+        <div className="mb-3">
+          <Form.Label className="fw-semibold">Total à payer</Form.Label>
+          <Form.Control
+            type="text"
+            readOnly
+            value={`${totalCost.toLocaleString()} XOF`}
+            className="bg-light fw-bold"
+          />
+        </div>
+
         <Form.Group className="mb-3">
-          <Form.Label>Montant Reçu</Form.Label>
+          <Form.Label className="fw-semibold">Montant reçu</Form.Label>
           <Form.Control
             type="number"
             min="0"
+            step="0.01"
             value={montantRecu}
-            onChange={e => setMontantRecu(e.target.value)}
+            onChange={handleMontantChange}
             placeholder="Entrez le montant payé"
+            autoFocus
           />
         </Form.Group>
 
         <Form.Group>
-          <Form.Label>Montant à Rendre</Form.Label>
+          <Form.Label className="fw-semibold">Montant à rendre</Form.Label>
           <Form.Control
             type="text"
             readOnly
-            value={montantRendu}
-            className="fw-bold"
+            value={`${montantRendu.toLocaleString()} XOF`}
+            className={`fw-bold ${montantRendu > 0 ? 'text-success' : ''}`}
           />
         </Form.Group>
       </Modal.Body>
