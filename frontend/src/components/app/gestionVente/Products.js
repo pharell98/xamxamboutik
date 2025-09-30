@@ -51,7 +51,6 @@ const useProducts = () => {
   const fetchProducts = useCallback(async (pageToLoad) => {
     // Éviter les requêtes multiples
     if (loading) {
-      console.log('[Products] Requête en cours, ignorée');
       return;
     }
     
@@ -116,10 +115,8 @@ const useProducts = () => {
 
   const reloadProductsAfterSale = useCallback(
     _.debounce(async () => {
-      console.log('[Products] Rechargement fluide des produits après vente...');
       // Éviter les rechargements multiples
       if (loading) {
-        console.log('[Products] Rechargement ignoré - requête en cours');
         return;
       }
       try {
@@ -143,8 +140,6 @@ const useProducts = () => {
                 quantiteDisponible: Number(product.stockDisponible || product.stock || 0),
                 totalPrice: Number(product.prixVente || product.prix || 0) * 1
               }));
-            
-            console.log('[Products] Nouveaux produits chargés:', validatedProducts.length);
             
             // Transition fluide : remplacer les produits d'un coup
             setProducts(validatedProducts);
@@ -217,11 +212,7 @@ const Products = () => {
 
   // Fonction de test pour vérifier la connexion WebSocket
   const testWebSocketConnection = () => {
-    console.log('[Products] Test de connexion WebSocket:');
-    console.log('- Connected:', connected);
-    console.log('- VenteData length:', venteData?.length || 0);
-    console.log('- Dernier message:', venteData?.[venteData.length - 1]);
-  };
+    };
 
   useEffect(() => {
     // Limiter les tests de connexion WebSocket
@@ -285,14 +276,12 @@ const Products = () => {
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
-      console.log('[Products] Message de vente reçu:', latestMessage);
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
         Array.isArray(latestMessage.soldItems) &&
         latestMessage.soldItems.length > 0
       ) {
-        console.log('[Products] Rechargement des produits après vente...');
         // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
@@ -314,7 +303,6 @@ const Products = () => {
       setLastSoldItems(soldItems);
       
       // Un seul effet : rechargement complet au lieu de mise à jour immédiate
-      console.log('[Products] Checkout détecté, rechargement des produits...');
       setTimeout(() => {
         reloadProductsAfterSale();
       }, 300);

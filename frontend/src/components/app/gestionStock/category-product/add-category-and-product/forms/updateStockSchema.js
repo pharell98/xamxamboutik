@@ -81,7 +81,6 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
     if (stompData && stompData.length > 0) {
       const lastMessage = stompData[stompData.length - 1];
       if (lastMessage && lastMessage.action === 'UPDATE' && lastMessage.type === 'STOCK_UPDATE') {
-        console.log('[UpdateStockForm] Notification de mise à jour de stock reçue:', lastMessage);
         // Rafraîchir les données si nécessaire
         onSuccess?.();
       }
