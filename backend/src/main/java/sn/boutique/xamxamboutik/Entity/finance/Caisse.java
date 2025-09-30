@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 
+
 @Entity
 @Table(name = "caisses")
 @Data

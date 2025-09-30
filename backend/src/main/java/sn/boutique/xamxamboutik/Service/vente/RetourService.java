@@ -1,6 +1,8 @@
 package sn.boutique.xamxamboutik.Service.vente;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -16,15 +18,14 @@ import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
 import sn.boutique.xamxamboutik.Repository.vente.DetailVenteRepository;
-import sn.boutique.xamxamboutik.Repository.vente.PaiementRepository;
 import sn.boutique.xamxamboutik.Repository.vente.RetourProduitRepository;
 import sn.boutique.xamxamboutik.Repository.vente.VenteRepository;
-import sn.boutique.xamxamboutik.Web.DTO.Request.AnnulationRequestDTO;
+import sn.boutique.xamxamboutik.Service.user.CurrentUserService;
+import sn.boutique.xamxamboutik.Service.statistique.CaisseInternalService;
 import sn.boutique.xamxamboutik.Web.DTO.Request.EchangeRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.RemboursementRequestDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -37,8 +38,9 @@ public class RetourService implements IRetourService {
     private final DetailVenteRepository detailVenteRepository;
     private final VenteRepository venteRepository;
     private final ProduitRepository produitRepository;
-    private final PaiementRepository paiementRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final CurrentUserService currentUserService;
+    private final CaisseInternalService caisseInternalService;
 
     @Autowired
     public RetourService(
@@ -46,33 +48,30 @@ public class RetourService implements IRetourService {
             DetailVenteRepository detailVenteRepository,
             VenteRepository venteRepository,
             ProduitRepository produitRepository,
-            PaiementRepository paiementRepository,
-            SimpMessagingTemplate messagingTemplate
+            SimpMessagingTemplate messagingTemplate,
+            CurrentUserService currentUserService,
+            CaisseInternalService caisseInternalService
     ) {
         this.retourProduitRepository = retourProduitRepository;
         this.detailVenteRepository = detailVenteRepository;
         this.venteRepository = venteRepository;
         this.produitRepository = produitRepository;
-        this.paiementRepository = paiementRepository;
         this.messagingTemplate = messagingTemplate;
+        this.currentUserService = currentUserService;
+        this.caisseInternalService = caisseInternalService;
     }
 
     @Override
-    public RetourProduit createRemboursement(RemboursementRequestDTO dto) {
+    public RetourProduit createRemboursementBonEtat(RemboursementRequestDTO dto) {
         try {
-            logger.info("Début de createRemboursement pour detailVenteId: {}, sousType: {}", dto.getDetailVenteId(), dto.getSousType());
+            logger.info("Début de createRemboursementBonEtat pour detailVenteId: {}", dto.getDetailVenteId());
             validateRemboursementRequest(dto);
-            if (dto.getSousType() == null) {
-                logger.error("Sous-type de remboursement manquant pour l'endpoint principal");
-                throw new BaseCustomException("Sous-type de remboursement requis", ErrorCodes.INVALID_REQUEST);
-            }
             DetailVente detailVente = validateDetailVente(dto.getDetailVenteId());
-            validateSousType(dto.getSousType(), "remboursement");
 
             if (retourProduitRepository.existsByDetailVenteId(dto.getDetailVenteId())) {
                 logger.error("Un retour existe déjà pour detailVenteId: {}", dto.getDetailVenteId());
                 throw new BaseCustomException(
-                        "Un remboursement, échange ou annulation a déjà été effectué pour cette vente",
+                        "Un remboursement ou échange a déjà été effectué pour cette vente",
                         ErrorCodes.INVALID_STATE
                 );
             }
@@ -80,34 +79,25 @@ public class RetourService implements IRetourService {
             RetourProduit retourProduit = new RetourProduit();
             retourProduit.setDateRetour(LocalDateTime.now());
             retourProduit.setMotif(dto.getMotif());
-            retourProduit.setTypeRetour(dto.getSousType().name());
+            retourProduit.setTypeRetour(TypeRetour.REMBOURSEMENT_AVEC_RETOUR_BON_ETAT.name());
             retourProduit.setDetailVente(detailVente);
+            retourProduit.setUtilisateurRetour(currentUserService.getCurrentUser());
 
-            switch (dto.getSousType()) {
-                case REMBOURSEMENT_AVEC_RETOUR_BON_ETAT:
-                    handleRemboursementBonEtat(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
-                    break;
-                case REMBOURSEMENT_DEFECTUEUX:
-                    handleRemboursementDefectueux(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
-                    break;
-                default:
-                    throw new BaseCustomException("Sous-type de remboursement non supporté", ErrorCodes.INVALID_REQUEST);
-            }
+            double montantRemboursementBonEtat = handleRemboursementBonEtat(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
+            caisseInternalService.updateVentesJournalieresRealtime();
+            logger.info("Remboursement bon état: {} FCFA retourné au client, caisse mise à jour", montantRemboursementBonEtat);
 
             retourProduitRepository.save(retourProduit);
-            logger.info("Remboursement créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
+            logger.info("Remboursement (bon état) créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
             if (messagingTemplate != null) {
                 messagingTemplate.convertAndSend("/topic/retours", "remboursement");
-                logger.info("Message STOMP envoyé à /topic/retours pour remboursement, detailVenteId: {}", dto.getDetailVenteId());
-            } else {
-                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour remboursement, detailVenteId: {}", dto.getDetailVenteId());
             }
             return retourProduit;
         } catch (BaseCustomException e) {
-            logger.error("Erreur gérée lors du remboursement pour detailVenteId: {}. Message: {}", dto.getDetailVenteId(), e.getMessage());
+            logger.error("Erreur gérée lors du remboursement bon état pour detailVenteId: {}. Message: {}", dto.getDetailVenteId(), e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("Erreur inattendue lors du remboursement pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
+            logger.error("Erreur inattendue lors du remboursement bon état pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
             throw new BaseCustomException(
                     "Erreur interne lors du traitement du remboursement: " + e.getMessage(),
                     ErrorCodes.INTERNAL_ERROR
@@ -116,33 +106,16 @@ public class RetourService implements IRetourService {
     }
 
     @Override
-    public RetourProduit createRemboursementBonEtat(RemboursementRequestDTO dto) {
-        dto.setSousType(TypeRetour.REMBOURSEMENT_AVEC_RETOUR_BON_ETAT);
-        return createRemboursement(dto);
-    }
-
-    @Override
     public RetourProduit createRemboursementDefectueux(RemboursementRequestDTO dto) {
-        dto.setSousType(TypeRetour.REMBOURSEMENT_DEFECTUEUX);
-        return createRemboursement(dto);
-    }
-
-    @Override
-    public RetourProduit createEchange(EchangeRequestDTO dto) {
         try {
-            logger.info("Début de createEchange pour detailVenteId: {}, sousType: {}", dto.getDetailVenteId(), dto.getSousType());
-            validateEchangeRequest(dto);
-            if (dto.getSousType() == null) {
-                logger.error("Sous-type d'échange manquant pour l'endpoint principal");
-                throw new BaseCustomException("Sous-type d'échange requis", ErrorCodes.INVALID_REQUEST);
-            }
+            logger.info("Début de createRemboursementDefectueux pour detailVenteId: {}", dto.getDetailVenteId());
+            validateRemboursementRequest(dto);
             DetailVente detailVente = validateDetailVente(dto.getDetailVenteId());
-            validateSousType(dto.getSousType(), "echange");
 
             if (retourProduitRepository.existsByDetailVenteId(dto.getDetailVenteId())) {
                 logger.error("Un retour existe déjà pour detailVenteId: {}", dto.getDetailVenteId());
                 throw new BaseCustomException(
-                        "Un remboursement, échange ou annulation a déjà été effectué pour cette vente",
+                        "Un remboursement ou échange a déjà été effectué pour cette vente",
                         ErrorCodes.INVALID_STATE
                 );
             }
@@ -150,34 +123,68 @@ public class RetourService implements IRetourService {
             RetourProduit retourProduit = new RetourProduit();
             retourProduit.setDateRetour(LocalDateTime.now());
             retourProduit.setMotif(dto.getMotif());
-            retourProduit.setTypeRetour(dto.getSousType().name());
+            retourProduit.setTypeRetour(TypeRetour.REMBOURSEMENT_DEFECTUEUX.name());
             retourProduit.setDetailVente(detailVente);
+            retourProduit.setUtilisateurRetour(currentUserService.getCurrentUser());
 
-            switch (dto.getSousType()) {
-                case ECHANGE_DEFECTUEUX:
-                    handleEchangeDefectueux(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
-                    break;
-                case ECHANGE_CHANGEMENT_PREFERENCE:
-                    handleEchangeChangementPreference(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
-                    break;
-                case ECHANGE_AJUSTEMENT_PRIX:
-                    handleEchangeAjustementPrix(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
-                    break;
-                default:
-                    throw new BaseCustomException("Sous-type d'échange non supporté", ErrorCodes.INVALID_REQUEST);
-            }
+            double perte = handleRemboursementDefectueux(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
+            caisseInternalService.updateVentesJournalieresRealtime();
+            caisseInternalService.updatePertesJournalieres(LocalDate.now(), perte);
+            logger.info("Remboursement défectueux: {} FCFA retourné au client, perte enregistrée, caisse mise à jour", perte);
 
             retourProduitRepository.save(retourProduit);
-            logger.info("Échange créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
+            logger.info("Remboursement (défectueux) créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/retours", "remboursement");
+            }
+            return retourProduit;
+        } catch (BaseCustomException e) {
+            logger.error("Erreur gérée lors du remboursement défectueux pour detailVenteId: {}. Message: {}", dto.getDetailVenteId(), e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Erreur inattendue lors du remboursement défectueux pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
+            throw new BaseCustomException(
+                    "Erreur interne lors du traitement du remboursement: " + e.getMessage(),
+                    ErrorCodes.INTERNAL_ERROR
+            );
+        }
+    }
+
+    @Override
+    public RetourProduit createEchangeDefectueux(EchangeRequestDTO dto) {
+        try {
+            logger.info("Début de createEchangeDefectueux pour detailVenteId: {}", dto.getDetailVenteId());
+            validateEchangeRequest(dto);
+            DetailVente detailVente = validateDetailVente(dto.getDetailVenteId());
+
+            if (retourProduitRepository.existsByDetailVenteId(dto.getDetailVenteId())) {
+                logger.error("Un retour existe déjà pour detailVenteId: {}", dto.getDetailVenteId());
+                throw new BaseCustomException(
+                        "Un remboursement ou échange a déjà été effectué pour cette vente",
+                        ErrorCodes.INVALID_STATE
+                );
+            }
+
+            RetourProduit retourProduit = new RetourProduit();
+            retourProduit.setDateRetour(LocalDateTime.now());
+            retourProduit.setMotif(dto.getMotif());
+            retourProduit.setTypeRetour(TypeRetour.ECHANGE_DEFECTUEUX.name());
+            retourProduit.setDetailVente(detailVente);
+            retourProduit.setUtilisateurRetour(currentUserService.getCurrentUser());
+
+            double perte = handleEchangeDefectueux(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
+            caisseInternalService.updateVentesJournalieresRealtime();
+            caisseInternalService.updatePertesJournalieres(LocalDate.now(), perte);
+            logger.info("Échange défectueux: {} FCFA de perte, caisse mise à jour", perte);
+
+            retourProduitRepository.save(retourProduit);
+            logger.info("Échange défectueux créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
             if (messagingTemplate != null) {
                 messagingTemplate.convertAndSend("/topic/retours", "echange");
-                logger.info("Message STOMP envoyé à /topic/retours pour échange, detailVenteId: {}", dto.getDetailVenteId());
-            } else {
-                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour échange, detailVenteId: {}", dto.getDetailVenteId());
             }
             return retourProduit;
         } catch (Exception e) {
-            logger.error("Erreur lors de la création de l'échange pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
+            logger.error("Erreur lors de la création de l'échange défectueux pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
             throw new BaseCustomException(
                     "Erreur interne lors du traitement de l'échange: " + e.getMessage(),
                     ErrorCodes.INTERNAL_ERROR
@@ -186,39 +193,16 @@ public class RetourService implements IRetourService {
     }
 
     @Override
-    public RetourProduit createEchangeDefectueux(EchangeRequestDTO dto) {
-        dto.setSousType(TypeRetour.ECHANGE_DEFECTUEUX);
-        return createEchange(dto);
-    }
-
-    @Override
     public RetourProduit createEchangeChangementPreference(EchangeRequestDTO dto) {
-        dto.setSousType(TypeRetour.ECHANGE_CHANGEMENT_PREFERENCE);
-        return createEchange(dto);
-    }
-
-    @Override
-    public RetourProduit createEchangeAjustementPrix(EchangeRequestDTO dto) {
-        dto.setSousType(TypeRetour.ECHANGE_AJUSTEMENT_PRIX);
-        return createEchange(dto);
-    }
-
-    @Override
-    public RetourProduit createAnnulation(AnnulationRequestDTO dto) {
         try {
-            logger.info("Début de createAnnulation pour detailVenteId: {}, sousType: {}", dto.getDetailVenteId(), dto.getSousType());
-            validateAnnulationRequest(dto);
-            if (dto.getSousType() == null) {
-                logger.error("Sous-type d'annulation manquant pour l'endpoint principal");
-                throw new BaseCustomException("Sous-type d'annulation requis", ErrorCodes.INVALID_REQUEST);
-            }
+            logger.info("Début de createEchangeChangementPreference pour detailVenteId: {}", dto.getDetailVenteId());
+            validateEchangeRequest(dto);
             DetailVente detailVente = validateDetailVente(dto.getDetailVenteId());
-            validateSousType(dto.getSousType(), "annulation");
 
             if (retourProduitRepository.existsByDetailVenteId(dto.getDetailVenteId())) {
                 logger.error("Un retour existe déjà pour detailVenteId: {}", dto.getDetailVenteId());
                 throw new BaseCustomException(
-                        "Un remboursement, échange ou annulation a déjà été effectué pour cette vente",
+                        "Un remboursement ou échange a déjà été effectué pour cette vente",
                         ErrorCodes.INVALID_STATE
                 );
             }
@@ -226,57 +210,68 @@ public class RetourService implements IRetourService {
             RetourProduit retourProduit = new RetourProduit();
             retourProduit.setDateRetour(LocalDateTime.now());
             retourProduit.setMotif(dto.getMotif());
-            retourProduit.setTypeRetour(dto.getSousType().name());
+            retourProduit.setTypeRetour(TypeRetour.ECHANGE_CHANGEMENT_PREFERENCE.name());
             retourProduit.setDetailVente(detailVente);
+            retourProduit.setUtilisateurRetour(currentUserService.getCurrentUser());
 
-            switch (dto.getSousType()) {
-                case ANNULATION_APRES_LIVRAISON:
-                    handleAnnulationApresLivraison(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
-                    break;
-                case ANNULATION_PARTIELLE:
-                    handleAnnulationPartielle(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
-                    break;
-                case ANNULATION_NON_CONFORMITE:
-                    handleAnnulationNonConformite(detailVente, detailVente.getVente(), dto.getQuantiteRetour());
-                    break;
-                default:
-                    throw new BaseCustomException("Sous-type d'annulation non supporté", ErrorCodes.INVALID_REQUEST);
-            }
+            handleEchangeChangementPreference(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
+            caisseInternalService.updateVentesJournalieresRealtime();
+            logger.info("Échange changement préférence: caisse mise à jour");
 
             retourProduitRepository.save(retourProduit);
-            logger.info("Annulation créée avec succès pour detailVenteId: {}", dto.getDetailVenteId());
+            logger.info("Échange (changement préférence) créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
             if (messagingTemplate != null) {
-                messagingTemplate.convertAndSend("/topic/retours", "annulation");
-                logger.info("Message STOMP envoyé à /topic/retours pour annulation, detailVenteId: {}", dto.getDetailVenteId());
-            } else {
-                logger.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour annulation, detailVenteId: {}", dto.getDetailVenteId());
+                messagingTemplate.convertAndSend("/topic/retours", "echange");
             }
             return retourProduit;
         } catch (Exception e) {
-            logger.error("Erreur lors de la création de l'annulation pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
+            logger.error("Erreur lors de la création de l'échange changement de préférence pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
             throw new BaseCustomException(
-                    "Erreur interne lors du traitement de l'annulation: " + e.getMessage(),
+                    "Erreur interne lors du traitement de l'échange: " + e.getMessage(),
                     ErrorCodes.INTERNAL_ERROR
             );
         }
     }
 
     @Override
-    public RetourProduit createAnnulationApresLivraison(AnnulationRequestDTO dto) {
-        dto.setSousType(TypeRetour.ANNULATION_APRES_LIVRAISON);
-        return createAnnulation(dto);
-    }
+    public RetourProduit createEchangeAjustementPrix(EchangeRequestDTO dto) {
+        try {
+            logger.info("Début de createEchangeAjustementPrix pour detailVenteId: {}", dto.getDetailVenteId());
+            validateEchangeRequest(dto);
+            DetailVente detailVente = validateDetailVente(dto.getDetailVenteId());
 
-    @Override
-    public RetourProduit createAnnulationPartielle(AnnulationRequestDTO dto) {
-        dto.setSousType(TypeRetour.ANNULATION_PARTIELLE);
-        return createAnnulation(dto);
-    }
+            if (retourProduitRepository.existsByDetailVenteId(dto.getDetailVenteId())) {
+                logger.error("Un retour existe déjà pour detailVenteId: {}", dto.getDetailVenteId());
+                throw new BaseCustomException(
+                        "Un remboursement ou échange a déjà été effectué pour cette vente",
+                        ErrorCodes.INVALID_STATE
+                );
+            }
 
-    @Override
-    public RetourProduit createAnnulationNonConformite(AnnulationRequestDTO dto) {
-        dto.setSousType(TypeRetour.ANNULATION_NON_CONFORMITE);
-        return createAnnulation(dto);
+            RetourProduit retourProduit = new RetourProduit();
+            retourProduit.setDateRetour(LocalDateTime.now());
+            retourProduit.setMotif(dto.getMotif());
+            retourProduit.setTypeRetour(TypeRetour.ECHANGE_AJUSTEMENT_PRIX.name());
+            retourProduit.setDetailVente(detailVente);
+            retourProduit.setUtilisateurRetour(currentUserService.getCurrentUser());
+
+            handleEchangeAjustementPrix(detailVente, detailVente.getVente(), dto.getProduitRemplacementId(), dto.getQuantiteRetour());
+            caisseInternalService.updateVentesJournalieresRealtime();
+            logger.info("Échange ajustement prix: caisse mise à jour");
+
+            retourProduitRepository.save(retourProduit);
+            logger.info("Échange (ajustement prix) créé avec succès pour detailVenteId: {}", dto.getDetailVenteId());
+            if (messagingTemplate != null) {
+                messagingTemplate.convertAndSend("/topic/retours", "echange");
+            }
+            return retourProduit;
+        } catch (Exception e) {
+            logger.error("Erreur lors de la création de l'échange ajustement prix pour detailVenteId: {}. Détails: {}", dto.getDetailVenteId(), e.getMessage(), e);
+            throw new BaseCustomException(
+                    "Erreur interne lors du traitement de l'échange: " + e.getMessage(),
+                    ErrorCodes.INTERNAL_ERROR
+            );
+        }
     }
 
     private DetailVente validateDetailVente(Long detailVenteId) {
@@ -302,7 +297,6 @@ public class RetourService implements IRetourService {
                     "Vente introuvable pour le détail de vente (ID: " + detailVenteId + ")",
                     ErrorCodes.ENTITY_NOT_FOUND);
         }
-        // Vérification supplémentaire : s'assurer que le DetailVente appartient à la Vente
         if (!vente.getDetailVentes().contains(detailVente)) {
             logger.error("DetailVente ID: {} n'appartient pas à la vente associée", detailVenteId);
             throw new BaseCustomException(
@@ -315,113 +309,70 @@ public class RetourService implements IRetourService {
 
     private void validateRemboursementRequest(RemboursementRequestDTO dto) {
         logger.debug("Validation de RemboursementRequestDTO: {}", dto);
-        if (dto.getDetailVenteId() == null) {
-            logger.error("ID du détail de vente manquant");
-            throw new BaseCustomException("ID du détail de vente requis", ErrorCodes.INVALID_REQUEST);
-        }
-        if (dto.getMotif() == null || dto.getMotif().trim().isEmpty()) {
-            logger.error("Motif de remboursement manquant");
-            throw new BaseCustomException("Motif de remboursement requis", ErrorCodes.INVALID_REQUEST);
-        }
-        if (dto.getQuantiteRetour() <= 0) {
-            logger.error("Quantité de retour invalide: {}", dto.getQuantiteRetour());
-            throw new BaseCustomException("Quantité de retour invalide", ErrorCodes.INVALID_REQUEST);
-        }
+        validateCommonRetourFields(dto.getDetailVenteId(), dto.getMotif(), dto.getQuantiteRetour());
     }
 
     private void validateEchangeRequest(EchangeRequestDTO dto) {
         logger.debug("Validation de EchangeRequestDTO: {}", dto);
-        if (dto.getDetailVenteId() == null) {
-            throw new BaseCustomException("ID du détail de vente requis", ErrorCodes.INVALID_REQUEST);
-        }
-        if (dto.getMotif() == null || dto.getMotif().trim().isEmpty()) {
-            throw new BaseCustomException("Motif d'échange requis", ErrorCodes.INVALID_REQUEST);
-        }
-        if (dto.getQuantiteRetour() <= 0) {
-            throw new BaseCustomException("Quantité de retour invalide", ErrorCodes.INVALID_REQUEST);
-        }
+        validateCommonRetourFields(dto.getDetailVenteId(), dto.getMotif(), dto.getQuantiteRetour());
         if (dto.getProduitRemplacementId() == null) {
             throw new BaseCustomException("ID du produit de remplacement requis pour un échange", ErrorCodes.INVALID_REQUEST);
         }
     }
-
-    private void validateAnnulationRequest(AnnulationRequestDTO dto) {
-        logger.debug("Validation de AnnulationRequestDTO: {}", dto);
-        if (dto.getDetailVenteId() == null) {
+    
+    private void validateCommonRetourFields(Long detailVenteId, String motif, int quantiteRetour) {
+        if (detailVenteId == null) {
             throw new BaseCustomException("ID du détail de vente requis", ErrorCodes.INVALID_REQUEST);
         }
-        if (dto.getMotif() == null || dto.getMotif().trim().isEmpty()) {
-            throw new BaseCustomException("Motif d'annulation requis", ErrorCodes.INVALID_REQUEST);
+        if (motif == null || motif.trim().isEmpty()) {
+            throw new BaseCustomException("Motif requis", ErrorCodes.INVALID_REQUEST);
         }
-        if (dto.getQuantiteRetour() <= 0) {
+        if (quantiteRetour <= 0) {
             throw new BaseCustomException("Quantité de retour invalide", ErrorCodes.INVALID_REQUEST);
         }
     }
 
-    private void validateSousType(TypeRetour sousType, String operationType) {
-        boolean isValid = false;
-        switch (operationType.toLowerCase()) {
-            case "remboursement":
-                isValid = sousType == TypeRetour.REMBOURSEMENT_AVEC_RETOUR_BON_ETAT ||
-                        sousType == TypeRetour.REMBOURSEMENT_DEFECTUEUX;
-                break;
-            case "echange":
-                isValid = sousType == TypeRetour.ECHANGE_DEFECTUEUX ||
-                        sousType == TypeRetour.ECHANGE_CHANGEMENT_PREFERENCE ||
-                        sousType == TypeRetour.ECHANGE_AJUSTEMENT_PRIX;
-                break;
-            case "annulation":
-                isValid = sousType == TypeRetour.ANNULATION_APRES_LIVRAISON ||
-                        sousType == TypeRetour.ANNULATION_PARTIELLE ||
-                        sousType == TypeRetour.ANNULATION_NON_CONFORMITE;
-                break;
-        }
-        if (!isValid) {
-            throw new BaseCustomException(
-                    "Sous-type invalide pour l'opération " + operationType,
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-    }
-
-    private void handleRemboursementBonEtat(DetailVente detailVente, Vente vente, int quantiteRetour) {
+    private double handleRemboursementBonEtat(DetailVente detailVente, Vente vente, int quantiteRetour) {
         logger.debug("Traitement du remboursement bon état pour DetailVente ID: {}, Quantité: {}", detailVente.getId(), quantiteRetour);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à retourner supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
-        if (quantiteRetour == detailVente.getQuantiteVendu()) {
-            detailVente.setStatus(StatusDetailVente.RETOURNE_REMBOURSE);
-            detailVente.setMontantTotal(0.0);
-        } else {
-            detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-            detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        }
-        Produit produit = detailVente.getProduit();
-        produit.setStockDisponible(produit.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produit);
-        Paiement remboursement = new Paiement();
-        remboursement.setDatePaiement(LocalDateTime.now());
-        remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
-        remboursement.setVente(vente);
-        detailVenteRepository.save(detailVente);
-        paiementRepository.save(remboursement);
-        updateVenteMontants(vente, -montantRembourse);
+        double montantRembourse = processRemboursement(detailVente, vente, quantiteRetour, true);
+        logger.info("Remboursement bon état traité: montant={}, stock remis", montantRembourse);
+        return montantRembourse;
     }
 
-    private void handleRemboursementDefectueux(DetailVente detailVente, Vente vente, int quantiteRetour) {
+    private double handleRemboursementDefectueux(DetailVente detailVente, Vente vente, int quantiteRetour) {
         logger.debug("Traitement du remboursement défectueux pour DetailVente ID: {}, Quantité: {}", detailVente.getId(), quantiteRetour);
+        double montantRembourse = processRemboursement(detailVente, vente, quantiteRetour, false);
+        logger.info("Remboursement défectueux traité: montant={}, stock non remis", montantRembourse);
+        return montantRembourse;
+    }
+    
+    /**
+     * Méthode commune pour traiter les remboursements
+     */
+    private double processRemboursement(DetailVente detailVente, Vente vente, int quantiteRetour, boolean remettreEnStock) {
+        validateQuantiteRetour(detailVente, quantiteRetour);
+        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
+        updateDetailVenteForRemboursement(detailVente, quantiteRetour);
+        if (remettreEnStock) {
+            Produit produit = detailVente.getProduit();
+            produit.setStockDisponible(produit.getStockDisponible() + quantiteRetour);
+            produitRepository.save(produit);
+        }
+        detailVenteRepository.save(detailVente);
+        updateVenteMontants(vente, 0);
+        return montantRembourse;
+    }
+    
+    private void validateQuantiteRetour(DetailVente detailVente, int quantiteRetour) {
         if (quantiteRetour > detailVente.getQuantiteVendu()) {
             throw new BaseCustomException(
-                    "Quantité à retourner supérieure à la quantité vendue",
+                    "Quantité à retourner (" + quantiteRetour + ") supérieure à la quantité vendue (" + detailVente.getQuantiteVendu() + ")",
                     ErrorCodes.INVALID_REQUEST
             );
         }
-        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
+    }
+    
+    private void updateDetailVenteForRemboursement(DetailVente detailVente, int quantiteRetour) {
         if (quantiteRetour == detailVente.getQuantiteVendu()) {
             detailVente.setStatus(StatusDetailVente.RETOURNE_REMBOURSE);
             detailVente.setMontantTotal(0.0);
@@ -429,128 +380,70 @@ public class RetourService implements IRetourService {
             detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
             detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
         }
-        detailVenteRepository.save(detailVente);
-        Paiement remboursement = new Paiement();
-        remboursement.setDatePaiement(LocalDateTime.now());
-        remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
-        remboursement.setVente(vente);
-        paiementRepository.save(remboursement);
-        updateVenteMontants(vente, -montantRembourse);
     }
-
-    private void handleEchangeDefectueux(DetailVente detailVente, Vente vente, Long produitRemplacementId, int quantiteRetour) {
+    
+    private double handleEchangeDefectueux(DetailVente detailVente, Vente vente, Long produitRemplacementId, int quantiteRetour) {
         logger.debug("Traitement de l'échange défectueux pour DetailVente ID: {}, Quantité: {}, ProduitRemplacementId: {}",
                 detailVente.getId(), quantiteRetour, produitRemplacementId);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à retourner supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        Produit produitRemplacement = produitRepository.findById(produitRemplacementId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Produit de remplacement introuvable (ID: " + produitRemplacementId + ")",
-                        ErrorCodes.ENTITY_NOT_FOUND));
-        if (produitRemplacement.getStockDisponible() < quantiteRetour) {
-            throw new BaseCustomException(
-                    "Stock insuffisant pour le produit de remplacement : " + produitRemplacement.getLibelle(),
-                    ErrorCodes.INSUFFICIENT_STOCK
-            );
-        }
-        double montantRetourne = detailVente.getPrixVente() * quantiteRetour;
-        if (quantiteRetour == detailVente.getQuantiteVendu()) {
-            detailVente.setStatus(StatusDetailVente.RETOURNE_ECHANGE);
-            detailVente.setMontantTotal(0.0);
-        } else {
-            detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-            detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        }
-        DetailVente nouveauDetailVente = new DetailVente();
-        nouveauDetailVente.setVente(vente);
-        nouveauDetailVente.setProduit(produitRemplacement);
-        nouveauDetailVente.setPrixVente(detailVente.getPrixVente());
-        nouveauDetailVente.setQuantiteVendu(quantiteRetour);
-        nouveauDetailVente.setMontantTotal(nouveauDetailVente.getPrixVente() * quantiteRetour);
-        nouveauDetailVente.setStatus(StatusDetailVente.VENDU);
-        detailVenteRepository.save(detailVente);
-        detailVenteRepository.save(nouveauDetailVente);
-        produitRemplacement.setStockDisponible(produitRemplacement.getStockDisponible() - quantiteRetour);
-        produitRepository.save(produitRemplacement);
-        vente.getDetailVentes().add(nouveauDetailVente);
-        double montantAjoute = nouveauDetailVente.getMontantTotal();
-        updateVenteMontants(vente, montantAjoute - montantRetourne);
+        double perte = detailVente.getPrixVente() * quantiteRetour;
+        processEchange(detailVente, vente, produitRemplacementId, quantiteRetour, false, false);
+        logger.info("Échange défectueux traité: ancien produit non remis en stock, perte: {} FCFA", perte);
+        return perte;
     }
 
     private void handleEchangeChangementPreference(DetailVente detailVente, Vente vente, Long produitRemplacementId, int quantiteRetour) {
         logger.debug("Traitement de l'échange changement de préférence pour DetailVente ID: {}, Quantité: {}, ProduitRemplacementId: {}",
                 detailVente.getId(), quantiteRetour, produitRemplacementId);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à retourner supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        Produit produitRetourne = detailVente.getProduit();
-        produitRetourne.setStockDisponible(produitRetourne.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produitRetourne);
-        Produit produitRemplacement = produitRepository.findById(produitRemplacementId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Produit de remplacement introuvable (ID: " + produitRemplacementId + ")",
-                        ErrorCodes.ENTITY_NOT_FOUND));
-        if (produitRemplacement.getStockDisponible() < quantiteRetour) {
-            throw new BaseCustomException(
-                    "Stock insuffisant pour le produit de remplacement : " + produitRemplacement.getLibelle(),
-                    ErrorCodes.INSUFFICIENT_STOCK
-            );
-        }
-        double montantRetourne = detailVente.getPrixVente() * quantiteRetour;
-        if (quantiteRetour == detailVente.getQuantiteVendu()) {
-            detailVente.setStatus(StatusDetailVente.RETOURNE_ECHANGE);
-            detailVente.setMontantTotal(0.0);
-        } else {
-            detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-            detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        }
-        DetailVente nouveauDetailVente = new DetailVente();
-        nouveauDetailVente.setVente(vente);
-        nouveauDetailVente.setProduit(produitRemplacement);
-        nouveauDetailVente.setPrixVente(detailVente.getPrixVente());
-        nouveauDetailVente.setQuantiteVendu(quantiteRetour);
-        nouveauDetailVente.setMontantTotal(nouveauDetailVente.getPrixVente() * quantiteRetour);
-        nouveauDetailVente.setStatus(StatusDetailVente.VENDU);
-        detailVenteRepository.save(detailVente);
-        detailVenteRepository.save(nouveauDetailVente);
-        produitRemplacement.setStockDisponible(produitRemplacement.getStockDisponible() - quantiteRetour);
-        produitRepository.save(produitRemplacement);
-        vente.getDetailVentes().add(nouveauDetailVente);
-        double montantAjoute = nouveauDetailVente.getMontantTotal();
-        updateVenteMontants(vente, montantAjoute - montantRetourne);
+        processEchange(detailVente, vente, produitRemplacementId, quantiteRetour, true, false);
+        logger.info("Échange changement préférence traité: ancien produit remis en stock");
     }
 
     private void handleEchangeAjustementPrix(DetailVente detailVente, Vente vente, Long produitRemplacementId, int quantiteRetour) {
         logger.debug("Traitement de l'échange avec ajustement de prix pour DetailVente ID: {}, Quantité: {}, ProduitRemplacementId: {}",
                 detailVente.getId(), quantiteRetour, produitRemplacementId);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à retourner supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        Produit produitRetourne = detailVente.getProduit();
-        produitRetourne.setStockDisponible(produitRetourne.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produitRetourne);
+        processEchange(detailVente, vente, produitRemplacementId, quantiteRetour, true, true);
+        logger.info("Échange ajustement prix traité: ancien produit remis en stock, nouveau prix appliqué");
+    }
+    
+    /**
+     * Méthode commune pour traiter tous les types d'échange
+     */
+    private void processEchange(DetailVente detailVente, Vente vente, Long produitRemplacementId, 
+                               int quantiteRetour, boolean remettreAncienEnStock, boolean nouveauPrix) {
+        validateQuantiteRetour(detailVente, quantiteRetour);
         Produit produitRemplacement = produitRepository.findById(produitRemplacementId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Produit de remplacement introuvable (ID: " + produitRemplacementId + ")",
                         ErrorCodes.ENTITY_NOT_FOUND));
         if (produitRemplacement.getStockDisponible() < quantiteRetour) {
             throw new BaseCustomException(
-                    "Stock insuffisant pour le produit de remplacement : " + produitRemplacement.getLibelle(),
+                    "Stock insuffisant pour le produit de remplacement : " + produitRemplacement.getLibelle() +
+                    " (Disponible: " + produitRemplacement.getStockDisponible() + ", Demandé: " + quantiteRetour + ")",
                     ErrorCodes.INSUFFICIENT_STOCK
             );
         }
+        if (remettreAncienEnStock) {
+            Produit ancienProduit = detailVente.getProduit();
+            ancienProduit.setStockDisponible(ancienProduit.getStockDisponible() + quantiteRetour);
+            produitRepository.save(ancienProduit);
+        }
         double montantRetourne = detailVente.getPrixVente() * quantiteRetour;
+        updateDetailVenteForEchange(detailVente, quantiteRetour);
+        DetailVente nouveauDetailVente = createNewDetailVente(vente, produitRemplacement, detailVente, quantiteRetour, nouveauPrix);
+        produitRemplacement.setStockDisponible(produitRemplacement.getStockDisponible() - quantiteRetour);
+        produitRepository.save(produitRemplacement);
+        detailVenteRepository.save(detailVente);
+        detailVenteRepository.save(nouveauDetailVente);
+        vente.getDetailVentes().add(nouveauDetailVente);
+        if (nouveauPrix) {
+            double montantAjoute = nouveauDetailVente.getMontantTotal();
+            double montantAjuste = montantAjoute - montantRetourne;
+            logger.debug("Ajustement de prix calculé: {} (nouveau: {}, ancien: {})", montantAjuste, montantAjoute, montantRetourne);
+        }
+        updateVenteMontants(vente, 0);
+    }
+    
+    private void updateDetailVenteForEchange(DetailVente detailVente, int quantiteRetour) {
         if (quantiteRetour == detailVente.getQuantiteVendu()) {
             detailVente.setStatus(StatusDetailVente.RETOURNE_ECHANGE);
             detailVente.setMontantTotal(0.0);
@@ -558,123 +451,45 @@ public class RetourService implements IRetourService {
             detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
             detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
         }
+    }
+    
+    private DetailVente createNewDetailVente(Vente vente, Produit produitRemplacement, 
+                                           DetailVente ancienDetailVente, int quantiteRetour, boolean nouveauPrix) {
         DetailVente nouveauDetailVente = new DetailVente();
         nouveauDetailVente.setVente(vente);
         nouveauDetailVente.setProduit(produitRemplacement);
-        nouveauDetailVente.setPrixVente(produitRemplacement.getPrixVente());
+        Double prixAUtiliser = nouveauPrix ? produitRemplacement.getPrixVente() : ancienDetailVente.getPrixVente();
+        nouveauDetailVente.setPrixVente(prixAUtiliser);
         nouveauDetailVente.setQuantiteVendu(quantiteRetour);
-        nouveauDetailVente.setMontantTotal(nouveauDetailVente.getPrixVente() * quantiteRetour);
+        nouveauDetailVente.setMontantTotal(prixAUtiliser * quantiteRetour);
         nouveauDetailVente.setStatus(StatusDetailVente.VENDU);
-        detailVenteRepository.save(detailVente);
-        detailVenteRepository.save(nouveauDetailVente);
-        produitRemplacement.setStockDisponible(produitRemplacement.getStockDisponible() - quantiteRetour);
-        produitRepository.save(produitRemplacement);
-        double montantAjoute = nouveauDetailVente.getMontantTotal();
-        double montantAjuste = montantAjoute - montantRetourne;
-        if (montantAjuste != 0) {
-            Paiement ajustement = new Paiement();
-            ajustement.setDatePaiement(LocalDateTime.now());
-            ajustement.setMontantVerser(montantAjuste);
-            ajustement.setModePaiement(vente.getPaiement().getModePaiement());
-            ajustement.setVente(vente);
-            paiementRepository.save(ajustement);
-        }
-        vente.getDetailVentes().add(nouveauDetailVente);
-        updateVenteMontants(vente, montantAjuste);
+        return nouveauDetailVente;
     }
-
-    private void handleAnnulationApresLivraison(DetailVente detailVente, Vente vente, int quantiteRetour) {
-        logger.debug("Traitement de l'annulation après livraison pour DetailVente ID: {}, Quantité: {}", detailVente.getId(), quantiteRetour);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à annuler supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
-        if (quantiteRetour == detailVente.getQuantiteVendu()) {
-            detailVente.setStatus(StatusDetailVente.ANNULE);
-            detailVente.setMontantTotal(0.0);
-        } else {
-            detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-            detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        }
-        Produit produit = detailVente.getProduit();
-        produit.setStockDisponible(produit.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produit);
-        Paiement remboursement = new Paiement();
-        remboursement.setDatePaiement(LocalDateTime.now());
-        remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
-        remboursement.setVente(vente);
-        detailVenteRepository.save(detailVente);
-        paiementRepository.save(remboursement);
-        updateVenteMontants(vente, -montantRembourse);
-    }
-
-    private void handleAnnulationPartielle(DetailVente detailVente, Vente vente, int quantiteRetour) {
-        logger.debug("Traitement de l'annulation partielle pour DetailVente ID: {}, Quantité: {}", detailVente.getId(), quantiteRetour);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à annuler supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
-        detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-        detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        Produit produit = detailVente.getProduit();
-        produit.setStockDisponible(produit.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produit);
-        Paiement remboursement = new Paiement();
-        remboursement.setDatePaiement(LocalDateTime.now());
-        remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
-        remboursement.setVente(vente);
-        detailVenteRepository.save(detailVente);
-        paiementRepository.save(remboursement);
-        updateVenteMontants(vente, -montantRembourse);
-    }
-
-    private void handleAnnulationNonConformite(DetailVente detailVente, Vente vente, int quantiteRetour) {
-        logger.debug("Traitement de l'annulation pour non-conformité pour DetailVente ID: {}, Quantité: {}", detailVente.getId(), quantiteRetour);
-        if (quantiteRetour > detailVente.getQuantiteVendu()) {
-            throw new BaseCustomException(
-                    "Quantité à annuler supérieure à la quantité vendue",
-                    ErrorCodes.INVALID_REQUEST
-            );
-        }
-        double montantRembourse = detailVente.getPrixVente() * quantiteRetour;
-        if (quantiteRetour == detailVente.getQuantiteVendu()) {
-            detailVente.setStatus(StatusDetailVente.ANNULE);
-            detailVente.setMontantTotal(0.0);
-        } else {
-            detailVente.setQuantiteVendu(detailVente.getQuantiteVendu() - quantiteRetour);
-            detailVente.setMontantTotal(detailVente.getPrixVente() * detailVente.getQuantiteVendu());
-        }
-        Produit produit = detailVente.getProduit();
-        produit.setStockDisponible(produit.getStockDisponible() + quantiteRetour);
-        produitRepository.save(produit);
-        Paiement remboursement = new Paiement();
-        remboursement.setDatePaiement(LocalDateTime.now());
-        remboursement.setMontantVerser(-montantRembourse);
-        remboursement.setModePaiement(vente.getPaiement().getModePaiement());
-        remboursement.setVente(vente);
-        detailVenteRepository.save(detailVente);
-        paiementRepository.save(remboursement);
-        updateVenteMontants(vente, -montantRembourse);
-    }
-
+    
+    /**
+     * Recalcul des montants de la vente après retour/échange
+     */
     private void updateVenteMontants(Vente vente, double montantModifie) {
         logger.debug("Mise à jour des montants pour Vente ID: {}, Montant modifié: {}", vente.getId(), montantModifie);
-        double nouveauMontantTotal = vente.getMontantTotal() + montantModifie;
+        double nouveauMontantTotal = vente.getDetailVentes().stream()
+                .mapToDouble(DetailVente::getMontantTotal)
+                .sum();
+        logger.debug("Ancien montant total: {}, Nouveau montant total calculé: {}", vente.getMontantTotal(), nouveauMontantTotal);
         vente.setMontantTotal(nouveauMontantTotal);
         if (vente.getEstCredit()) {
-            double montantPaye = vente.getPaiement() != null ? vente.getPaiement().getMontantVerser() : 0.0;
-            vente.setMontantRestant(nouveauMontantTotal - montantPaye);
+            double montantTotalPaye = calculerMontantTotalPaye(vente);
+            vente.setMontantRestant(Math.max(0.0, nouveauMontantTotal - montantTotalPaye));
+            logger.debug("Vente à crédit - Montant payé: {}, Montant restant: {}", montantTotalPaye, vente.getMontantRestant());
         } else {
             vente.setMontantRestant(0.0);
         }
         venteRepository.save(vente);
+    }
+
+    private double calculerMontantTotalPaye(Vente vente) {
+        return vente.getPaiements().stream()
+                .filter(p -> p.getMontantVerser() > 0)
+                .mapToDouble(Paiement::getMontantVerser)
+                .sum();
     }
 }

@@ -3,7 +3,10 @@ package sn.boutique.xamxamboutik.Service.produit;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +18,9 @@ import sn.boutique.xamxamboutik.Entity.produit.Produit;
 import sn.boutique.xamxamboutik.Exception.BaseCustomException;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
+import sn.boutique.xamxamboutik.Repository.Projection.ProduitEchangeProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitProjection;
 import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
-import sn.boutique.xamxamboutik.Service.approvisionnement.ApprovisionnementService;
 import sn.boutique.xamxamboutik.Service.base.AbstractBaseService;
 import sn.boutique.xamxamboutik.Service.imageservice.service.ImageBackgroundService;
 import sn.boutique.xamxamboutik.Util.ProduitUtils;
@@ -25,7 +28,11 @@ import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -40,7 +47,6 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     private final SimpMessagingTemplate messagingTemplate;
     private final ImageBackgroundService imageBackgroundService;
     private final ProduitMapper produitMapper;
-    private final ApprovisionnementService approvisionnementService;
 
     @Override
     protected ProduitRepository getRepository() {
@@ -52,7 +58,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     public void deleteById(Long id) {
         Produit produit = getRepository().findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + id + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND));
-        getRepository().deleteById(id);
+        getRepository().softDelete(id);
         notifyUpdate(produit, "DELETE");
     }
 
@@ -132,11 +138,13 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         if (!produitRepository.existsById(produit.getId())) {
             throw new EntityNotFoundException("Produit avec l'ID " + produit.getId() + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND);
         }
-        produit.setLibelle(produit.getLibelle().toLowerCase());
+
         if (produitRepository.existsByLibelleAndDeletedFalseAndIdNot(produit.getLibelle(), produit.getId())) {
             throw new BaseCustomException("Le produit '" + produit.getLibelle() + "' existe déjà.", "DUPLICATE_ENTITY");
         }
+
         Produit updated = produitRepository.save(produit);
+
         notifyUpdate(updated, "UPDATE");
         return updated;
     }
@@ -146,6 +154,21 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     public Optional<Produit> findByCode(String c) {
         requireNonNull(c, "Le code du produit est requis.");
         return produitRepository.findByCodeProduit(c);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Produit> findByLibelleAndCategorie(String libelle, Long categorieId) {
+        requireNonNull(libelle, "Le libellé du produit est requis.");
+        requireNonNull(categorieId, "L'ID de la catégorie est requis.");
+        return produitRepository.findByLibelleAndCategorie_IdAndDeletedFalse(libelle.toLowerCase(), categorieId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Produit> findByLibelleOnly(String libelle) {
+        requireNonNull(libelle, "Le libellé du produit est requis.");
+        return produitRepository.findByLibelleAndDeletedFalse(libelle.toLowerCase());
     }
 
     @Override
@@ -180,44 +203,39 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         return produitRepository.findApprovisionnementSuggestions(pfx.toLowerCase(), sorted(pg));
     }
 
+    @Override
     @Transactional
-    public Produit updateStock(Long produitId, int quantite, Double prixAchat) {
+    public Produit updateStockAndPrice(Long produitId, int quantiteAjoutee, double prixAchat) {
         requireNonNull(produitId, "L'ID du produit est requis.");
-        if (quantite == 0) {
-            throw new IllegalArgumentException("La quantité doit être non nulle.");
-        }
-
         Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new EntityNotFoundException("Produit avec l'ID " + produitId + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND));
-
         int oldStock = produit.getStockDisponible();
         double oldCMA = produit.getCoupMoyenAcquisition();
-        double prix = prixAchat != null ? prixAchat : produit.getPrixAchat();
-
-        int newStock = oldStock + quantite;
-        if (newStock < 0) {
-            throw new IllegalArgumentException("Stock insuffisant pour cette opération.");
-        }
-        produit.setStockDisponible(newStock);
-
-        if (quantite > 0) {
-            double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, quantite, prix);
-            produit.setCoupMoyenAcquisition(nouveauCMA);
-            produit.setPrixAchat(prix);
-        }
-
-        approvisionnementService.createApprovisionnementVirtuel(produit, quantite, prix);
-
+        int newStock = quantiteAjoutee;
+        double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, newStock, prixAchat);
+        produit.setCoupMoyenAcquisition(nouveauCMA);
+        produit.setStockDisponible(oldStock + newStock);
+        produit.setPrixAchat(prixAchat);
         Produit updated = produitRepository.save(produit);
-        notifyUpdate(updated, "UPDATE_STOCK");
+        notifyUpdate(updated, "UPDATE");
         return updated;
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return produitRepository.existsById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProduitEchangeProjection> findProduitsEchange() {
+        return produitRepository.findProduitsEchange();
     }
 
     private Produit buildProduit(ProduitRequestDTO dto) {
         Categorie cat = categorieService.findById(dto.getCategorieId())
                 .orElseThrow(() -> new EntityNotFoundException("Catégorie avec l'ID " + dto.getCategorieId() + " non trouvée.", ErrorCodes.ENTITY_NOT_FOUND));
         Produit p = produitMapper.toEntity(dto);
-        p.setLibelle(p.getLibelle().toLowerCase());
+        p.setLibelle(p.getLibelle().trim().toLowerCase());
         p.setCategorie(cat);
         p.setStockDisponible(Objects.requireNonNullElse(dto.getStockDisponible(), 0));
         double pa = Objects.requireNonNullElse(dto.getPrixAchat(), 0.0);
@@ -228,7 +246,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
 
     private void updateProduitFields(Produit p, ProduitRequestDTO dto) {
         p.setCodeProduit(dto.getCodeProduit());
-        p.setLibelle(dto.getLibelle().toLowerCase());
+        p.setLibelle(dto.getLibelle().trim().toLowerCase());
         p.setPrixAchat(Objects.requireNonNullElse(dto.getPrixAchat(), 0.0));
         p.setPrixVente(Objects.requireNonNullElse(dto.getPrixVente(), 0.0));
         p.setSeuilRuptureStock(Objects.requireNonNullElse(dto.getSeuilRuptureStock(), 0));
@@ -259,8 +277,8 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
 
     private void handleImageUpdate(Produit p, MultipartFile file, String url) {
         if (url != null) {
-            String oldId = extractPublicId(p.getImage());
-            if (oldId != null) {
+            String oldId = extractCloudinaryPublicId(p.getImage());
+            if (oldId != null && isCloudinaryUrl(p.getImage())) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
@@ -274,7 +292,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         if (file != null && !file.isEmpty()) {
             try {
                 byte[] data = file.getBytes();
-                String oldId = extractPublicId(p.getImage());
+                String oldId = extractCloudinaryPublicId(p.getImage());
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
@@ -292,7 +310,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         int q = Objects.requireNonNullElse(dto.getStockDisponible(), 0);
         if (q > 0) {
             double pa = Objects.requireNonNullElse(dto.getPrixAchat(), 0.0);
-            approvisionnementService.createApprovisionnementVirtuel(p, q, pa);
+            // approvisionnementService.createApprovisionnementVirtuel(p, q, pa);
             p.setCoupMoyenAcquisition(ProduitUtils.calculerCoupMoyenAcquisition(
                     p.getStockDisponible() - q, p.getCoupMoyenAcquisition(), q, pa));
             produitRepository.save(p);
@@ -316,12 +334,48 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
     }
 
-    private String extractPublicId(String url) {
-        if (url == null || !url.contains("/")) {
+    private boolean isCloudinaryUrl(String url) {
+        if (url == null) return false;
+        try {
+            java.net.URI uri = java.net.URI.create(url);
+            String host = uri.getHost();
+            return host != null && host.contains("res.cloudinary.com");
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String extractCloudinaryPublicId(String url) {
+        if (!isCloudinaryUrl(url)) {
             return null;
         }
-        String[] part = url.split("/");
-        return part[part.length - 1].split("\\.")[0];
+        try {
+            // Example: https://res.cloudinary.com/<cloud>/image/upload/v12345/folder/name.jpg
+            // We want: folder/name (without extension and version)
+            String path = java.net.URI.create(url).getPath();
+            // Find the segment after "/upload/"
+            int uploadIdx = path.indexOf("/upload/");
+            if (uploadIdx == -1) {
+                return null;
+            }
+            String afterUpload = path.substring(uploadIdx + "/upload/".length());
+            // Remove transformation segments if any (start with "c_", "w_" etc.) which appear before the version
+            // Cloudinary typically puts version as v12345, so strip a leading v{digits}/ if present
+            afterUpload = afterUpload.replaceFirst("^v\\d+/", "");
+            // Now remove file extension
+            int lastSlash = afterUpload.lastIndexOf('/');
+            String filePart = afterUpload.substring(lastSlash + 1);
+            int dotIdx = filePart.lastIndexOf('.');
+            String fileNoExt = (dotIdx > 0) ? filePart.substring(0, dotIdx) : filePart;
+            if (lastSlash >= 0) {
+                String folder = afterUpload.substring(0, lastSlash);
+                return folder.isEmpty() ? fileNoExt : folder + "/" + fileNoExt;
+            } else {
+                return fileNoExt;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Pageable sorted(Pageable pg) {

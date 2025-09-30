@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Web.Controller.base;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -6,18 +7,26 @@ import sn.boutique.xamxamboutik.Entity.interfaces.Identifiable;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Service.base.BaseService;
-import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Util.PaginationUtil;
+import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
+
 import java.util.List;
 import java.util.Map;
+
 public abstract class AbstractBaseController<E extends Identifiable<Long>, DRequest, DWebResponse, DMobileResponse>
         implements BaseController<DRequest> {
     protected abstract BaseService<E, Long> getService();
+
     protected abstract E toEntity(DRequest dto);
+
     protected abstract DWebResponse toWebResponse(E entity);
+
     protected abstract DMobileResponse toMobileResponse(E entity);
+
     protected abstract List<DWebResponse> toWebResponseList(List<E> entities);
+
     protected abstract List<DMobileResponse> toMobileResponseList(List<E> entities);
+
     @Override
     public ResponseEntity<ApiResponse<?>> findAll(Integer page, Integer size, String clientType) {
         Page<E> pagedEntities = getService().findAll(PageRequest.of(page, size));
@@ -32,6 +41,7 @@ public abstract class AbstractBaseController<E extends Identifiable<Long>, DRequ
             return ResponseEntity.ok(ApiResponse.success("Liste paginée récupérée avec succès (web)", data));
         }
     }
+
     @Override
     public ResponseEntity<ApiResponse<?>> findById(Long id, String clientType) {
         E entity = getService().findById(id)
@@ -44,6 +54,7 @@ public abstract class AbstractBaseController<E extends Identifiable<Long>, DRequ
             return ResponseEntity.ok(ApiResponse.success("Détails récupérés avec succès (web)", dto));
         }
     }
+
     @Override
     public ResponseEntity<ApiResponse<?>> save(DRequest request) {
         E entity = toEntity(request);
@@ -51,11 +62,13 @@ public abstract class AbstractBaseController<E extends Identifiable<Long>, DRequ
         DWebResponse dto = toWebResponse(savedEntity);
         return ResponseEntity.ok(ApiResponse.success("Enregistré avec succès", dto));
     }
+
     @Override
     public ResponseEntity<ApiResponse<Void>> delete(Long id) {
         getService().deleteById(id);
         return ResponseEntity.ok(ApiResponse.success("Supprimé avec succès", null));
     }
+
     @Override
     public ResponseEntity<ApiResponse<?>> update(Long id, DRequest request) {
         E entity = toEntity(request);

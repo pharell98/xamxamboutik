@@ -3,14 +3,17 @@ package sn.boutique.xamxamboutik.Web.DTO.Mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
-import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
-import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitResponseWebDTO;
-import sn.boutique.xamxamboutik.Web.DTO.Response.mobile.ProduitResponseMobileDTO;
+import sn.boutique.xamxamboutik.Repository.Projection.PreApproProductLibelleSearch;
+import sn.boutique.xamxamboutik.Repository.Projection.ProduitEchangeProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ProduitStockProjection;
-import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitStockResponseDTO;
-import sn.boutique.xamxamboutik.Repository.Projection.PreApproProductLibelleSearch;
+import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitRequestDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.mobile.ProduitResponseMobileDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitEchangeResponseDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitResponseWebDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.ProduitStockResponseDTO;
+
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -31,11 +34,13 @@ public interface ProduitMapper {
     ProduitResponseMobileDTO toResponseMobileDTO(Produit produit);
 
     List<ProduitResponseWebDTO> toResponseWebDTOs(List<Produit> produits);
+
     List<ProduitResponseMobileDTO> toResponseMobileDTOs(List<Produit> produits);
 
     @Mapping(source = "categorie.libelle", target = "categorie")
     @Mapping(source = "coupMoyenAcquisition", target = "coupMoyenAcquisition")
-    @Mapping(source = "deleted", target = "deleted") // Mappage explicite pour la projection
+    @Mapping(source = "deleted", target = "deleted")
+        // Mappage explicite pour la projection
     ProduitResponseWebDTO toResponseWebDTOFromProjection(ProduitProjection projection);
 
     List<ProduitResponseWebDTO> toResponseWebDTOsFromProjection(List<ProduitProjection> projections);
@@ -48,4 +53,11 @@ public interface ProduitMapper {
     AddApproProductLibelleSearchResponseDTO toApproSearchResponse(PreApproProductLibelleSearch projection);
 
     List<AddApproProductLibelleSearchResponseDTO> toApproSearchResponseList(List<PreApproProductLibelleSearch> projections);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "libelle", target = "libelle")
+    @Mapping(source = "prixVente", target = "prixVente")
+    ProduitEchangeResponseDTO toProduitEchangeResponseDTO(ProduitEchangeProjection projection);
+
+    List<ProduitEchangeResponseDTO> toProduitEchangeResponseDTOs(List<ProduitEchangeProjection> projections);
 }

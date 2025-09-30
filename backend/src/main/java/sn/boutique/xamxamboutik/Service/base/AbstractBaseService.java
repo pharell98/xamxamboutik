@@ -1,21 +1,26 @@
 package sn.boutique.xamxamboutik.Service.base;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 import sn.boutique.xamxamboutik.Entity.interfaces.Identifiable;
 import sn.boutique.xamxamboutik.Exception.*;
-import org.springframework.data.jpa.repository.JpaRepository;
 import sn.boutique.xamxamboutik.Repository.base.SoftDeleteRepository;
+
 import java.lang.reflect.Method;
 import java.util.Optional;
+
 @Transactional
 public abstract class AbstractBaseService<T extends Identifiable<Long>> implements BaseService<T, Long> {
     protected abstract JpaRepository<T, Long> getRepository();
+
     @Override
     public Page<T> findAll(Pageable pageable) throws BaseCustomException {
         return getRepository().findAll(pageable);
     }
+
     @Override
     public <R> Page<R> findAll(Pageable pageable, Class<R> type) throws BaseCustomException {
         try {
@@ -26,6 +31,7 @@ public abstract class AbstractBaseService<T extends Identifiable<Long>> implemen
                     + e.getMessage(), "PROJECTION_ERROR");
         }
     }
+
     @Override
     public Optional<T> findById(Long id) throws EntityNotFoundException {
         return getRepository().findById(id)
@@ -33,8 +39,9 @@ public abstract class AbstractBaseService<T extends Identifiable<Long>> implemen
                     throw new EntityNotFoundException("Entity with ID " + id + " not found.", ErrorCodes.ENTITY_NOT_FOUND);
                 });
     }
+
     @Override
-    public T save(T entity) throws DuplicateEntityException, BaseCustomException {
+    public T save(T entity) throws BaseCustomException {
         try {
             return getRepository().save(entity);
         } catch (DataIntegrityViolationException ex) {
@@ -43,6 +50,7 @@ public abstract class AbstractBaseService<T extends Identifiable<Long>> implemen
             throw new InternalServiceException("An error occurred while saving the entity.", ex);
         }
     }
+
     @Override
     public void deleteById(Long id) throws EntityNotFoundException {
         if (!getRepository().existsById(id)) {
@@ -54,6 +62,7 @@ public abstract class AbstractBaseService<T extends Identifiable<Long>> implemen
             getRepository().deleteById(id);
         }
     }
+
     @Override
     public T update(T entity) throws EntityNotFoundException {
         if (!getRepository().existsById(entity.getId())) {

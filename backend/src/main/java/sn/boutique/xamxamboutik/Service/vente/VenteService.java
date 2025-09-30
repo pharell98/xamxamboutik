@@ -22,6 +22,8 @@ import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
 import sn.boutique.xamxamboutik.Repository.vente.DetailVenteRepository;
 import sn.boutique.xamxamboutik.Repository.vente.PaiementRepository;
 import sn.boutique.xamxamboutik.Repository.vente.VenteRepository;
+import sn.boutique.xamxamboutik.Service.user.CurrentUserService;
+import sn.boutique.xamxamboutik.Service.statistique.CaisseInternalService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ProduitVenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.VenteMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.DetailVenteRequestDTO;
@@ -30,11 +32,7 @@ import sn.boutique.xamxamboutik.Web.DTO.Response.web.VenteJourResponseDTO;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Transactional
@@ -46,6 +44,8 @@ public class VenteService implements IVenteService {
     private final VenteMapper venteMapper;
     private final ProduitVenteMapper produitVenteMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final CurrentUserService currentUserService;
+    private final CaisseInternalService caisseInternalService;
 
     @Autowired
     public VenteService(
@@ -55,7 +55,9 @@ public class VenteService implements IVenteService {
             ProduitRepository produitRepository,
             VenteMapper venteMapper,
             ProduitVenteMapper produitVenteMapper,
-            SimpMessagingTemplate messagingTemplate
+            SimpMessagingTemplate messagingTemplate,
+            CurrentUserService currentUserService,
+            CaisseInternalService caisseInternalService
     ) {
         this.venteRepository = venteRepository;
         this.detailVenteRepository = detailVenteRepository;
@@ -64,31 +66,53 @@ public class VenteService implements IVenteService {
         this.venteMapper = venteMapper;
         this.produitVenteMapper = produitVenteMapper;
         this.messagingTemplate = messagingTemplate;
+        this.currentUserService = currentUserService;
+        this.caisseInternalService = caisseInternalService;
     }
 
     @Override
     public Vente createVente(VenteRequestDTO dto) {
+        // IMPORTANT: Ouverture automatique de la caisse avant toute vente
+        caisseInternalService.ouvrirCaisseAutomatiquement();
+        
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
-        double totalMontant = 0.0;
+
+        // Assigner automatiquement l'utilisateur connecté
+        vente.setUtilisateur(currentUserService.getCurrentUser());
+
+        // Génération automatique du numéro de facture
+        vente.setNumeroFacture(generateNumeroFacture());
+
+        // Initialisation des valeurs par défaut
         vente.setEstCredit(false);
         vente.setMontantRestant(0.0);
 
+        // Traitement des détails de vente
         List<DetailVente> detailVentes = new ArrayList<>();
-        if (dto.getDetailVenteList() != null) {
+        double totalMontant = 0.0;
+        
+        if (dto.getDetailVenteList() != null && !dto.getDetailVenteList().isEmpty()) {
             for (DetailVenteRequestDTO detailDTO : dto.getDetailVenteList()) {
+                // Récupération et validation du produit
                 Produit produit = produitRepository.findById(detailDTO.getProduitId())
                         .orElseThrow(() -> new EntityNotFoundException(
                                 "Produit introuvable (ID: " + detailDTO.getProduitId() + ")",
                                 ErrorCodes.ENTITY_NOT_FOUND));
-                int stockRestant = produit.getStockDisponible() - detailDTO.getQuantiteVendu();
-                if (stockRestant < 0) {
+                
+                // Vérification du stock disponible
+                if (produit.getStockDisponible() < detailDTO.getQuantiteVendu()) {
                     throw new BaseCustomException(
-                            "Stock insuffisant pour : " + produit.getLibelle(),
+                            "Stock insuffisant pour : " + produit.getLibelle() + 
+                            " (Disponible: " + produit.getStockDisponible() + ", Demandé: " + detailDTO.getQuantiteVendu() + ")",
                             ErrorCodes.INSUFFICIENT_STOCK
                     );
                 }
-                produit.setStockDisponible(stockRestant);
+                
+                // Mise à jour du stock
+                produit.setStockDisponible(produit.getStockDisponible() - detailDTO.getQuantiteVendu());
+                
+                // Création du détail de vente
                 DetailVente detailVente = new DetailVente();
                 detailVente.setVente(vente);
                 detailVente.setProduit(produit);
@@ -96,6 +120,7 @@ public class VenteService implements IVenteService {
                 detailVente.setQuantiteVendu(detailDTO.getQuantiteVendu());
                 detailVente.setMontantTotal(detailDTO.getPrixVente() * detailDTO.getQuantiteVendu());
                 detailVente.setStatus(StatusDetailVente.VENDU);
+                
                 detailVentes.add(detailVente);
                 totalMontant += detailVente.getMontantTotal();
             }
@@ -109,11 +134,46 @@ public class VenteService implements IVenteService {
         paiement.setMontantVerser(totalMontant);
         paiement.setModePaiement(dto.getModePaiement() != null ? dto.getModePaiement() : ModePaiement.ESPECE);
         paiement.setVente(vente);
-        vente.setPaiement(paiement);
+        vente.getPaiements().add(paiement);
 
         Vente savedVente = venteRepository.save(vente);
+        
+        // IMPORTANT: Mise à jour en temps réel des montants de caisse après chaque vente
+        caisseInternalService.updateVentesJournalieresRealtime();
+        
         notifyUpdate(savedVente);
         return savedVente;
+    }
+
+    /**
+     * Génère automatiquement un numéro de facture au format FAC-JJ-MM-AA-0001
+     *
+     * @return Le numéro de facture généré
+     */
+    private String generateNumeroFacture() {
+        LocalDateTime now = LocalDateTime.now();
+        String jour = String.format("%02d", now.getDayOfMonth());
+        String mois = String.format("%02d", now.getMonthValue());
+        String annee = String.format("%02d", now.getYear() % 100); // Prend les 2 derniers chiffres de l'année
+
+        String prefix = "FAC-" + jour + "-" + mois + "-" + annee + "-";
+
+        // Récupérer le dernier numéro de facture du jour
+        Optional<String> lastNumero = venteRepository.findLastNumeroFactureByPrefix(prefix);
+
+        int sequence = 1;
+        if (lastNumero.isPresent()) {
+            String lastNum = lastNumero.get();
+            // Extraire le numéro de séquence (les 4 derniers chiffres)
+            String sequenceStr = lastNum.substring(lastNum.lastIndexOf("-") + 1);
+            try {
+                sequence = Integer.parseInt(sequenceStr) + 1;
+            } catch (NumberFormatException e) {
+                sequence = 1;
+            }
+        }
+
+        return prefix + String.format("%04d", sequence);
     }
 
     private void notifyUpdate(Vente vente) {

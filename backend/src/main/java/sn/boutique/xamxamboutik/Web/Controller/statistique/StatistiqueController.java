@@ -1,4 +1,5 @@
 package sn.boutique.xamxamboutik.Web.Controller.statistique;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import sn.boutique.xamxamboutik.Service.statistique.IStatistique;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.StatistiqueMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.StatistiqueResponseWebDTO;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -16,7 +18,7 @@ import java.util.Map;
 
 @Tag(name = "Statistiques", description = "API pour afficher les bénéfices de la boutique")
 @RestController
-@RequestMapping(value = "/api/v1", produces = "application/json")
+@RequestMapping(value = "/", produces = "application/json")
 @CrossOrigin("*")
 public class StatistiqueController {
     private final IStatistique statistiqueService;
@@ -40,7 +42,7 @@ public class StatistiqueController {
     @Operation(summary = "Bénéfice sur une période", description = "Retourne le bénéfice total entre deux dates (incluses)")
     public ResponseEntity<ApiResponse<StatistiqueResponseWebDTO>> getBenefitBetweenDates(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate")   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
         double benefit = statistiqueService.getBenefitBetweenDates(startDateTime, endDateTime);

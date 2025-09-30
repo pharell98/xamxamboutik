@@ -1,6 +1,5 @@
-package sn.boutique.xamxamboutik.Entity.parametrage;
+package sn.boutique.xamxamboutik.Entity.parametre;
 
-import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 
 @Entity
 @Table(

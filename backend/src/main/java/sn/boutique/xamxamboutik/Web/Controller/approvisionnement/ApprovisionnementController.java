@@ -14,12 +14,17 @@ import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.Approvisionnement;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProjection;
 import sn.boutique.xamxamboutik.Service.approvisionnement.ApprovisionnementService;
+import sn.boutique.xamxamboutik.Service.approvisionnement.IExcelApproImportService;
 import sn.boutique.xamxamboutik.Util.PaginationUtil;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ApprovisionnementMapper;
+import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementExcelRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.ApiResponse;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.ApprovisionnementProductDTO;
+
+import java.util.List;
 import java.util.Map;
+
 import static java.util.Objects.requireNonNull;
 
 @Slf4j
@@ -31,6 +36,7 @@ import static java.util.Objects.requireNonNull;
 public class ApprovisionnementController {
     private final ApprovisionnementService approvisionnementService;
     private final ApprovisionnementMapper approvisionnementMapper;
+    private final IExcelApproImportService excelImportService;
 
     @PostMapping(value = "approvisionnement/supply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
@@ -59,7 +65,8 @@ public class ApprovisionnementController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size
     ) {
-        if (page < 1 || size < 1) throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
+        if (page < 1 || size < 1)
+            throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
         Page<ApprovisionnementProjection> pagedApprovisionnements = approvisionnementService.getAllApprovisionnements(PageRequest.of(page - 1, size));
         Map<String, Object> response = PaginationUtil.buildPaginationMap(
                 pagedApprovisionnements,
@@ -79,9 +86,24 @@ public class ApprovisionnementController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         requireNonNull(approId, "L'ID de l'approvisionnement ne peut pas être nul");
-        if (page < 1 || size < 1) throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
+        if (page < 1 || size < 1)
+            throw new IllegalArgumentException("Les paramètres de pagination doivent être positifs");
         Page<ApprovisionnementProductDTO> productPage = approvisionnementService.getProductsByApprovisionnement(approId, PageRequest.of(page - 1, size));
         Map<String, Object> response = PaginationUtil.buildPaginationMap(productPage, productPage.getContent());
         return ResponseEntity.ok(ApiResponse.success("Produits de l'approvisionnement récupérés avec succès", response));
+    }
+
+    @PostMapping("/approvisionnement/import/excel")
+    @Operation(
+            summary = "Importer des produits via Excel pour l'approvisionnement",
+            description = "Importe des produits depuis un fichier Excel pour créer un approvisionnement."
+    )
+    public ResponseEntity<ApiResponse<?>> importExcelApprovisionnement(@RequestBody List<ApprovisionnementExcelRequestDTO> lignes) {
+        try {
+            Map<String, Object> res = excelImportService.importProduitsExcel(lignes);
+            return ResponseEntity.ok(ApiResponse.success("Import d'approvisionnement terminé", res));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 }

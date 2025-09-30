@@ -1,9 +1,11 @@
 package sn.boutique.xamxamboutik.Entity.approvisionnement;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
+
 @Entity
 @Table(name = "detail_appros")
 @Data
@@ -18,7 +20,7 @@ public class DetailAppro extends BaseEntity {
     private Integer quantiteAchat;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approvisionnement_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler","detailAppros"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "detailAppros"})
     private Approvisionnement approvisionnement;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "produit_id", nullable = false)

@@ -12,16 +12,13 @@ import org.springframework.web.multipart.MultipartFile;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.Approvisionnement;
 import sn.boutique.xamxamboutik.Entity.approvisionnement.DetailAppro;
 import sn.boutique.xamxamboutik.Entity.produit.Produit;
-import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
-import sn.boutique.xamxamboutik.Exception.ErrorCodes;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProductProjection;
 import sn.boutique.xamxamboutik.Repository.Projection.ApprovisionnementProjection;
 import sn.boutique.xamxamboutik.Repository.approvisionnement.ApprovisionnementRepository;
 import sn.boutique.xamxamboutik.Repository.approvisionnement.DetailApproRepository;
-import sn.boutique.xamxamboutik.Repository.produit.ProduitRepository;
-import sn.boutique.xamxamboutik.Service.produit.CategorieService;
 import sn.boutique.xamxamboutik.Service.imageservice.service.ImageBackgroundService;
-import sn.boutique.xamxamboutik.Util.ProduitUtils;
+import sn.boutique.xamxamboutik.Service.produit.CategorieService;
+import sn.boutique.xamxamboutik.Service.produit.IProduitService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ApprovisionnementMapper;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ApprovisionnementRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Request.ProduitExistantDTO;
@@ -47,11 +44,11 @@ public class ApprovisionnementService implements IApprovisionnementService {
     /*=======================  Dépendances  =======================*/
     private final ApprovisionnementRepository approvisionnementRepository;
     private final DetailApproRepository detailApproRepository;
-    private final ProduitRepository produitRepository;
     private final ApprovisionnementMapper approvisionnementMapper;
     private final CategorieService categorieService;
     private final ImageBackgroundService imageBackgroundService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final IProduitService produitService;
 
     /*=============================================================
                           Approvisionnement CLASSIQUE
@@ -68,7 +65,7 @@ public class ApprovisionnementService implements IApprovisionnementService {
             for (ProduitExistantDTO pe : dto.getProduitExitant()) {
                 if (pe.getQuantite() == null || pe.getQuantite() <= 0)
                     errors.add("Quantité invalide pour le produit existant ID " + pe.getId());
-                if (!produitRepository.existsById(Long.valueOf(pe.getId())))
+                if (!produitService.existsById(Long.valueOf(pe.getId())))
                     errors.add("Produit existant ID " + pe.getId() + " introuvable");
             }
         }
@@ -119,12 +116,14 @@ public class ApprovisionnementService implements IApprovisionnementService {
         if (appro.getDetailAppros().isEmpty()) {
             throw new IllegalStateException("Aucun produit valide — approvisionnement annulé");
         }
+
         double totalDetails = appro.getDetailAppros().stream()
                 .mapToDouble(d -> d.getPrixAchat() * d.getQuantiteAchat())
                 .sum();
         double frais = Optional.ofNullable(appro.getFraisTransport()).orElse(0.0);
         appro.setMontantAppro(totalDetails + frais);
-        approvisionnementRepository.save(appro); // cascade = détails enregistrés
+
+        approvisionnementRepository.save(appro);
         notifyUpdate();
     }
 
@@ -163,7 +162,7 @@ public class ApprovisionnementService implements IApprovisionnementService {
 
         // Mettre à jour le dernier prix d'achat
         p.setPrixAchat(prix);
-        produitRepository.save(p);
+        produitService.update(p);
 
         notifyUpdate();
         return a;
@@ -198,24 +197,15 @@ public class ApprovisionnementService implements IApprovisionnementService {
         double fraisParUnite = (fraisTransport != null && totalQuantite > 0) ? fraisTransport / totalQuantite : 0.0;
 
         for (ProduitExistantDTO dto : list) {
-            Produit p = produitRepository.findById(Long.valueOf(dto.getId()))
-                    .orElseThrow(() -> new EntityNotFoundException("Produit ID " + dto.getId(), ErrorCodes.ENTITY_NOT_FOUND));
-            int oldStock = p.getStockDisponible();
-            double oldCMA = p.getCoupMoyenAcquisition();
-            int newStock = dto.getQuantite();
-            double newPrixAchat = dto.getPrixAchat() + fraisParUnite; // Inclure les frais de transport
-
-            // Calcul du coût moyen d'acquisition
-            double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, newStock, newPrixAchat);
-            p.setCoupMoyenAcquisition(nouveauCMA);
-            p.setStockDisponible(oldStock + newStock);
-            p.setPrixAchat(dto.getPrixAchat()); // Mettre à jour le dernier prix d'achat
-            produitRepository.save(p);
-
+            Produit p = produitService.updateStockAndPrice(
+                    Long.valueOf(dto.getId()),
+                    dto.getQuantite(),
+                    dto.getPrixAchat() + fraisParUnite
+            );
             DetailAppro d = new DetailAppro();
             d.setApprovisionnement(appro);
             d.setProduit(p);
-            d.setQuantiteAchat(newStock);
+            d.setQuantiteAchat(dto.getQuantite());
             d.setPrixAchat(dto.getPrixAchat());
             DetailAppro savedDetail = detailApproRepository.save(d);
             appro.getDetailAppros().add(savedDetail);
@@ -225,32 +215,30 @@ public class ApprovisionnementService implements IApprovisionnementService {
     private void processNewProducts(Approvisionnement appro, List<ProduitRequestDTO> list, MultipartFile[] imgs, Double fraisTransport) {
         if (list == null) return;
 
-        // Calculer la quantité totale pour répartir les frais de transport
         int totalQuantite = list.stream().mapToInt(ProduitRequestDTO::getStockDisponible).sum();
         double fraisParUnite = (fraisTransport != null && totalQuantite > 0) ? fraisTransport / totalQuantite : 0.0;
 
-        for (ProduitRequestDTO dto : list) {
-            Produit p = new Produit();
-            p.setCodeProduit(dto.getCodeProduit());
-            p.setLibelle(dto.getLibelle());
-            p.setPrixAchat(dto.getPrixAchat()); // Définir le dernier prix d'achat
-            p.setPrixVente(dto.getPrixVente());
-            double nouveauCMA = dto.getPrixAchat() + fraisParUnite; // Inclure les frais de transport
-            nouveauCMA = Math.round(nouveauCMA * 100.0) / 100.0; // Arrondi à 2 décimales
-            p.setCoupMoyenAcquisition(nouveauCMA);
-            p.setStockDisponible(dto.getStockDisponible());
-            p.setSeuilRuptureStock(dto.getSeuilRuptureStock());
-            p.setCategorie(categorieService.findById(dto.getCategorieId()).orElseThrow());
-            if (dto.getImageURL() != null) p.setImage(dto.getImageURL());
-            Produit saved = produitRepository.save(p);
+        for (int i = 0; i < list.size(); i++) {
+            ProduitRequestDTO dto = list.get(i);
+            MultipartFile file = (imgs != null && imgs.length > i) ? imgs[i] : null;
+            try {
+                Produit p = produitService.saveWithoutAppro(dto, file);
+                double nouveauCMA = dto.getPrixAchat() + fraisParUnite;
+                nouveauCMA = Math.round(nouveauCMA * 100.0) / 100.0;
+                p.setCoupMoyenAcquisition(nouveauCMA);
+                p.setPrixAchat(dto.getPrixAchat());
+                p = produitService.update(p);
 
-            DetailAppro d = new DetailAppro();
-            d.setApprovisionnement(appro);
-            d.setProduit(saved);
-            d.setQuantiteAchat(dto.getStockDisponible());
-            d.setPrixAchat(dto.getPrixAchat());
-            DetailAppro savedDetail = detailApproRepository.save(d);
-            appro.getDetailAppros().add(savedDetail);
+                DetailAppro d = new DetailAppro();
+                d.setApprovisionnement(appro);
+                d.setProduit(p);
+                d.setQuantiteAchat(dto.getStockDisponible());
+                d.setPrixAchat(dto.getPrixAchat());
+                DetailAppro savedDetail = detailApproRepository.save(d);
+                appro.getDetailAppros().add(savedDetail);
+            } catch (Exception e) {
+                log.error("Erreur lors de la création d'un nouveau produit dans l'approvisionnement", e);
+            }
         }
     }
 
@@ -270,8 +258,14 @@ public class ApprovisionnementService implements IApprovisionnementService {
      */
     private void notifyUpdate() {
         if (messagingTemplate != null) {
-            messagingTemplate.convertAndSend("/topic/approvisionnements", "update");
-            log.info("Message STOMP envoyé à /topic/approvisionnements");
+            // Créer un message plus informatif avec timestamp
+            Map<String, Object> message = new HashMap<>();
+            message.put("type", "APPROVISIONNEMENT_CREATED");
+            message.put("timestamp", LocalDateTime.now().toString());
+            message.put("message", "Nouvel approvisionnement créé");
+
+            messagingTemplate.convertAndSend("/topic/approvisionnements", message);
+            log.info("Message STOMP envoyé à /topic/approvisionnements: {}", message);
         } else {
             log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour /topic/approvisionnements");
         }

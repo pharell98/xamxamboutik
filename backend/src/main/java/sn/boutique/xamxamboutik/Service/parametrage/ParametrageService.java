@@ -6,7 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import sn.boutique.xamxamboutik.Entity.parametrage.Parametrage;
+import sn.boutique.xamxamboutik.Entity.parametre.Parametrage;
 import sn.boutique.xamxamboutik.Exception.BaseCustomException;
 import sn.boutique.xamxamboutik.Exception.EntityNotFoundException;
 import sn.boutique.xamxamboutik.Exception.ErrorCodes;

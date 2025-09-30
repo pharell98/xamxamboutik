@@ -1,11 +1,12 @@
 package sn.boutique.xamxamboutik.Entity.utilisateur;
-import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import sn.boutique.xamxamboutik.Enums.Role;
 
 @Entity

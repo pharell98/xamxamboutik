@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import sn.boutique.xamxamboutik.Entity.parametrage.Parametrage;
+import sn.boutique.xamxamboutik.Entity.parametre.Parametrage;
 import sn.boutique.xamxamboutik.Repository.Projection.ParametrageProjection;
 import sn.boutique.xamxamboutik.Service.parametrage.ParametrageService;
 import sn.boutique.xamxamboutik.Web.DTO.Mapper.ParametrageMapper;

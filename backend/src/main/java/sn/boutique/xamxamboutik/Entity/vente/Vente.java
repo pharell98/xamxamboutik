@@ -1,9 +1,11 @@
 package sn.boutique.xamxamboutik.Entity.vente;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 import sn.boutique.xamxamboutik.Entity.client.Client;
+import sn.boutique.xamxamboutik.Entity.utilisateur.Utilisateur;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -14,12 +16,14 @@ import java.util.Set;
         name = "ventes",
         indexes = {
                 @Index(name = "idx_vente_date", columnList = "date"),
-                @Index(name = "idx_vente_client_id", columnList = "client_id")
+                @Index(name = "idx_vente_client_id", columnList = "client_id"),
+                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture"),
+                @Index(name = "idx_vente_utilisateur_id", columnList = "utilisateur_id")
         }
 )
 @Data
-@EqualsAndHashCode(callSuper = true, exclude = {"detailVentes", "paiement"})
-@ToString(callSuper = true, exclude = {"detailVentes", "paiement"})
+@EqualsAndHashCode(callSuper = true, exclude = {"detailVentes", "paiements"})
+@ToString(callSuper = true, exclude = {"detailVentes", "paiements"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Vente extends BaseEntity {
@@ -37,13 +41,21 @@ public class Vente extends BaseEntity {
     @Column(name = "est_credit")
     private Boolean estCredit = false;
 
+    @Column(name = "numero_facture", unique = true)
+    private String numeroFacture;
+
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Client client;
 
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id")
+    private Utilisateur utilisateur;
+
     @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL)
     private Set<DetailVente> detailVentes = new HashSet<>();
 
-    @OneToOne(mappedBy = "vente", cascade = CascadeType.ALL)
-    private Paiement paiement;
+    @OneToMany(mappedBy = "vente", cascade = CascadeType.ALL)
+    private Set<Paiement> paiements = new HashSet<>();
+
 }

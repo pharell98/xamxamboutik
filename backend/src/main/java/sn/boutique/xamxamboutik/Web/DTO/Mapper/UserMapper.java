@@ -7,7 +7,6 @@ import sn.boutique.xamxamboutik.Repository.Projection.UserProjection;
 import sn.boutique.xamxamboutik.Web.DTO.Request.UserRequestDTO;
 import sn.boutique.xamxamboutik.Web.DTO.Response.web.UserResponseDTO;
 
-
 import java.util.List;
 
 @Mapper(componentModel = "spring")
