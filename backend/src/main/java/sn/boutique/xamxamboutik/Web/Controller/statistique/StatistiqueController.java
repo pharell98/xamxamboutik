@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Tag(name = "Statistiques", description = "API pour afficher les bénéfices de la boutique")
 @RestController
-@RequestMapping(value = "/api/v1", produces = "application/json")
+@RequestMapping(value = "/", produces = "application/json")
 @CrossOrigin("*")
 public class StatistiqueController {
     private final IStatistique statistiqueService;

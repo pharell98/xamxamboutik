@@ -441,17 +441,28 @@ public class RetourService implements IRetourService {
 #### **Algorithme de Calcul**
 ```java
 private double calculerMontantInitialIntelligent() {
-    // Récupérer la dernière session de caisse fermée
+    // 1) Priorité: chiffre d'affaires de la DERNIÈRE journée de vente
+    try {
+        LocalDateTime lastSaleDateTime = statistiqueBusinessService.getLastSaleDate();
+        if (lastSaleDateTime != null) {
+            LocalDate lastSaleDate = lastSaleDateTime.toLocalDate();
+            LocalDateTime start = lastSaleDate.atStartOfDay();
+            LocalDateTime end = lastSaleDate.atTime(23, 59, 59);
+            double revenue = statistiqueBusinessService.getRevenueBetweenDates(start, end);
+            return revenue;
+        }
+    } catch (Exception ignored) {
+    }
+
+    // 2) Repli: montant de fermeture de la dernière session fermée
     Optional<Statistique> derniereSession = statistiqueRepository.findTopByEstCaisseOuverteFalseOrderByDateDesc();
-    
     if (derniereSession.isPresent()) {
-        // Boutique existante : montant de fermeture de la veille
         Double montantFermeture = derniereSession.get().getMontantCaisseFermeture();
         return montantFermeture != null ? montantFermeture : 0.0;
-    } else {
-        // Nouvelle boutique : 0 FCFA
-        return 0.0;
     }
+
+    // 3) Nouvelle boutique: 0 FCFA
+    return 0.0;
 }
 ```
 
@@ -463,9 +474,10 @@ private double calculerMontantInitialIntelligent() {
 - **Logique** : Pas d'historique, la boutique débute
 
 **Cas 2 : Boutique Existante (Jours Suivants)**
-- **Condition** : Au moins une session de caisse fermée trouvée
-- **Montant Initial** : Montant de fermeture de la veille
-- **Logique** : Continuité naturelle de la caisse
+- **Condition** : Au moins une journée de vente enregistrée
+- **Montant Initial (priorité)** : Chiffre d'affaires de la dernière journée de vente
+- **Repli** : Montant de fermeture de la dernière session fermée (si aucune journée de vente ne peut être lue)
+- **Logique** : Démarrage avec le niveau réel d'activité du dernier jour de vente
 
 ### **2. Montant de Fermeture (Logique Corrigée)**
 
@@ -532,26 +544,14 @@ public void updatePertesJournalieres(LocalDate date, double perte) {
 ### **4. Montant Total Réel de la Caisse Physique**
 
 #### **Gestion Séparée**
-- **Entité Caisse** : Gère le montant total réel de la caisse physique
+- **Entité Caisse** : Garde la trace du montant réel de la caisse physique
 - **Séparation** : Complètement séparé des calculs théoriques
-- **Mise à Jour** : Via l'API `POST /api/caisse/update-montant-reel`
+- **Mise à Jour** : En dehors du système (contrôle physique et/ou procédure interne)
 
 #### **Utilisation**
 ```java
-public double getMontantTotalCaisseReel() {
-    Caisse caisse = caisseRepository.findFirstByOrderByIdAsc();
-    return caisse != null ? caisse.getSolde() : 0.0;
-}
-
-public void updateMontantTotalCaisseReel(double nouveauMontant) {
-    Caisse caisse = caisseRepository.findFirstByOrderByIdAsc();
-    if (caisse == null) {
-        caisse = new Caisse();
-        caisse.setSolde(0.0);
-    }
-    caisse.setSolde(nouveauMontant);
-    caisseRepository.save(caisse);
-}
+// Le montant réel est vérifié/ajusté en dehors du système.
+// Le backend ne fournit plus d'endpoint pour le modifier.
 ```
 
 ---
@@ -571,7 +571,8 @@ public void updateMontantTotalCaisseReel(double nouveauMontant) {
    - Si non, procède à l'ouverture
 5. **Calcul du Montant Initial Intelligent** :
    - **Nouvelle boutique** : 0 FCFA
-   - **Boutique existante** : Montant de fermeture de la veille
+   - **Boutique existante (priorité)** : Chiffre d'affaires de la dernière journée de vente
+   - **Repli** : Montant de fermeture de la dernière session fermée
 6. **Création/Mise à Jour de la Statistique** :
    ```java
    statistique.setEstCaisseOuverte(true);
@@ -632,7 +633,7 @@ public void updateMontantTotalCaisseReel(double nouveauMontant) {
 #### **Option 1 : Fermeture Manuelle**
 
 1. **Le vendeur décide** de fermer (ex: 18h00)
-2. **Appel via API** : `POST /api/caisse/fermer`
+2. **Appel via API** : `POST /caisse/fermer`
 3. **Délégation** : `CaisseApiService.fermerCaisseManuellement(montantReel)`
 4. **Logique Métier** : `CaisseInternalService.fermerCaisseManuellement(montantReel)`
 5. **Calcul du Montant Théorique** :
@@ -640,7 +641,7 @@ public void updateMontantTotalCaisseReel(double nouveauMontant) {
    private double calculerMontantTheoriqueJournee(LocalDate date) {
        LocalDateTime startOfDay = date.atStartOfDay();
        LocalDateTime endOfDay = date.atTime(23, 59, 59);
-       return statistiqueBusinessService.calculateRevenueBetweenDates(startOfDay, endOfDay);
+       return statistiqueBusinessService.getRevenueBetweenDates(startOfDay, endOfDay);
    }
    ```
 6. **Enregistrement de la Fermeture** :
@@ -780,7 +781,7 @@ version                 INTEGER
 
 ### **1. État de la Caisse**
 ```http
-GET /api/caisse/etat
+GET /caisse/etat
 ```
 
 **Réponse :**
@@ -800,22 +801,18 @@ GET /api/caisse/etat
 
 ### **2. Fermeture Manuelle**
 ```http
-POST /api/caisse/fermer
-Content-Type: application/json
-
-{
-    "montantReel": 7500.0
-}
+POST /caisse/fermer
 ```
+Le système calcule automatiquement le montant théorique (ventes du jour). Le vendeur compare ensuite avec le montant réel dans le coffre (hors système).
 
 ### **3. Rafraîchissement Forcé**
 ```http
-POST /api/caisse/refresh
+POST /caisse/refresh
 ```
 
 ### **4. Vérification d'Ouverture**
 ```http
-GET /api/caisse/is-ouverte
+GET /caisse/is-ouverte
 ```
 
 **Réponse :**
@@ -826,16 +823,140 @@ GET /api/caisse/is-ouverte
 ```
 
 ### **5. Mise à Jour Montant Réel**
-```http
-POST /api/caisse/update-montant-reel
-Content-Type: application/json
+Non exposé via API (géré en dehors du système).
 
-{
-    "montantReel": 25000.0
+---
+
+## 🖥️ Intégration Front (exemples rapides)
+
+Cette section montre comment un front (JS/TS/React) peut consommer les endpoints exposés par le contrôleur de caisse.
+
+### 1) Récupérer l’état de la caisse
+```ts
+// TypeScript
+export async function fetchCaisseEtat(baseUrl: string) {
+  const res = await fetch(`${baseUrl}/caisse/etat`);
+  if (!res.ok) throw new Error('Erreur lors de la récupération de l\'état de la caisse');
+  return res.json();
 }
 ```
 
----
+### 2) Vérifier si la caisse est ouverte
+```ts
+export async function fetchIsCaisseOuverte(baseUrl: string) {
+  const res = await fetch(`${baseUrl}/caisse/is-ouverte`);
+  if (!res.ok) throw new Error('Erreur lors de la vérification de l\'état de la caisse');
+  return res.json(); // { estOuverte: boolean }
+}
+```
+
+### 3) Fermer la caisse (manuelle)
+```ts
+export async function fermerCaisse(baseUrl: string, montantReel: number) {
+  const res = await fetch(`${baseUrl}/caisse/fermer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ montantReel })
+  });
+  if (!res.ok) throw new Error('Erreur lors de la fermeture de la caisse');
+  return res.json(); // renvoie l\'état de la caisse après fermeture
+}
+```
+
+### 4) Mettre à jour le montant réel de la caisse
+Non applicable côté front; l’ajustement se fait hors système.
+
+### 5) Forcer la mise à jour des ventes du jour
+```ts
+export async function refreshVentes(baseUrl: string) {
+  const res = await fetch(`${baseUrl}/caisse/refresh`, { method: 'POST' });
+  if (!res.ok) throw new Error('Erreur lors de l\'actualisation des ventes');
+  return res.json();
+}
+```
+
+### 6) Exemple React minimal (affichage état + actions)
+```tsx
+import React from 'react';
+
+type CaisseEtat = {
+  estOuverte: boolean;
+  dateOuverture: string | null;
+  montantInitial: number;
+  ventesDuJour: number;
+  pertesDuJour: number;
+  montantFermeture: number;
+  montantTotalCaisseReel: number;
+  date: string;
+  status: 'OUVERTE' | 'FERMEE';
+};
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+
+export function CaisseWidget() {
+  const [etat, setEtat] = React.useState<CaisseEtat | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [montantReel, setMontantReel] = React.useState('');
+
+  const loadEtat = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/caisse/etat`);
+      if (!res.ok) throw new Error('Erreur réseau');
+      const data = await res.json();
+      setEtat(data);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadEtat();
+  }, [loadEtat]);
+
+  const onFermer = async () => {
+    const res = await fetch(`${BASE_URL}/caisse/fermer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ montantReel: Number(montantReel) || 0 })
+    });
+    if (res.ok) setEtat(await res.json());
+  };
+
+  // Suppression de la mise à jour du montant réel côté front (hors système)
+
+  if (loading && !etat) return <div>Chargement…</div>;
+  if (!etat) return <div>Aucune donnée caisse</div>;
+
+  return (
+    <div style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+      <div style={{ fontWeight: 600 }}>Caisse: {etat.status}</div>
+      <div>Montant initial: {etat.montantInitial} FCFA</div>
+      <div>Ventes du jour: {etat.ventesDuJour} FCFA</div>
+      <div>Pertes du jour: {etat.pertesDuJour} FCFA</div>
+      <div>Montant fermeture (théorique): {etat.montantFermeture} FCFA</div>
+      <div>Solde réel caisse: {etat.montantTotalCaisseReel} FCFA</div>
+
+      <div style={{ marginTop: 8 }}>
+        <input
+          type="number"
+          value={montantReel}
+          placeholder="Montant réel…"
+          onChange={(e) => setMontantReel(e.target.value)}
+        />
+        <button onClick={onUpdateMontant} style={{ marginLeft: 8 }}>Mettre à jour réel</button>
+        <button onClick={onFermer} style={{ marginLeft: 8 }}>Fermer la caisse</button>
+        <button onClick={loadEtat} style={{ marginLeft: 8 }}>Rafraîchir</button>
+      </div>
+    </div>
+  );
+}
+```
+
+Notes:
+- `@CrossOrigin("*")` est déjà présent côté backend pour ces endpoints.
+- Ajuster `BASE_URL` selon votre passerelle/API (ex: `http://localhost:8080/api/v1`).
+- Gérer l’authentification si activée (en-têtes `Authorization`).
 
 ## 🔧 Configuration et Déploiement
 

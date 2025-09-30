@@ -37,11 +37,10 @@ public class ExcelApproImportService implements IExcelApproImportService {
     private static final String STOCK_NEGATIF = "Le stock disponible ne peut pas être négatif";
     private static final String PRIX_ACHAT_NEGATIF = "Le prix d'achat ne peut pas être négatif";
     private static final String PRODUIT_SUPPRIME = "Le produit avec le code %s est supprimé";
-    private static final String CAT_INTROUVABLE = "Catégorie non trouvée pour : %s";
 
     @Override
     public Map<String, Object> importProduitsExcel(List<ApprovisionnementExcelRequestDTO> produitsExcel) throws Exception {
-        log.info("DEBUG - Début de l'import Excel - Transaction ACID avec isolation SERIALIZABLE démarrée");
+        log.info("Début de l'import Excel");
 
         synchronized (IMPORT_LOCK) {
             return transactionTemplate.execute(status -> {
@@ -76,12 +75,7 @@ public class ExcelApproImportService implements IExcelApproImportService {
                     // Finaliser l'approvisionnement
                     approvisionnementService.finalizeAndSaveApprovisionnement(appro);
 
-                    log.info("DEBUG - Fin de l'import Excel - Transaction ACID prête à être commitée");
-                    verifyDataPersistence(produitsEnregistres);
-                    log.info("DEBUG - Transaction ACID terminée avec succès - Commit imminent");
-
-                    // Notifier via WebSocket après la finalisation
-                    log.info("DEBUG - Notification WebSocket après import Excel");
+                    log.info("Import Excel terminé avec succès");
 
                     return createSuccessResponse(appro, produitsEnregistres);
 
@@ -235,11 +229,6 @@ public class ExcelApproImportService implements IExcelApproImportService {
      * Traite un produit individuel (création ou mise à jour)
      */
     private Produit processSingleProduit(ProduitRequestDTO dto, double fraisParUnite) {
-        log.info("DEBUG - Valeurs reçues dans DTO: codeProduit={}, libelle={}, prixAchat={}, prixVente={}, stockDisponible={}, categorieId={}",
-                dto.getCodeProduit(), dto.getLibelle(), dto.getPrixAchat(), dto.getPrixVente(),
-                dto.getStockDisponible(), dto.getCategorieId());
-
-        // Recherche intelligente du produit
         Optional<Produit> existingProduct = findExistingProduct(dto);
 
         if (existingProduct.isPresent()) {
@@ -253,42 +242,19 @@ public class ExcelApproImportService implements IExcelApproImportService {
      * Recherche intelligente d'un produit existant
      */
     private Optional<Produit> findExistingProduct(ProduitRequestDTO dto) {
-        // Normaliser le libellé (supprimer les espaces en début/fin)
-        String normalizedLibelle = dto.getLibelle().trim();
-        log.info("DEBUG - Recherche produit pour: libelle='{}' (normalisé: '{}'), code='{}', categorieId={}",
-                dto.getLibelle(), normalizedLibelle, dto.getCodeProduit(), dto.getCategorieId());
+        String normalizedLibelle = dto.getLibelle().trim().toLowerCase();
 
-        // Recherche PRINCIPALE par libellé normalisé
+        // Recherche par libellé normalisé
         Optional<Produit> opt = produitService.findByLibelleOnly(normalizedLibelle);
 
-        if (opt.isPresent()) {
-            log.info("DEBUG - Produit trouvé par libellé normalisé: {} (ID: {}, Code: {})",
-                    opt.get().getLibelle(), opt.get().getId(), opt.get().getCodeProduit());
-        } else {
-            log.info("DEBUG - Produit non trouvé par libellé normalisé: '{}'", normalizedLibelle);
+        // Recherche alternative par libellé + catégorie si nécessaire
+        if (opt.isEmpty() && dto.getCategorieId() != null) {
+            opt = produitService.findByLibelleAndCategorie(normalizedLibelle, dto.getCategorieId());
+        }
 
-            // Si pas trouvé, essayer par libellé + catégorie
-            if (dto.getCategorieId() != null) {
-                opt = produitService.findByLibelleAndCategorie(normalizedLibelle, dto.getCategorieId());
-                if (opt.isPresent()) {
-                    log.info("DEBUG - Produit trouvé par libellé+catégorie: {} (ID: {}, Code: {})",
-                            opt.get().getLibelle(), opt.get().getId(), opt.get().getCodeProduit());
-                } else {
-                    log.info("DEBUG - Produit non trouvé par libellé+catégorie: '{}' + catégorie {}",
-                            normalizedLibelle, dto.getCategorieId());
-                }
-            }
-
-            // En dernier recours, chercher par code produit
-            if (opt.isEmpty()) {
-                opt = produitService.findByCode(dto.getCodeProduit());
-                if (opt.isPresent()) {
-                    log.info("DEBUG - Produit trouvé par code: {} (ID: {}, Code: {})",
-                            opt.get().getLibelle(), opt.get().getId(), opt.get().getCodeProduit());
-                } else {
-                    log.info("DEBUG - Produit non trouvé par code: '{}'", dto.getCodeProduit());
-                }
-            }
+        // En dernier recours, recherche par code produit
+        if (opt.isEmpty()) {
+            opt = produitService.findByCode(dto.getCodeProduit());
         }
 
         return opt;
@@ -298,39 +264,21 @@ public class ExcelApproImportService implements IExcelApproImportService {
      * Met à jour un produit existant
      */
     private Produit updateExistingProduct(Produit p, ProduitRequestDTO dto, double fraisParUnite) {
-        log.info("DEBUG - Produit trouvé: {} (ID: {}, Code: {})", p.getLibelle(), p.getId(), p.getCodeProduit());
-
-        int oldStock = p.getStockDisponible();
-        double oldCMA = p.getCoupMoyenAcquisition();
+        // Lecture fraîche depuis la base pour éviter les problèmes de cache
+        Produit freshProduct = produitRepository.findById(p.getId()).orElse(p);
+        int oldStock = freshProduct.getStockDisponible();
+        double oldCMA = freshProduct.getCoupMoyenAcquisition();
         int newStock = Optional.ofNullable(dto.getStockDisponible()).orElse(0);
         double newPrixAchat = Optional.ofNullable(dto.getPrixAchat()).orElse(0.0) + fraisParUnite;
-        double oldPrixAchat = p.getPrixAchat();
         double prixAchatBrut = Optional.ofNullable(dto.getPrixAchat()).orElse(0.0);
 
-        log.info("DEBUG - Calculs: Ancien stock={}, Nouveau stock={}, Ancien CMA={}, Nouveau prix={}",
-                oldStock, newStock, oldCMA, newPrixAchat);
-
         // Mise à jour du CMA et du stock
-        updateProductCMAAndStock(p, oldStock, oldCMA, newStock, newPrixAchat, prixAchatBrut, oldPrixAchat);
+        updateProductCMAAndStock(freshProduct, oldStock, oldCMA, newStock, newPrixAchat, prixAchatBrut, freshProduct.getPrixAchat());
 
         // Mise à jour des autres informations
-        updateProductInfo(p, dto);
+        updateProductInfo(freshProduct, dto);
 
-        log.info("DEBUG - Avant sauvegarde explicite - Produit: {} (ID: {}, Stock: {}, CMA: {})",
-                p.getLibelle(), p.getId(), p.getStockDisponible(), p.getCoupMoyenAcquisition());
-
-        // Persistance explicite en utilisant directement le repository pour rester dans la même transaction
-        Produit updatedProduit = produitRepository.save(p);
-
-        log.info("DEBUG - Après sauvegarde explicite - Produit: {} (ID: {}, Stock: {}, CMA: {})",
-                updatedProduit.getLibelle(), updatedProduit.getId(),
-                updatedProduit.getStockDisponible(), updatedProduit.getCoupMoyenAcquisition());
-
-        log.info("Produit mis à jour avec succès en base: {} (ID: {}, CMA final: {}, Stock final: {})",
-                updatedProduit.getLibelle(), updatedProduit.getId(),
-                updatedProduit.getCoupMoyenAcquisition(), updatedProduit.getStockDisponible());
-
-        return updatedProduit;
+        return produitRepository.save(freshProduct);
     }
 
     /**
@@ -343,18 +291,9 @@ public class ExcelApproImportService implements IExcelApproImportService {
             double nouveauCMA = ProduitUtils.calculerCoupMoyenAcquisition(oldStock, oldCMA, newStock, newPrixAchat);
             p.setCoupMoyenAcquisition(nouveauCMA);
             p.setStockDisponible(oldStock + newStock);
-
-            log.info("Mise à jour du produit existant avec nouveau stock : {} (stock: {} + {} = {}, CMA: {} → {})",
-                    p.getLibelle(), oldStock, newStock, p.getStockDisponible(), oldCMA, nouveauCMA);
         } else if (ProduitUtils.prixSignificativementDifferent(prixAchatBrut, oldPrixAchat, 0.01)) {
             // Le prix d'achat a changé mais pas de nouveau stock
             p.setCoupMoyenAcquisition(prixAchatBrut);
-
-            log.info("Mise à jour du prix d'achat du produit existant : {} (CMA: {} → {}, prix brut: {})",
-                    p.getLibelle(), oldCMA, prixAchatBrut, prixAchatBrut);
-        } else {
-            log.info("Mise à jour des informations du produit existant (sans changement de stock/prix) : {}",
-                    p.getLibelle());
         }
     }
 
@@ -362,59 +301,60 @@ public class ExcelApproImportService implements IExcelApproImportService {
      * Met à jour les informations du produit
      */
     private void updateProductInfo(Produit p, ProduitRequestDTO dto) {
-        p.setCodeProduit(dto.getCodeProduit());  // Mise à jour du code produit
-        p.setPrixAchat(dto.getPrixAchat());
-
-        // Ne mettre à jour le libellé que s'il a changé
-        if (!p.getLibelle().equalsIgnoreCase(dto.getLibelle())) {
-            p.setLibelle(dto.getLibelle());
+        // Code produit: mise à jour si fourni et différent
+        if (dto.getCodeProduit() != null && !dto.getCodeProduit().isBlank()
+                && (p.getCodeProduit() == null || !p.getCodeProduit().equals(dto.getCodeProduit()))) {
+            p.setCodeProduit(dto.getCodeProduit());
         }
 
-        p.setPrixVente(dto.getPrixVente());
-        p.setSeuilRuptureStock(dto.getSeuilRuptureStock());
+        // Libellé: ne pas modifier pour éviter les problèmes de concurrence
+
+        // Prix d'achat: mise à jour si fourni et différent
+        if (dto.getPrixAchat() != null) {
+            Double newPa = dto.getPrixAchat();
+            if (p.getPrixAchat() == null || Double.compare(p.getPrixAchat(), newPa) != 0) {
+                p.setPrixAchat(newPa);
+            }
+        }
+
+        // Prix de vente: mise à jour si fourni et différent
+        if (dto.getPrixVente() != null) {
+            Double newPv = dto.getPrixVente();
+            if (p.getPrixVente() == null || Double.compare(p.getPrixVente(), newPv) != 0) {
+                p.setPrixVente(newPv);
+            }
+        }
+
+        // Seuil de rupture: mise à jour si fourni et différent
+        if (dto.getSeuilRuptureStock() != null) {
+            Integer newSeuil = dto.getSeuilRuptureStock();
+            if (p.getSeuilRuptureStock() == null || !p.getSeuilRuptureStock().equals(newSeuil)) {
+                p.setSeuilRuptureStock(newSeuil);
+            }
+        }
     }
 
     /**
      * Crée un nouveau produit ou met à jour un existant
      */
     private Produit createNewProduct(ProduitRequestDTO dto, double fraisParUnite) {
+        // Recherche pour éviter les doublons
+        Optional<Produit> existingProduct = findExistingProduct(dto);
+
+        if (existingProduct.isPresent()) {
+            return updateExistingProduct(existingProduct.get(), dto, fraisParUnite);
+        }
+
         try {
-            // Vérifier si le produit existe déjà par libellé
-            Optional<Produit> existingProduct = produitService.findByLibelleOnly(dto.getLibelle().trim());
+            // Créer un nouveau produit
+            Produit p = produitService.saveWithoutAppro(dto, null);
+            double nouveauCMA = Math.round((dto.getPrixAchat() + fraisParUnite) * 100.0) / 100.0;
+            p.setCoupMoyenAcquisition(nouveauCMA);
+            p.setPrixAchat(dto.getPrixAchat());
 
-            if (existingProduct.isPresent()) {
-                // Le produit existe déjà, on le met à jour
-                log.info("Produit existant trouvé lors de la création, mise à jour : {} (ID: {}, Code: {})",
-                        existingProduct.get().getLibelle(), existingProduct.get().getId(), existingProduct.get().getCodeProduit());
-
-                return updateExistingProduct(existingProduct.get(), dto, fraisParUnite);
-            } else {
-                // Créer un nouveau produit
-                log.info("Création d'un nouveau produit: {}", dto.getLibelle());
-
-                Produit p = produitService.saveWithoutAppro(dto, null);
-                double nouveauCMA = dto.getPrixAchat() + fraisParUnite;
-                nouveauCMA = Math.round(nouveauCMA * 100.0) / 100.0;
-                p.setCoupMoyenAcquisition(nouveauCMA);
-                p.setPrixAchat(dto.getPrixAchat());
-
-                log.info("DEBUG - Avant sauvegarde explicite du nouveau produit: {} (stock: {}, CMA: {})",
-                        p.getLibelle(), p.getStockDisponible(), nouveauCMA);
-
-                // Persistance explicite du nouveau produit en utilisant directement le repository
-                Produit savedProduit = produitRepository.save(p);
-
-                log.info("DEBUG - Après sauvegarde explicite du nouveau produit: {} (ID: {}, stock: {}, CMA: {})",
-                        savedProduit.getLibelle(), savedProduit.getId(), savedProduit.getStockDisponible(), savedProduit.getCoupMoyenAcquisition());
-
-                log.info("Nouveau produit créé avec succès: {} (ID: {}, stock: {}, CMA: {})",
-                        savedProduit.getLibelle(), savedProduit.getId(), savedProduit.getStockDisponible(), savedProduit.getCoupMoyenAcquisition());
-
-                return savedProduit;
-            }
+            return produitRepository.save(p);
         } catch (Exception e) {
-            log.error("Erreur lors de la création/mise à jour du produit {}: {}", dto.getLibelle(), e.getMessage());
-            throw new RuntimeException("Erreur lors de la création/mise à jour du produit " + dto.getLibelle(), e);
+            throw new RuntimeException("Erreur lors de la création du produit " + dto.getLibelle(), e);
         }
     }
 
@@ -454,56 +394,5 @@ public class ExcelApproImportService implements IExcelApproImportService {
                 .replaceAll("\\s+", " ");
     }
 
-    /**
-     * Traite tous les produits avec persistance explicite et verrouillage pour garantir l'ACID
-     */
-    private List<Produit> processProductsWithLocking(List<ProduitRequestDTO> produitsStandard, double fraisParUnite, Approvisionnement appro) {
-        List<Produit> produitsEnregistres = new ArrayList<>();
 
-        for (ProduitRequestDTO dto : produitsStandard) {
-            try {
-                Produit p = processSingleProduit(dto, fraisParUnite);
-                int qte = Optional.ofNullable(dto.getStockDisponible()).orElse(0);
-
-                if (qte > 0) {
-                    approvisionnementService.addExcelDetail(appro, p, qte, dto.getPrixAchat());
-                }
-                produitsEnregistres.add(p);
-
-                log.info("Produit traité avec succès: {} (ID: {}, Stock: {}, CMA: {})",
-                        p.getLibelle(), p.getId(), p.getStockDisponible(), p.getCoupMoyenAcquisition());
-
-            } catch (Exception e) {
-                log.error("Erreur lors du traitement du produit {}: {}", dto.getLibelle(), e.getMessage());
-                throw new RuntimeException("Erreur lors du traitement du produit " + dto.getLibelle(), e);
-            }
-        }
-
-        return produitsEnregistres;
-    }
-
-    /**
-     * Vérifie la persistance des données après l'import.
-     * Cette méthode est appelée pour s'assurer que les produits créés/mis à jour
-     * ont bien été persistés en base après l'import.
-     */
-    private void verifyDataPersistence(List<Produit> produitsEnregistres) {
-        log.info("DEBUG - Vérification de la persistance des données après l'import...");
-
-        for (Produit produit : produitsEnregistres) {
-            // Re-chercher le produit en base pour vérifier sa présence
-            Optional<Produit> foundProduct = produitRepository.findById(produit.getId());
-
-            if (foundProduct.isPresent()) {
-                log.info("DEBUG - Produit trouvé en base après import: {} (ID: {}, Code: {}, Stock: {}, CMA: {})",
-                        foundProduct.get().getLibelle(), foundProduct.get().getId(), foundProduct.get().getCodeProduit(),
-                        foundProduct.get().getStockDisponible(), foundProduct.get().getCoupMoyenAcquisition());
-            } else {
-                log.error("DEBUG - Produit non trouvé en base après import: {} (ID: {}, Code: {}, Stock: {}, CMA: {})",
-                        produit.getLibelle(), produit.getId(), produit.getCodeProduit(),
-                        produit.getStockDisponible(), produit.getCoupMoyenAcquisition());
-            }
-        }
-        log.info("DEBUG - Vérification de la persistance des données terminée.");
-    }
 }

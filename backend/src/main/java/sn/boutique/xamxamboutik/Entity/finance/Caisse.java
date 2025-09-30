@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 
-import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "caisses")
 @Data

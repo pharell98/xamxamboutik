@@ -93,17 +93,11 @@ public class CaisseApiService {
 
     /**
      * Ferme manuellement la caisse (délégation pure)
-     * API LOGIC : Exposition d'une action avec validation
+     * API LOGIC : Exposition d'une action
      */
-    public void fermerCaisseManuellement(double montantReel) {
-        logger.info("Fermeture manuelle de la caisse demandée via API avec montant: {} FCFA", montantReel);
-        
-        // Validation API (logique de validation, pas de calcul métier)
-        if (montantReel < 0) {
-            throw new IllegalArgumentException("Le montant réel ne peut pas être négatif");
-        }
-        
-        caisseInternalService.fermerCaisseManuellement(montantReel);
+    public void fermerCaisseManuellement() {
+        logger.info("Fermeture manuelle de la caisse demandée via API");
+        caisseInternalService.fermerCaisseManuellement();
     }
 
     /**
@@ -124,29 +118,7 @@ public class CaisseApiService {
         caisseInternalService.updateVentesJournalieresRealtime();
     }
 
-    /**
-     * Met à jour le montant réel de la caisse physique (délégation pure)
-     * API LOGIC : Exposition d'une action avec validation
-     */
-    public void updateMontantTotalCaisseReel(double nouveauMontant) {
-        logger.info("Mise à jour du montant réel de la caisse demandée via API: {} FCFA", nouveauMontant);
-        
-        // Validation API (logique de validation, pas de calcul métier)
-        if (nouveauMontant < 0) {
-            throw new IllegalArgumentException("Le montant de la caisse ne peut pas être négatif");
-        }
-        
-        caisseInternalService.updateMontantTotalCaisseReel(nouveauMontant);
-    }
-
-    /**
-     * Récupère le montant total réel de la caisse physique (délégation pure)
-     * API LOGIC : Exposition d'une donnée
-     */
-    public double getMontantTotalCaisseReel() {
-        logger.debug("Récupération du montant total réel de la caisse demandée via API");
-        return caisseInternalService.getMontantTotalCaisseReel();
-    }
+    
 
     /**
      * Récupère les statistiques de caisse pour une date donnée

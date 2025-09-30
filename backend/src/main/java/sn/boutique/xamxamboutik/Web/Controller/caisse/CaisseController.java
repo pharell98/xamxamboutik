@@ -1,4 +1,4 @@
-package sn.boutique.xamxamboutik.Web.Controller;
+package sn.boutique.xamxamboutik.Web.Controller.caisse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ public class CaisseController {
 
     /**
      * Récupère l'état actuel de la caisse en temps réel
-     * GET /api/caisse/etat
+     * GET /caisse/etat
      */
     @GetMapping("/etat")
     public ResponseEntity<Map<String, Object>> getCaisseEtat() {
@@ -35,14 +35,12 @@ public class CaisseController {
 
     /**
      * Ferme manuellement la caisse avant 23h59
-     * POST /api/caisse/fermer
-     * Body: { "montantReel": 25000.0 }
+     * POST /caisse/fermer
      */
     @PostMapping("/fermer")
-    public ResponseEntity<Map<String, Object>> fermerCaisseManuellement(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<Map<String, Object>> fermerCaisseManuellement() {
         try {
-            double montantReel = ((Number) request.get("montantReel")).doubleValue();
-            caisseApiService.fermerCaisseManuellement(montantReel);
+            caisseApiService.fermerCaisseManuellement();
             
             // Retourner l'état de la caisse après fermeture
             Map<String, Object> etat = caisseApiService.getCaisseEtat();
@@ -54,7 +52,7 @@ public class CaisseController {
 
     /**
      * Force la mise à jour des ventes en temps réel
-     * POST /api/caisse/refresh
+     * POST /caisse/refresh
      */
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, Object>> refreshVentesRealtime() {
@@ -69,7 +67,7 @@ public class CaisseController {
 
     /**
      * Vérifie si la caisse est ouverte
-     * GET /api/caisse/is-ouverte
+     * GET /caisse/is-ouverte
      */
     @GetMapping("/is-ouverte")
     public ResponseEntity<Map<String, Object>> isCaisseOuverte() {
@@ -81,22 +79,5 @@ public class CaisseController {
         }
     }
 
-    /**
-     * Met à jour le montant total réel de la caisse physique
-     * POST /api/caisse/update-montant-reel
-     * Body: { "montantReel": 25000.0 }
-     */
-    @PostMapping("/update-montant-reel")
-    public ResponseEntity<Map<String, Object>> updateMontantReel(@RequestBody Map<String, Object> request) {
-        try {
-            double montantReel = ((Number) request.get("montantReel")).doubleValue();
-            caisseApiService.updateMontantTotalCaisseReel(montantReel);
-            
-            // Retourner l'état de la caisse après mise à jour
-            Map<String, Object> etat = caisseApiService.getCaisseEtat();
-            return ResponseEntity.ok(etat);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    
 }

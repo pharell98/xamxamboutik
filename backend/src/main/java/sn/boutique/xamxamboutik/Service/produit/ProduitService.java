@@ -139,31 +139,11 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
             throw new EntityNotFoundException("Produit avec l'ID " + produit.getId() + " non trouvé.", ErrorCodes.ENTITY_NOT_FOUND);
         }
 
-        log.info("DEBUG - ProduitService.update() - Avant sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
-                produit.getId(), produit.getCodeProduit(), produit.getLibelle(),
-                produit.getPrixAchat(), produit.getStockDisponible(), produit.getCoupMoyenAcquisition());
-
-        // Ne pas modifier le libellé car il a déjà été mis à jour dans updateProductInfo()
-        // produit.setLibelle(produit.getLibelle().toLowerCase());
-
         if (produitRepository.existsByLibelleAndDeletedFalseAndIdNot(produit.getLibelle(), produit.getId())) {
             throw new BaseCustomException("Le produit '" + produit.getLibelle() + "' existe déjà.", "DUPLICATE_ENTITY");
         }
 
-        // Forcer la sauvegarde en utilisant merge pour s'assurer que les modifications sont persistées
         Produit updated = produitRepository.save(produit);
-
-        // Vérifier que les données sont bien sauvegardées en rechargeant depuis la base
-        Produit reloaded = produitRepository.findById(produit.getId()).orElse(null);
-        if (reloaded != null) {
-            log.info("DEBUG - ProduitService.update() - Après rechargement depuis DB: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
-                    reloaded.getId(), reloaded.getCodeProduit(), reloaded.getLibelle(),
-                    reloaded.getPrixAchat(), reloaded.getStockDisponible(), reloaded.getCoupMoyenAcquisition());
-        }
-
-        log.info("DEBUG - ProduitService.update() - Après sauvegarde: ID={}, Code={}, Libelle={}, Prix={}, Stock={}, CMA={}",
-                updated.getId(), updated.getCodeProduit(), updated.getLibelle(),
-                updated.getPrixAchat(), updated.getStockDisponible(), updated.getCoupMoyenAcquisition());
 
         notifyUpdate(updated, "UPDATE");
         return updated;
@@ -255,7 +235,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         Categorie cat = categorieService.findById(dto.getCategorieId())
                 .orElseThrow(() -> new EntityNotFoundException("Catégorie avec l'ID " + dto.getCategorieId() + " non trouvée.", ErrorCodes.ENTITY_NOT_FOUND));
         Produit p = produitMapper.toEntity(dto);
-        p.setLibelle(p.getLibelle().toLowerCase());
+        p.setLibelle(p.getLibelle().trim().toLowerCase());
         p.setCategorie(cat);
         p.setStockDisponible(Objects.requireNonNullElse(dto.getStockDisponible(), 0));
         double pa = Objects.requireNonNullElse(dto.getPrixAchat(), 0.0);
@@ -266,7 +246,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
 
     private void updateProduitFields(Produit p, ProduitRequestDTO dto) {
         p.setCodeProduit(dto.getCodeProduit());
-        p.setLibelle(dto.getLibelle().toLowerCase());
+        p.setLibelle(dto.getLibelle().trim().toLowerCase());
         p.setPrixAchat(Objects.requireNonNullElse(dto.getPrixAchat(), 0.0));
         p.setPrixVente(Objects.requireNonNullElse(dto.getPrixVente(), 0.0));
         p.setSeuilRuptureStock(Objects.requireNonNullElse(dto.getSeuilRuptureStock(), 0));
@@ -297,8 +277,8 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
 
     private void handleImageUpdate(Produit p, MultipartFile file, String url) {
         if (url != null) {
-            String oldId = extractPublicId(p.getImage());
-            if (oldId != null) {
+            String oldId = extractCloudinaryPublicId(p.getImage());
+            if (oldId != null && isCloudinaryUrl(p.getImage())) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
@@ -312,7 +292,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         if (file != null && !file.isEmpty()) {
             try {
                 byte[] data = file.getBytes();
-                String oldId = extractPublicId(p.getImage());
+                String oldId = extractCloudinaryPublicId(p.getImage());
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
@@ -354,12 +334,48 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
     }
 
-    private String extractPublicId(String url) {
-        if (url == null || !url.contains("/")) {
+    private boolean isCloudinaryUrl(String url) {
+        if (url == null) return false;
+        try {
+            java.net.URI uri = java.net.URI.create(url);
+            String host = uri.getHost();
+            return host != null && host.contains("res.cloudinary.com");
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String extractCloudinaryPublicId(String url) {
+        if (!isCloudinaryUrl(url)) {
             return null;
         }
-        String[] part = url.split("/");
-        return part[part.length - 1].split("\\.")[0];
+        try {
+            // Example: https://res.cloudinary.com/<cloud>/image/upload/v12345/folder/name.jpg
+            // We want: folder/name (without extension and version)
+            String path = java.net.URI.create(url).getPath();
+            // Find the segment after "/upload/"
+            int uploadIdx = path.indexOf("/upload/");
+            if (uploadIdx == -1) {
+                return null;
+            }
+            String afterUpload = path.substring(uploadIdx + "/upload/".length());
+            // Remove transformation segments if any (start with "c_", "w_" etc.) which appear before the version
+            // Cloudinary typically puts version as v12345, so strip a leading v{digits}/ if present
+            afterUpload = afterUpload.replaceFirst("^v\\d+/", "");
+            // Now remove file extension
+            int lastSlash = afterUpload.lastIndexOf('/');
+            String filePart = afterUpload.substring(lastSlash + 1);
+            int dotIdx = filePart.lastIndexOf('.');
+            String fileNoExt = (dotIdx > 0) ? filePart.substring(0, dotIdx) : filePart;
+            if (lastSlash >= 0) {
+                String folder = afterUpload.substring(0, lastSlash);
+                return folder.isEmpty() ? fileNoExt : folder + "/" + fileNoExt;
+            } else {
+                return fileNoExt;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Pageable sorted(Pageable pg) {

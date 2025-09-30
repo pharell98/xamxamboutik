@@ -104,7 +104,6 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     void restore(@Param("id") Long id);
 
     @Query("SELECT p FROM Produit p WHERE p.codeProduit = :codeProduit AND p.deleted = false AND p.stockDisponible > 0")
-    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Optional<Produit> findByCodeProduit(@Param("codeProduit") String codeProduit);
 
     @Query("SELECT COUNT(p) > 0 FROM Produit p WHERE p.deleted = false AND LOWER(p.libelle) = LOWER(:libelle)")
@@ -114,11 +113,9 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     boolean existsByLibelleAndDeletedFalseAndIdNot(@Param("libelle") String libelle, @Param("id") Long id);
 
     @Query("SELECT p FROM Produit p WHERE p.deleted = false AND LOWER(p.libelle) = LOWER(:libelle) AND p.categorie.id = :categorieId")
-    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Optional<Produit> findByLibelleAndCategorie_IdAndDeletedFalse(@Param("libelle") String libelle, @Param("categorieId") Long categorieId);
 
     @Query("SELECT p FROM Produit p WHERE p.deleted = false AND LOWER(p.libelle) = LOWER(:libelle)")
-    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Optional<Produit> findByLibelleAndDeletedFalse(@Param("libelle") String libelle);
 
     /**

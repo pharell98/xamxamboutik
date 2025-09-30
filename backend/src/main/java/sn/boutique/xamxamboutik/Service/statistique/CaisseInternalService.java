@@ -92,7 +92,7 @@ public class CaisseInternalService {
      * Ferme manuellement la caisse avant 23h59
      * LOGIQUE PURE : Calcul et mise à jour d'entité
      */
-    public void fermerCaisseManuellement(double montantReel) {
+    public void fermerCaisseManuellement() {
         LocalDate today = LocalDate.now();
         Optional<Statistique> statistiqueOpt = statistiqueRepository.findByDateBetween(
             today.atStartOfDay(), 
@@ -230,30 +230,14 @@ public class CaisseInternalService {
         }
     }
 
+    
     /**
      * Récupère le montant total réel de la caisse physique
-     * LOGIQUE PURE : Lecture d'entité
+     * LOGIQUE PURE : Lecture d'entité (read-only)
      */
     public double getMontantTotalCaisseReel() {
         Caisse caisse = caisseRepository.findFirstByOrderByIdAsc();
         return caisse != null ? caisse.getSolde() : 0.0;
-    }
-
-    /**
-     * Met à jour le montant total réel de la caisse physique
-     * LOGIQUE PURE : Mise à jour d'entité
-     */
-    public void updateMontantTotalCaisseReel(double nouveauMontant) {
-        Caisse caisse = caisseRepository.findFirstByOrderByIdAsc();
-        if (caisse == null) {
-            // Créer la caisse si elle n'existe pas
-            caisse = new Caisse();
-            caisse.setSolde(0.0);
-        }
-        caisse.setSolde(nouveauMontant);
-        caisseRepository.save(caisse);
-        
-        logger.info("Montant total de la caisse physique mis à jour: {} FCFA", nouveauMontant);
     }
 
     /**
@@ -276,20 +260,34 @@ public class CaisseInternalService {
      * LOGIQUE PURE : Calcul métier
      */
     private double calculerMontantInitialIntelligent() {
-        // Récupérer la dernière session de caisse fermée
+        // 1) Essayer de baser le montant initial sur le chiffre d'affaires
+        //    du DERNIER jour de vente effectivement enregistré
+        try {
+            LocalDateTime lastSaleDateTime = statistiqueBusinessService.getLastSaleDate();
+            if (lastSaleDateTime != null) {
+                LocalDate lastSaleDate = lastSaleDateTime.toLocalDate();
+                LocalDateTime start = lastSaleDate.atStartOfDay();
+                LocalDateTime end = lastSaleDate.atTime(23, 59, 59);
+                double revenue = statistiqueBusinessService.getRevenueBetweenDates(start, end);
+                logger.debug("Montant initial basé sur la dernière journée de vente ({}): {} FCFA", lastSaleDate, revenue);
+                return revenue;
+            }
+        } catch (Exception e) {
+            logger.warn("Impossible de calculer le montant initial via la dernière journée de vente, fallback sur la dernière session fermée", e);
+        }
+
+        // 2) Fallback: utiliser la dernière session de caisse fermée si disponible
         Optional<Statistique> derniereSession = statistiqueRepository.findTopByEstCaisseOuverteFalseOrderByDateDesc();
-        
         if (derniereSession.isPresent()) {
-            // Boutique existante : montant de fermeture de la veille
             Double montantFermeture = derniereSession.get().getMontantCaisseFermeture();
             double montant = montantFermeture != null ? montantFermeture : 0.0;
-            logger.debug("Montant initial calculé (boutique existante): {} FCFA", montant);
+            logger.debug("Montant initial (fallback, dernière session fermée): {} FCFA", montant);
             return montant;
-        } else {
-            // Nouvelle boutique : 0 FCFA
-            logger.debug("Montant initial calculé (nouvelle boutique): 0 FCFA");
-            return 0.0;
         }
+
+        // 3) Nouvelle boutique: 0 FCFA
+        logger.debug("Montant initial calculé (nouvelle boutique): 0 FCFA");
+        return 0.0;
     }
 
     /**
