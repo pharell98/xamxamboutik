@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import sn.boutique.xamxamboutik.Exception.TokenException;
@@ -15,7 +16,6 @@ import sn.boutique.xamxamboutik.security.config.JwtProperties;
 import sn.boutique.xamxamboutik.security.constants.SecurityConstants;
 import sn.boutique.xamxamboutik.security.model.AuthenticatedUser;
 import sn.boutique.xamxamboutik.security.service.CustomUserDetailsService;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import javax.crypto.SecretKey;
 import java.util.Arrays;
