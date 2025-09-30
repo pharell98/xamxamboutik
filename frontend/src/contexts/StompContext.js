@@ -88,6 +88,9 @@ export const StompProvider = ({ children }) => {
       subscribeWithErrorHandling('/topic/barcode', parsed => {
         setData(prevData => [...prevData, parsed]);
       });
+      subscribeWithErrorHandling('/topic/stock-updates', parsed => {
+        setData(prevData => [...prevData, parsed]);
+      });
       subscribeWithErrorHandling('/topic/approvisionnements', parsed => {
         setApprovisionnementData(prevData => [...prevData, parsed]);
         setData(prevData => [...prevData, parsed]);
