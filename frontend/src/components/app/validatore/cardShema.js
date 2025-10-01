@@ -84,7 +84,7 @@ export const customerInfoSchema = Yup.object().shape({
     }),
   phoneNumber: Yup.string()
     .trim()
-    .matches(/^[\d\s\-\+\(\)]+$/, 'Numéro de téléphone invalide')
+    .matches(/^[\d\s\-+()]+$/, 'Numéro de téléphone invalide')
     .when('required', {
       is: true,
       then: schema => schema.required('Le numéro de téléphone est requis')
