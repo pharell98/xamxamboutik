@@ -13,10 +13,7 @@ const CustomerInfo = () => {
         <Row className="align-items-center">
           <Col>
             <h5 className="mb-0 fw-bold">
-              <FontAwesomeIcon
-                icon="info-circle"
-                className="me-2 text-primary"
-              />
+              <FontAwesomeIcon icon="info-circle" className="me-2 text-primary" />
               Details
             </h5>
           </Col>
@@ -38,10 +35,7 @@ const CustomerInfo = () => {
         <Row>
           <Col lg xxl={5}>
             <div className="d-flex align-items-center mb-3">
-              <FontAwesomeIcon
-                icon="user-circle"
-                className="text-primary me-2"
-              />
+              <FontAwesomeIcon icon="user-circle" className="text-primary me-2" />
               <h6 className="fw-semibold ls mb-0 text-uppercase">
                 Account Information
               </h6>
@@ -78,10 +72,7 @@ const CustomerInfo = () => {
           </Col>
           <Col lg xxl={{ span: 5, offset: 1 }} className="mt-4 mt-lg-0">
             <div className="d-flex align-items-center mb-3">
-              <FontAwesomeIcon
-                icon="credit-card"
-                className="text-primary me-2"
-              />
+              <FontAwesomeIcon icon="credit-card" className="text-primary me-2" />
               <h6 className="fw-semibold ls mb-0 text-uppercase">
                 Billing Information
               </h6>

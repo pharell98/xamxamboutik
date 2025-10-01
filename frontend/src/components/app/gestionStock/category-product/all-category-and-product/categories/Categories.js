@@ -168,6 +168,7 @@ const Categories = ({ onEdit }) => {
           latestMessage.message?.includes('category') ||
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
+        console.log('[Categories] Message WebSocket reçu, rafraîchissement des données:', latestMessage);
         setRefresh(prev => prev + 1);
       }
     }
@@ -180,6 +181,7 @@ const Categories = ({ onEdit }) => {
     };
 
     const handleStockUpdated = () => {
+      console.log('[Categories] Événement stock-updated reçu, rafraîchissement des données');
       setRefresh(prev => prev + 1);
     };
 

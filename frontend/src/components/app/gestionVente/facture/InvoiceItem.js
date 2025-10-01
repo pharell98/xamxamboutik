@@ -1,11 +1,11 @@
 import React from 'react';
 import { Badge, Button, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faReceipt,
-  faUser,
-  faPhone,
-  faPrint,
+import { 
+  faReceipt, 
+  faUser, 
+  faPhone, 
+  faPrint, 
   faChevronDown,
   faChevronUp,
   faUserTie
@@ -14,13 +14,13 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const InvoiceProductItem = ({ product, isDark = false }) => (
-  <div
-    className={`invoice-product-item d-flex justify-content-between align-items-center py-1 px-2 rounded ${
-      isDark ? 'dark' : ''
-    }`}
-  >
+  <div className={`invoice-product-item d-flex justify-content-between align-items-center py-1 px-2 rounded ${
+    isDark ? 'dark' : ''
+  }`}>
     <div className="flex-1">
-      <div className="fw-semibold small mb-0">{product.libelle}</div>
+      <div className="fw-semibold small mb-0">
+        {product.libelle}
+      </div>
       <small className="text-muted">
         {product.prix.toLocaleString()} XOF × {product.quantite}
       </small>
@@ -31,15 +31,15 @@ const InvoiceProductItem = ({ product, isDark = false }) => (
   </div>
 );
 
-const InvoiceItem = ({
-  facture,
-  isOpen,
-  onToggle,
-  onPrint,
+const InvoiceItem = ({ 
+  facture, 
+  isOpen, 
+  onToggle, 
+  onPrint, 
   isDark = false,
   isPrinting = false
 }) => {
-  const formatDate = dateString => {
+  const formatDate = (dateString) => {
     try {
       return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: fr });
     } catch {
@@ -47,36 +47,34 @@ const InvoiceItem = ({
     }
   };
 
-  const getPaymentModeLabel = mode => {
+  const getPaymentModeLabel = (mode) => {
     const modes = {
-      espece: 'Espèces',
-      mobile_money: 'Mobile Money',
-      carte_bancaire: 'Carte Bancaire',
-      virement: 'Virement',
-      cheque: 'Chèque'
+      'espece': 'Espèces',
+      'mobile_money': 'Mobile Money',
+      'carte_bancaire': 'Carte Bancaire',
+      'virement': 'Virement',
+      'cheque': 'Chèque'
     };
     return modes[mode] || mode;
   };
 
-  const getPaymentModeColor = mode => {
+  const getPaymentModeColor = (mode) => {
     const colors = {
-      espece: 'success',
-      mobile_money: 'primary',
-      carte_bancaire: 'info',
-      virement: 'warning',
-      cheque: 'secondary'
+      'espece': 'success',
+      'mobile_money': 'primary',
+      'carte_bancaire': 'info',
+      'virement': 'warning',
+      'cheque': 'secondary'
     };
     return colors[mode] || 'secondary';
   };
 
   return (
-    <div
-      className={`invoice-item rounded-3 ${
-        isDark ? 'bg-dark text-white' : 'bg-white'
-      } overflow-hidden shadow-sm`}
-    >
+    <div className={`invoice-item rounded-3 ${
+      isDark ? 'bg-dark text-white' : 'bg-white'
+    } overflow-hidden shadow-sm`}>
       {/* En-tête de la facture */}
-      <div
+      <div 
         className={`invoice-header p-3 d-flex justify-content-between align-items-center ${
           isDark ? 'bg-dark dark' : 'bg-light'
         }`}
@@ -84,24 +82,22 @@ const InvoiceItem = ({
         style={{ cursor: 'pointer' }}
       >
         <div className="d-flex align-items-center">
-          <div
-            className={`me-3 p-2 rounded-2 ${
-              isDark ? 'bg-primary' : 'bg-primary'
-            }`}
-          >
-            <FontAwesomeIcon
-              icon={faReceipt}
+          <div className={`me-3 p-2 rounded-2 ${isDark ? 'bg-primary' : 'bg-primary'}`}>
+            <FontAwesomeIcon 
+              icon={faReceipt} 
               className="text-white"
               size="sm"
             />
           </div>
           <div>
-            <div className="fw-bold mb-1 small">{facture.numeroFacture}</div>
+            <div className="fw-bold mb-1 small">
+              {facture.numeroFacture}
+            </div>
             <div className="d-flex align-items-center gap-2 flex-wrap">
               <small className="text-muted">
                 {formatDate(facture.dateVente)}
               </small>
-              <Badge
+              <Badge 
                 bg={getPaymentModeColor(facture.modePaiement)}
                 className="fs--2 px-2 py-1"
               >
@@ -121,7 +117,7 @@ const InvoiceItem = ({
             </div>
           </div>
         </div>
-
+        
         <div className="d-flex align-items-center gap-3">
           <div className="text-end">
             <div className="fw-bold text-success small">
@@ -133,8 +129,8 @@ const InvoiceItem = ({
               </small>
             )}
           </div>
-          <FontAwesomeIcon
-            icon={isOpen ? faChevronUp : faChevronDown}
+          <FontAwesomeIcon 
+            icon={isOpen ? faChevronUp : faChevronDown} 
             className="text-muted"
           />
         </div>
@@ -148,19 +144,14 @@ const InvoiceItem = ({
             <div className="d-flex justify-content-between align-items-center mb-1">
               <small className="fw-semibold text-muted">Produits</small>
               <small className="text-muted">
-                {facture.detailFacture?.length} article
-                {facture.detailFacture?.length > 1 ? 's' : ''}
+                {facture.detailFacture?.length} article{facture.detailFacture?.length > 1 ? 's' : ''}
               </small>
             </div>
-            <div
-              className={`rounded-2 p-2 ${
-                isDark ? 'bg-dark border' : 'bg-light'
-              }`}
-            >
+            <div className={`rounded-2 p-2 ${isDark ? 'bg-dark border' : 'bg-light'}`}>
               {facture.detailFacture?.map((product, index) => (
-                <InvoiceProductItem
-                  key={index}
-                  product={product}
+                <InvoiceProductItem 
+                  key={index} 
+                  product={product} 
                   isDark={isDark}
                 />
               ))}
@@ -179,7 +170,7 @@ const InvoiceItem = ({
                     </>
                   )}
                   {facture.telephoneClient && (
-                    <span className={facture.nomClient ? 'ms-2' : ''}>
+                    <span className={facture.nomClient ? "ms-2" : ""}>
                       <FontAwesomeIcon icon={faPhone} className="me-1" />
                       {facture.telephoneClient}
                     </span>
@@ -189,26 +180,19 @@ const InvoiceItem = ({
               {facture.utilisateurNom && (
                 <div className="mb-1">
                   <FontAwesomeIcon icon={faUserTie} className="me-1" />
-                  Vendeur:{' '}
-                  <span className="fw-semibold">{facture.utilisateurNom}</span>
+                  Vendeur: <span className="fw-semibold">{facture.utilisateurNom}</span>
                 </div>
               )}
               <div>
-                Payé:{' '}
-                <span className="text-success fw-semibold">
-                  {facture.montantPayer.toLocaleString()} XOF
-                </span>
+                Payé: <span className="text-success fw-semibold">{facture.montantPayer.toLocaleString()} XOF</span>
                 {facture.montantRestant > 0 && (
                   <span className="ms-2">
-                    Restant:{' '}
-                    <span className="text-warning fw-semibold">
-                      {facture.montantRestant.toLocaleString()} XOF
-                    </span>
+                    Restant: <span className="text-warning fw-semibold">{facture.montantRestant.toLocaleString()} XOF</span>
                   </span>
                 )}
               </div>
             </div>
-
+            
             <div className="d-flex gap-2">
               <Button
                 variant="outline-primary"

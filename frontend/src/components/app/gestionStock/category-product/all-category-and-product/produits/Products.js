@@ -78,6 +78,7 @@ const Products = ({ onEdit }) => {
           latestMessage.message?.includes('product') ||
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
+        console.log('[Products] Message WebSocket reçu, rafraîchissement des données:', latestMessage);
         debouncedSetRefresh();
       }
     }
@@ -90,6 +91,7 @@ const Products = ({ onEdit }) => {
     };
 
     const handleStockUpdated = () => {
+      console.log('[Products] Événement stock-updated reçu, rafraîchissement des données');
       debouncedSetRefresh();
     };
 

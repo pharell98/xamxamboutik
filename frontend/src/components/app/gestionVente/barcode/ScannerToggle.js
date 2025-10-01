@@ -4,39 +4,36 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBarcode, faCamera } from '@fortawesome/free-solid-svg-icons';
 
 const SCANNER_OPTIONS = [
-  {
-    value: 'usb',
-    label: 'Scanner USB',
-    icon: faBarcode
+  { 
+    value: 'usb', 
+    label: 'Scanner USB', 
+    icon: faBarcode 
   },
-  {
-    value: 'camera',
-    label: 'Scanner Caméra',
-    icon: faCamera
+  { 
+    value: 'camera', 
+    label: 'Scanner Caméra', 
+    icon: faCamera 
   }
 ];
 
 const ScannerToggle = ({ scannerMode, setScannerMode }) => {
-  const handleModeChange = useCallback(
-    e => {
-      setScannerMode(e.target.value);
-    },
-    [setScannerMode]
-  );
+  const handleModeChange = useCallback((e) => {
+    setScannerMode(e.target.value);
+  }, [setScannerMode]);
 
-  const preventPropagation = useCallback(e => {
+  const preventPropagation = useCallback((e) => {
     e.stopPropagation();
   }, []);
 
   return (
-    <Form.Group
+    <Form.Group 
       className="d-flex align-items-center mb-0"
       onClick={preventPropagation}
       onMouseDown={preventPropagation}
     >
       <Form.Label className="mb-0 me-2">Mode de Scan:</Form.Label>
       <div className="d-flex">
-        {SCANNER_OPTIONS.map(option => (
+        {SCANNER_OPTIONS.map((option) => (
           <Form.Check
             key={option.value}
             type="radio"

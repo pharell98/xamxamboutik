@@ -4,11 +4,11 @@ import { Button, Card, Col, Form, Image, Row, Alert } from 'react-bootstrap';
 import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faStore,
-  faEnvelope,
-  faPhone,
-  faMapMarkerAlt,
+import { 
+  faStore, 
+  faEnvelope, 
+  faPhone, 
+  faMapMarkerAlt, 
   faSave,
   faEdit,
   faCheckCircle,
@@ -185,18 +185,12 @@ const ShopSettingsForm = ({
           <Card className="settings-form-card border-0 rounded-3 overflow-hidden fade-in-up">
             <Card.Body className="p-4">
               {/* Section Informations générales */}
-              <div
-                className="mb-4 fade-in-up"
-                style={{ animationDelay: '0.1s' }}
-              >
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <Row className="g-3">
                   <Col md={6}>
                     <Form.Group>
                       <Form.Label className="fw-semibold d-flex align-items-center">
-                        <FontAwesomeIcon
-                          icon={faStore}
-                          className="text-primary me-2"
-                        />
+                        <FontAwesomeIcon icon={faStore} className="text-primary me-2" />
                         Nom de la boutique
                       </Form.Label>
                       <Form.Control
@@ -262,18 +256,12 @@ const ShopSettingsForm = ({
               <hr className="my-4" />
 
               {/* Section Informations de contact */}
-              <div
-                className="mb-4 fade-in-up"
-                style={{ animationDelay: '0.2s' }}
-              >
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <Row className="g-3">
                   <Col md={6}>
                     <Form.Group>
                       <Form.Label className="fw-semibold d-flex align-items-center">
-                        <FontAwesomeIcon
-                          icon={faEnvelope}
-                          className="text-info me-2"
-                        />
+                        <FontAwesomeIcon icon={faEnvelope} className="text-info me-2" />
                         Adresse e-mail
                       </Form.Label>
                       <Form.Control
@@ -291,10 +279,7 @@ const ShopSettingsForm = ({
                   <Col md={6}>
                     <Form.Group>
                       <Form.Label className="fw-semibold d-flex align-items-center">
-                        <FontAwesomeIcon
-                          icon={faPhone}
-                          className="text-success me-2"
-                        />
+                        <FontAwesomeIcon icon={faPhone} className="text-success me-2" />
                         Numéro de téléphone
                       </Form.Label>
                       <Form.Control
@@ -315,26 +300,22 @@ const ShopSettingsForm = ({
               <hr className="my-4" />
 
               {/* Section Adresse */}
-              <div
-                className="mb-4 fade-in-up"
-                style={{ animationDelay: '0.3s' }}
-              >
+              <div className="mb-4 fade-in-up" style={{ animationDelay: '0.3s' }}>
                 <div className="d-flex align-items-center mb-3">
                   <div className="bg-warning bg-opacity-10 p-2 rounded me-2 icon-container">
-                    <FontAwesomeIcon
-                      icon={faMapMarkerAlt}
-                      className="text-warning"
-                    />
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="text-warning" />
                   </div>
                   <h6 className="fw-bold mb-0 section-header">
                     Adresse de la boutique
                   </h6>
                 </div>
-
+                
                 <Row className="g-3">
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold">Pays</Form.Label>
+                      <Form.Label className="fw-semibold">
+                        Pays
+                      </Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Entrez le pays"
@@ -349,7 +330,9 @@ const ShopSettingsForm = ({
                   </Col>
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold">Région</Form.Label>
+                      <Form.Label className="fw-semibold">
+                        Région
+                      </Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Entrez la région"
@@ -381,7 +364,9 @@ const ShopSettingsForm = ({
                   </Col>
                   <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold">Quartier</Form.Label>
+                      <Form.Label className="fw-semibold">
+                        Quartier
+                      </Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Entrez le quartier"
@@ -396,7 +381,9 @@ const ShopSettingsForm = ({
                   </Col>
                   <Col md={12}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold">Rue</Form.Label>
+                      <Form.Label className="fw-semibold">
+                        Rue
+                      </Form.Label>
                       <Form.Control
                         type="text"
                         placeholder="Entrez la rue"
@@ -413,38 +400,26 @@ const ShopSettingsForm = ({
               </div>
 
               {/* Alert d'information */}
-              <Alert
-                variant="info"
-                className="alert-custom border-0 rounded-3 fade-in-up"
-                style={{ animationDelay: '0.4s' }}
-              >
+              <Alert variant="info" className="alert-custom border-0 rounded-3 fade-in-up" style={{ animationDelay: '0.4s' }}>
                 <div className="d-flex align-items-center">
                   <FontAwesomeIcon icon={faInfoCircle} className="me-2" />
                   <div>
-                    <strong>Information :</strong> Tous les champs marqués avec
-                    un astérisque (*) sont obligatoires. Les autres champs sont
-                    optionnels et peuvent être remplis plus tard.
+                    <strong>Information :</strong> Tous les champs marqués avec un astérisque (*) sont obligatoires. 
+                    Les autres champs sont optionnels et peuvent être remplis plus tard.
                   </div>
                 </div>
               </Alert>
 
               {/* Boutons d'action */}
-              <div
-                className="d-flex justify-content-center mt-4 fade-in-up"
-                style={{ animationDelay: '0.5s' }}
-              >
+              <div className="d-flex justify-content-center mt-4 fade-in-up" style={{ animationDelay: '0.5s' }}>
                 <Button
-                  variant={
-                    isEditMode || initialValues?.id ? 'warning' : 'primary'
-                  }
+                  variant={isEditMode || initialValues?.id ? 'warning' : 'primary'}
                   type="submit"
                   disabled={isSubmitting}
                   className={`px-5 py-2 rounded-3 fw-semibold ${
-                    isEditMode || initialValues?.id
-                      ? 'btn-warning-custom'
-                      : 'btn-custom'
+                    isEditMode || initialValues?.id ? 'btn-warning-custom' : 'btn-custom'
                   }`}
-                  style={{
+                  style={{ 
                     minWidth: '150px'
                   }}
                 >
@@ -455,13 +430,11 @@ const ShopSettingsForm = ({
                     </>
                   ) : (
                     <>
-                      <FontAwesomeIcon
-                        icon={isEditMode || initialValues?.id ? faEdit : faSave}
-                        className="me-2"
+                      <FontAwesomeIcon 
+                        icon={isEditMode || initialValues?.id ? faEdit : faSave} 
+                        className="me-2" 
                       />
-                      {isEditMode || initialValues?.id
-                        ? 'Modifier'
-                        : 'Enregistrer'}
+                      {isEditMode || initialValues?.id ? 'Modifier' : 'Enregistrer'}
                     </>
                   )}
                 </Button>

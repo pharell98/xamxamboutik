@@ -28,7 +28,7 @@ const ruptureFiltersConfig = [
   }
 ];
 
-const getRuptureColumns = getColumnStyles => [
+const getRuptureColumns = (getColumnStyles) => [
   {
     accessorKey: 'image',
     header: 'Image',
@@ -41,10 +41,10 @@ const getRuptureColumns = getColumnStyles => [
           className="rounded"
         />
       ) : (
-        <div
-          style={{
-            width: 40,
-            height: 40,
+        <div 
+          style={{ 
+            width: 40, 
+            height: 40, 
             backgroundColor: '#f8f9fa',
             borderRadius: '4px',
             display: 'flex',
@@ -52,10 +52,7 @@ const getRuptureColumns = getColumnStyles => [
             justifyContent: 'center'
           }}
         >
-          <i
-            className="fas fa-image text-muted"
-            style={{ fontSize: '0.8rem' }}
-          ></i>
+          <i className="fas fa-image text-muted" style={{ fontSize: '0.8rem' }}></i>
         </div>
       ),
     enableSorting: false,
@@ -92,10 +89,7 @@ const getRuptureColumns = getColumnStyles => [
     accessorKey: 'libelle',
     header: 'Nom du Produit',
     cell: ({ row: { original } }) => (
-      <div
-        className="text-start fw-medium text-truncate"
-        title={original.libelle}
-      >
+      <div className="text-start fw-medium text-truncate" title={original.libelle}>
         {original.libelle || '—'}
       </div>
     ),
@@ -139,13 +133,9 @@ const getRuptureColumns = getColumnStyles => [
     cell: ({ row: { original } }) => (
       <div className="text-center">
         {original.stockDisponible <= 0 ? (
-          <SubtleBadge bg="danger" className="fs-10">
-            Rupture
-          </SubtleBadge>
+          <SubtleBadge bg="danger" className="fs-10">Rupture</SubtleBadge>
         ) : (
-          <SubtleBadge bg="warning" className="fs-10">
-            Faible
-          </SubtleBadge>
+          <SubtleBadge bg="warning" className="fs-10">Faible</SubtleBadge>
         )}
       </div>
     ),
@@ -196,11 +186,7 @@ const RuptureStock = () => {
   }, []);
 
   // Ajuster les largeurs de colonnes selon la taille d'écran
-  const getColumnStyles = (
-    baseWidth,
-    mobileWidth = null,
-    tabletWidth = null
-  ) => {
+  const getColumnStyles = (baseWidth, mobileWidth = null, tabletWidth = null) => {
     let width = baseWidth;
     if (isMobile && mobileWidth) {
       width = mobileWidth;

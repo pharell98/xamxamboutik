@@ -11,17 +11,14 @@ const useImageZoom = () => {
     title: ''
   });
 
-  const showZoom = useCallback(
-    (imageSrc, imageAlt = '', title = 'Aperçu du produit') => {
-      setZoomModal({
-        show: true,
-        imageSrc,
-        imageAlt,
-        title
-      });
-    },
-    []
-  );
+  const showZoom = useCallback((imageSrc, imageAlt = '', title = 'Aperçu du produit') => {
+    setZoomModal({
+      show: true,
+      imageSrc,
+      imageAlt,
+      title
+    });
+  }, []);
 
   const hideZoom = useCallback(() => {
     setZoomModal(prev => ({

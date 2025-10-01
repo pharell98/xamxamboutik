@@ -28,7 +28,7 @@ const MARGINS = {
 /**
  * Charge une image et la convertit en data URL
  */
-const loadImage = async url => {
+const loadImage = async (url) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -56,7 +56,7 @@ const getCompanySettings = async () => {
   try {
     const settings = await apiServiceSettings.getSettings();
     if (!settings) throw new Error('Aucune donnée reçue');
-
+    
     return {
       name: settings.shopName || 'Boutique',
       address: settings.street || '',
@@ -107,14 +107,7 @@ class InvoiceGenerator {
     if (logoUrl) {
       try {
         const logoDataUrl = await loadImage(logoUrl);
-        this.doc.addImage(
-          logoDataUrl,
-          'PNG',
-          logoX,
-          logoY,
-          logoWidth,
-          logoHeight
-        );
+        this.doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight);
         return;
       } catch (error) {
         console.error('Erreur chargement logo:', error);
@@ -125,9 +118,7 @@ class InvoiceGenerator {
     this.doc.setDrawColor(...COLORS.BLACK);
     this.doc.roundedRect(logoX, logoY, logoWidth, logoHeight, 3, 3, 'S');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
-    this.doc.text('Logo', logoX + logoWidth / 2, logoY + logoHeight / 2 + 2, {
-      align: 'center'
-    });
+    this.doc.text('Logo', logoX + logoWidth/2, logoY + logoHeight/2 + 2, { align: 'center' });
   }
 
   /**
@@ -144,19 +135,11 @@ class InvoiceGenerator {
     this.doc.setFontSize(FONT_SIZES.NORMAL);
     let addressY = 22;
     if (company.address) {
-      this.doc.text(
-        `${company.address}, ${company.neighborhood}`,
-        50,
-        addressY
-      );
+      this.doc.text(`${company.address}, ${company.neighborhood}`, 50, addressY);
       addressY += 6;
     }
     if (company.department) {
-      this.doc.text(
-        `${company.department}, ${company.region}, ${company.city}`,
-        50,
-        addressY
-      );
+      this.doc.text(`${company.department}, ${company.region}, ${company.city}`, 50, addressY);
       addressY += 6;
     }
     if (company.phone) {
@@ -174,15 +157,9 @@ class InvoiceGenerator {
 
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
-    this.doc.text(`Date: ${invoiceData.date}`, MARGINS.RIGHT, 25, {
-      align: 'right'
-    });
-    this.doc.text(`N° Facture: ${invoiceData.number}`, MARGINS.RIGHT, 31, {
-      align: 'right'
-    });
-    this.doc.text(`N° Client: ${invoiceData.customerId}`, MARGINS.RIGHT, 37, {
-      align: 'right'
-    });
+    this.doc.text(`Date: ${invoiceData.date}`, MARGINS.RIGHT, 25, { align: 'right' });
+    this.doc.text(`N° Facture: ${invoiceData.number}`, MARGINS.RIGHT, 31, { align: 'right' });
+    this.doc.text(`N° Client: ${invoiceData.customerId}`, MARGINS.RIGHT, 37, { align: 'right' });
 
     // Ligne de séparation
     this.doc.setDrawColor(...COLORS.BLACK);
@@ -197,7 +174,7 @@ class InvoiceGenerator {
     this.doc.setFont('helvetica', 'bold');
     this.doc.setFontSize(FONT_SIZES.SUBTITLE);
     this.doc.text('Facturé à:', MARGINS.LEFT, 55);
-
+    
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
     this.doc.text(customerInfo.fullName || 'Client', MARGINS.LEFT, 62);
@@ -209,12 +186,7 @@ class InvoiceGenerator {
    */
   drawPaymentInfo(saleData, startY) {
     const paymentData = [
-      [
-        '',
-        format(new Date(), 'dd/MM/yyyy', { locale: fr }),
-        '',
-        saleData.modePaiement.toUpperCase()
-      ]
+      ['', format(new Date(), 'dd/MM/yyyy', { locale: fr }), '', saleData.modePaiement.toUpperCase()]
     ];
 
     // Vérifier si autoTable existe
@@ -258,18 +230,10 @@ class InvoiceGenerator {
     this.doc.setFont('helvetica', 'bold');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
     this.doc.text('Informations de paiement:', MARGINS.LEFT, startY);
-
+    
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(
-      `Mode: ${saleData.modePaiement.toUpperCase()}`,
-      MARGINS.LEFT,
-      startY + 8
-    );
-    this.doc.text(
-      `Date: ${format(new Date(), 'dd/MM/yyyy', { locale: fr })}`,
-      MARGINS.LEFT,
-      startY + 16
-    );
+    this.doc.text(`Mode: ${saleData.modePaiement.toUpperCase()}`, MARGINS.LEFT, startY + 8);
+    this.doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy', { locale: fr })}`, MARGINS.LEFT, startY + 16);
   }
 
   /**
@@ -281,8 +245,7 @@ class InvoiceGenerator {
     }
 
     const tableData = cartItems.map((item, index) => {
-      const unitPrice =
-        item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
       const quantity = item.quantity || item.quantiteVendu || 1;
       const totalPrice = unitPrice * quantity;
 
@@ -333,7 +296,7 @@ class InvoiceGenerator {
    */
   drawProductsTableFallback(cartItems, startY) {
     let currentY = startY + 10;
-
+    
     // En-tête
     this.doc.setFont('helvetica', 'bold');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
@@ -343,25 +306,15 @@ class InvoiceGenerator {
     // Produits
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(FONT_SIZES.SMALL);
-
+    
     cartItems.forEach((item, index) => {
-      const unitPrice =
-        item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
       const quantity = item.quantity || item.quantiteVendu || 1;
       const totalPrice = unitPrice * quantity;
 
-      this.doc.text(
-        `${index + 1}. ${item.libelle || 'Produit'}`,
-        MARGINS.LEFT,
-        currentY
-      );
+      this.doc.text(`${index + 1}. ${item.libelle || 'Produit'}`, MARGINS.LEFT, currentY);
       this.doc.text(`Qté: ${quantity}`, MARGINS.LEFT + 100, currentY);
-      this.doc.text(
-        `${totalPrice.toLocaleString()} XOF`,
-        MARGINS.RIGHT - 30,
-        currentY,
-        { align: 'right' }
-      );
+      this.doc.text(`${totalPrice.toLocaleString()} XOF`, MARGINS.RIGHT - 30, currentY, { align: 'right' });
       currentY += 6;
     });
 
@@ -375,9 +328,7 @@ class InvoiceGenerator {
     this.doc.setFont('helvetica', 'bold');
     this.doc.setFontSize(FONT_SIZES.SUBTITLE);
     this.doc.text('Total:', 150, startY);
-    this.doc.text(`${total.toLocaleString()} XOF`, MARGINS.RIGHT, startY, {
-      align: 'right'
-    });
+    this.doc.text(`${total.toLocaleString()} XOF`, MARGINS.RIGHT, startY, { align: 'right' });
 
     // Signature
     const signatureY = startY + 15;
@@ -395,22 +346,18 @@ class InvoiceGenerator {
    */
   drawFooter(company, startY) {
     const footerY = startY + 15;
-
+    
     this.doc.setLineWidth(0.3);
     this.doc.line(MARGINS.LEFT, footerY, MARGINS.RIGHT, footerY);
-
+    
     this.doc.setFont('helvetica', 'italic');
     this.doc.setFontSize(FONT_SIZES.NORMAL);
-    this.doc.text('Merci pour votre confiance !', 105, footerY + 10, {
-      align: 'center'
-    });
-
+    this.doc.text('Merci pour votre confiance !', 105, footerY + 10, { align: 'center' });
+    
     if (company.phone || company.email) {
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(FONT_SIZES.SMALL);
-      const contactText = `Contactez-nous: ${company.phone || ''} | ${
-        company.email || ''
-      }`;
+      const contactText = `Contactez-nous: ${company.phone || ''} | ${company.email || ''}`;
       this.doc.text(contactText, 105, footerY + 17, { align: 'center' });
     }
   }
@@ -420,29 +367,26 @@ class InvoiceGenerator {
    */
   async generate(saleData, cartItems, customerInfo = {}) {
     const company = await getCompanySettings();
-
+    
     // Données de la facture
     const invoiceData = {
       date: format(new Date(), 'dd/MM/yyyy', { locale: fr }),
-      number: `INV-${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, '0')}`,
+      number: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
       customerId: customerInfo.id || `CUST-${Math.floor(Math.random() * 1000)}`
     };
 
     // Calculer le total
     const total = cartItems.reduce((acc, item) => {
-      const unitPrice =
-        item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
+      const unitPrice = item.prixVente || Math.floor(item.totalPrice / item.quantity) || 0;
       const quantity = item.quantity || item.quantiteVendu || 1;
-      return acc + unitPrice * quantity;
+      return acc + (unitPrice * quantity);
     }, 0);
 
     // Dessiner la facture
     await this.drawLogo(company.logo);
     this.drawHeader(company, invoiceData);
     this.drawCustomerInfo(customerInfo);
-
+    
     let currentY = this.drawPaymentInfo(saleData, 80);
     currentY = this.drawProductsTable(cartItems, currentY + 10);
     currentY = this.drawTotal(total, currentY + 10);
@@ -457,21 +401,14 @@ const InvoiceGeneratorUtils = {
   /**
    * Génère et télécharge une facture
    */
-  async downloadInvoice(
-    saleData,
-    cartItems,
-    customerInfo = {},
-    companyInfo = {}
-  ) {
+  async downloadInvoice(saleData, cartItems, customerInfo = {}, companyInfo = {}) {
     try {
       const generator = new InvoiceGenerator();
       const doc = await generator.generate(saleData, cartItems, customerInfo);
-
-      const fileName = `facture_${format(new Date(), 'yyyyMMdd')}_${Math.floor(
-        Math.random() * 1000
-      )}.pdf`;
+      
+      const fileName = `facture_${format(new Date(), 'yyyyMMdd')}_${Math.floor(Math.random() * 1000)}.pdf`;
       doc.save(fileName);
-
+      
       return fileName;
     } catch (error) {
       console.error('Erreur génération facture:', error);
@@ -482,12 +419,7 @@ const InvoiceGeneratorUtils = {
   /**
    * Génère une facture sans la télécharger
    */
-  async generateInvoice(
-    saleData,
-    cartItems,
-    customerInfo = {},
-    companyInfo = {}
-  ) {
+  async generateInvoice(saleData, cartItems, customerInfo = {}, companyInfo = {}) {
     const generator = new InvoiceGenerator();
     return await generator.generate(saleData, cartItems, customerInfo);
   }

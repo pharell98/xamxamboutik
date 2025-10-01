@@ -19,12 +19,9 @@ const CustomerLog = () => {
         {logs.map((log, index) => (
           <Row
             key={log.id}
-            className={classNames(
-              'g-0 align-items-center border-bottom py-2 px-3 fade-in',
-              {
-                'bg-light': index % 2 === 0
-              }
-            )}
+            className={classNames('g-0 align-items-center border-bottom py-2 px-3 fade-in', {
+              'bg-light': index % 2 === 0
+            })}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <Col md="auto" className="pe-3">
@@ -35,15 +32,9 @@ const CustomerLog = () => {
                   'badge-subtle-warning': log.status === 400
                 })}
               >
-                <FontAwesomeIcon
-                  icon={
-                    log.status === 200
-                      ? 'check'
-                      : log.status === 404
-                      ? 'times'
-                      : 'exclamation-triangle'
-                  }
-                  className="me-1"
+                <FontAwesomeIcon 
+                  icon={log.status === 200 ? 'check' : log.status === 404 ? 'times' : 'exclamation-triangle'} 
+                  className="me-1" 
                 />
                 {log.status}
               </span>

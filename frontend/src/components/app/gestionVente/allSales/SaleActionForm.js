@@ -52,11 +52,7 @@ const SaleActionForm = ({
         // Récupère la page côté backend puis filtre côté client par libellé
         const data = await venteServiceV1.getEchangeProductList();
         if (!active) return;
-        const content = Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-          ? data
-          : [];
+        const content = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         const options = !productQuery
           ? content
           : content.filter(p =>
@@ -393,8 +389,7 @@ const SaleActionForm = ({
           <Card.Body>
             {isActionDisabled ? (
               <div className="disabled-message">
-                Action non disponible : le produit a déjà été retourné ou
-                échangé.
+                Action non disponible : le produit a déjà été retourné ou échangé.
                 <br />
                 Note : Pour permettre des retours partiels, le backend doit
                 fournir la quantité restante à retourner.
@@ -415,9 +410,7 @@ const SaleActionForm = ({
                           <Controller
                             name="produitRemplacementId"
                             control={control}
-                            rules={{
-                              required: `${field.label} est obligatoire`
-                            }}
+                            rules={{ required: `${field.label} est obligatoire` }}
                             render={({ field: ctrlField }) => (
                               <Autocomplete
                                 options={productOptions}
@@ -428,9 +421,7 @@ const SaleActionForm = ({
                                 openOnFocus
                                 filterOptions={x => x}
                                 getOptionLabel={opt => opt?.libelle || ''}
-                                isOptionEqualToValue={(opt, val) =>
-                                  String(opt?.id) === String(val?.id)
-                                }
+                                isOptionEqualToValue={(opt, val) => String(opt?.id) === String(val?.id)}
                                 onInputChange={(_, val) => setProductQuery(val)}
                                 onChange={(_, val) => {
                                   const selectedId = val ? Number(val.id) : '';
@@ -439,13 +430,9 @@ const SaleActionForm = ({
                                 }}
                                 renderOption={(props, option) => (
                                   <li {...props} key={option.id}>
-                                    <span style={{ flex: 1 }}>
-                                      {option.libelle}
-                                    </span>
+                                    <span style={{ flex: 1 }}>{option.libelle}</span>
                                     <span style={{ color: '#6c757d' }}>
-                                      {option.prixVente != null
-                                        ? `${option.prixVente} CFA`
-                                        : ''}
+                                      {option.prixVente != null ? `${option.prixVente} CFA` : ''}
                                     </span>
                                   </li>
                                 )}
@@ -455,9 +442,7 @@ const SaleActionForm = ({
                                     placeholder={field.placeholder}
                                     size="small"
                                     error={!!errors.produitRemplacementId}
-                                    helperText={
-                                      errors.produitRemplacementId?.message
-                                    }
+                                    helperText={errors.produitRemplacementId?.message}
                                   />
                                 )}
                               />
@@ -480,8 +465,7 @@ const SaleActionForm = ({
                                 ...(field.type === 'number' && {
                                   min: {
                                     value: 1,
-                                    message:
-                                      'La quantité doit être supérieure à 0'
+                                    message: 'La quantité doit être supérieure à 0'
                                   },
                                   max: {
                                     value: quantiteVendu,

@@ -36,6 +36,7 @@ import { useToast } from '../../common/Toast';
 const PRODUCTS_PER_PAGE = 24;
 const DEBOUNCE_DELAY = 300;
 
+
 const SENTINEL_MARGIN = '100px';
 
 // Hook personnalisé pour la gestion des produits
@@ -47,12 +48,13 @@ const useProducts = () => {
   const [loading, setLoading] = useState(false);
   const [lastSoldItems, setLastSoldItems] = useState([]);
 
-  const fetchProducts = useCallback(async pageToLoad => {
+  const fetchProducts = useCallback(async (pageToLoad) => {
     // Éviter les requêtes multiples
     if (loading) {
+      console.log('[Products] Requête en cours, ignorée');
       return;
     }
-
+    
     try {
       setLoading(true);
       const response = await venteServiceV1.getMostSoldProducts(
@@ -60,14 +62,14 @@ const useProducts = () => {
         PRODUCTS_PER_PAGE,
         'web'
       );
-
+      
       if (!response.success) {
         return;
       }
 
       const { number, totalPages, content } = response.data || {};
       const currentPage = number !== undefined ? number + 1 : pageToLoad;
-
+      
       if (!content || !totalPages) {
         console.error('[Products] Données API incomplètes:', {
           number,
@@ -87,14 +89,9 @@ const useProducts = () => {
           image: product.image || product.imageUrl || null,
           prixVente: Number(product.prixVente || product.prix || 0),
           prixAchat: Number(product.prixAchat || 0),
-          stockDisponible: Number(
-            product.stockDisponible || product.stock || 0
-          ),
-          categorieLibelle:
-            product.categorieLibelle || product.categorie || 'Sans catégorie',
-          quantiteDisponible: Number(
-            product.stockDisponible || product.stock || 0
-          ),
+          stockDisponible: Number(product.stockDisponible || product.stock || 0),
+          categorieLibelle: product.categorieLibelle || product.categorie || 'Sans catégorie',
+          quantiteDisponible: Number(product.stockDisponible || product.stock || 0),
           totalPrice: Number(product.prixVente || product.prix || 0) * 1
         }));
 
@@ -105,7 +102,7 @@ const useProducts = () => {
         );
         return unique;
       });
-
+      
       setPage(currentPage);
       setTotalPages(totalPages);
       setHasMore(currentPage < totalPages);
@@ -119,19 +116,17 @@ const useProducts = () => {
 
   const reloadProductsAfterSale = useCallback(
     _.debounce(async () => {
+      console.log('[Products] Rechargement fluide des produits après vente...');
       // Éviter les rechargements multiples
       if (loading) {
+        console.log('[Products] Rechargement ignoré - requête en cours');
         return;
       }
       try {
         // Démarrer le loading avec un délai minimal pour la fluidité
         setLoading(true);
-
-        const response = await venteServiceV1.getMostSoldProducts(
-          1,
-          PRODUCTS_PER_PAGE,
-          'web'
-        );
+        
+        const response = await venteServiceV1.getMostSoldProducts(1, PRODUCTS_PER_PAGE, 'web');
         if (response.success && response.data) {
           const { content, totalPages } = response.data;
           if (content && Array.isArray(content)) {
@@ -143,19 +138,14 @@ const useProducts = () => {
                 image: product.image || product.imageUrl || null,
                 prixVente: Number(product.prixVente || product.prix || 0),
                 prixAchat: Number(product.prixAchat || 0),
-                stockDisponible: Number(
-                  product.stockDisponible || product.stock || 0
-                ),
-                categorieLibelle:
-                  product.categorieLibelle ||
-                  product.categorie ||
-                  'Sans catégorie',
-                quantiteDisponible: Number(
-                  product.stockDisponible || product.stock || 0
-                ),
+                stockDisponible: Number(product.stockDisponible || product.stock || 0),
+                categorieLibelle: product.categorieLibelle || product.categorie || 'Sans catégorie',
+                quantiteDisponible: Number(product.stockDisponible || product.stock || 0),
                 totalPrice: Number(product.prixVente || product.prix || 0) * 1
               }));
-
+            
+            console.log('[Products] Nouveaux produits chargés:', validatedProducts.length);
+            
             // Transition fluide : remplacer les produits d'un coup
             setProducts(validatedProducts);
             setPage(1);
@@ -164,10 +154,7 @@ const useProducts = () => {
           }
         }
       } catch (error) {
-        console.error(
-          '[Products] Erreur lors du rechargement des produits:',
-          error
-        );
+        console.error('[Products] Erreur lors du rechargement des produits:', error);
       } finally {
         // Délai minimal pour éviter le flash
         setTimeout(() => {
@@ -229,14 +216,19 @@ const Products = () => {
   const isInitializedRef = useRef(false);
 
   // Fonction de test pour vérifier la connexion WebSocket
-  const testWebSocketConnection = () => {};
+  const testWebSocketConnection = () => {
+    console.log('[Products] Test de connexion WebSocket:');
+    console.log('- Connected:', connected);
+    console.log('- VenteData length:', venteData?.length || 0);
+    console.log('- Dernier message:', venteData?.[venteData.length - 1]);
+  };
 
   useEffect(() => {
     // Limiter les tests de connexion WebSocket
     const timeoutId = setTimeout(() => {
       testWebSocketConnection();
     }, 1000);
-
+    
     return () => clearTimeout(timeoutId);
   }, [connected, venteData]);
 
@@ -276,12 +268,12 @@ const Products = () => {
         threshold: 0.1
       }
     );
-
+    
     const el = sentinelRef.current;
     if (el) {
       observer.observe(el);
     }
-
+    
     return () => {
       if (el) {
         observer.unobserve(el);
@@ -293,12 +285,14 @@ const Products = () => {
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
+      console.log('[Products] Message de vente reçu:', latestMessage);
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
         Array.isArray(latestMessage.soldItems) &&
         latestMessage.soldItems.length > 0
       ) {
+        console.log('[Products] Rechargement des produits après vente...');
         // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
@@ -318,8 +312,9 @@ const Products = () => {
           libelle: item.libelle
         }));
       setLastSoldItems(soldItems);
-
+      
       // Un seul effet : rechargement complet au lieu de mise à jour immédiate
+      console.log('[Products] Checkout détecté, rechargement des produits...');
       setTimeout(() => {
         reloadProductsAfterSale();
       }, 300);
@@ -383,7 +378,7 @@ const Products = () => {
           }
         `}
       </style>
-
+      
       <Row className="mb-3">
         <Col xs={12}>
           <Card className="search-section">
@@ -419,11 +414,11 @@ const Products = () => {
                   )}
                 </InputGroup>
               </div>
-
+              
               <div className="d-flex align-items-center">
                 <BarcodeScanner />
               </div>
-
+              
               <OverlayTrigger
                 placement="top"
                 overlay={
@@ -446,7 +441,7 @@ const Products = () => {
           </Card>
         </Col>
       </Row>
-
+      
       <Row style={{ height: '80vh' }}>
         <Col
           xs={12}
@@ -459,7 +454,7 @@ const Products = () => {
         >
           <CartSection show />
         </Col>
-
+        
         <Col
           xs={12}
           md={8}
@@ -478,22 +473,21 @@ const Products = () => {
             >
               {finalProducts.length === 0 ? (
                 <div className="empty-state">
-                  <FontAwesomeIcon icon="search" className="empty-icon" />
+                  <FontAwesomeIcon
+                    icon="search"
+                    className="empty-icon"
+                  />
                   <h4 className="empty-title">Aucun produit trouvé</h4>
                   <p className="empty-description">
-                    {searchTerm
-                      ? `Aucune correspondance pour « ${searchTerm} »`
-                      : 'Aucun produit disponible'}
+                    {searchTerm ? `Aucune correspondance pour « ${searchTerm} »` : 'Aucun produit disponible'}
                   </p>
                 </div>
               ) : (
-                <Row
-                  className={classNames({
-                    'g-0': isList,
-                    'product-grid': isGrid,
-                    'product-list': isList
-                  })}
-                >
+                <Row className={classNames({ 
+                  'g-0': isList,
+                  'product-grid': isGrid,
+                  'product-list': isList
+                })}>
                   {finalProducts.map((product, index) =>
                     isList ? (
                       <ProductList
@@ -516,15 +510,15 @@ const Products = () => {
                 </Row>
               )}
             </Card.Body>
-
+            
             <div
               ref={sentinelRef}
               style={{ height: '50px', background: 'transparent' }}
             />
-
+            
             {loading && (
               <div className="loading-state position-relative">
-                <div
+                <div 
                   className="loading-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -533,15 +527,10 @@ const Products = () => {
                   }}
                 >
                   <div className="d-flex align-items-center">
-                    <div
-                      className="spinner-border spinner-border-sm text-primary me-2"
-                      role="status"
-                    >
+                    <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
                       <span className="visually-hidden">Mise à jour...</span>
                     </div>
-                    <span className="text-muted">
-                      Mise à jour des produits...
-                    </span>
+                    <span className="text-muted">Mise à jour des produits...</span>
                   </div>
                 </div>
               </div>

@@ -3,11 +3,7 @@ import { Image } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import apiServiceSettings from '../../../services/api.service.settings';
-import {
-  IMAGE_DISPLAY_MODES,
-  getImageStyle,
-  getResponsiveImageConfig
-} from './shared/ImageDisplayModes';
+import { IMAGE_DISPLAY_MODES, getImageStyle, getResponsiveImageConfig } from './shared/ImageDisplayModes';
 import ImageZoomModal from './shared/ImageZoomModal';
 import useImageZoom from './shared/useImageZoom';
 import './ProductImage.css';
@@ -22,15 +18,15 @@ let logoCache = null;
 /**
  * Vérifie si une URL est une image valide
  */
-const isValidImageUrl = url => {
+const isValidImageUrl = (url) => {
   if (!url) return false;
-
+  
   // URL complète
   if (url.startsWith('http://') || url.startsWith('https://')) return true;
-
+  
   // Data URL
   if (url.toLowerCase().startsWith('data:image')) return true;
-
+  
   // Extension d'image
   const lowerUrl = url.toLowerCase();
   return IMAGE_EXTENSIONS.some(ext => lowerUrl.endsWith(ext));
@@ -73,7 +69,7 @@ const LoadingPlaceholder = ({ layout, containerStyle }) => (
 /**
  * Hook pour gérer le logo de fallback
  */
-const useLogoFallback = shouldUseFallback => {
+const useLogoFallback = (shouldUseFallback) => {
   const [logoUrl, setLogoUrl] = useState(logoCache || FALLBACK_IMAGE);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,11 +80,8 @@ const useLogoFallback = shouldUseFallback => {
       setIsLoading(true);
       try {
         const settings = await apiServiceSettings.getSettings();
-        const logo =
-          settings?.logo && settings.logo !== 'blob'
-            ? settings.logo
-            : FALLBACK_IMAGE;
-
+        const logo = settings?.logo && settings.logo !== 'blob' ? settings.logo : FALLBACK_IMAGE;
+        
         logoCache = logo;
         setLogoUrl(logo);
       } catch (error) {
@@ -108,11 +101,11 @@ const useLogoFallback = shouldUseFallback => {
 /**
  * Composant d'image de produit avec fallback intelligent
  */
-const ProductImage = ({
-  libelle,
-  id,
-  image,
-  layout,
+const ProductImage = ({ 
+  libelle, 
+  id, 
+  image, 
+  layout, 
   containerStyle,
   displayMode = IMAGE_DISPLAY_MODES.CONTAIN,
   enableZoom = false
@@ -151,83 +144,75 @@ const ProductImage = ({
 
   // Affichage du placeholder pendant le chargement
   if (isLoading && shouldUseFallback) {
-    return (
-      <LoadingPlaceholder layout={layout} containerStyle={containerStyle} />
-    );
+    return <LoadingPlaceholder layout={layout} containerStyle={containerStyle} />;
   }
 
   return (
     <>
-      <div
-        style={getLayoutStyle(layout, containerStyle)}
-        className={classNames('product-image-container', {
-          'h-sm-100': layout === 'list',
-          'grid-layout': layout === 'grid',
-          'list-layout': layout === 'list'
+    <div
+      style={getLayoutStyle(layout, containerStyle)}
+      className={classNames('product-image-container', {
+        'h-sm-100': layout === 'list',
+        'grid-layout': layout === 'grid',
+        'list-layout': layout === 'list'
+      })}
+    >
+      <Image
+        rounded
+        src={currentImageSrc}
+        className={classNames('h-100 w-100 product-image', {
+          'clickable-image': enableZoom && currentImageSrc !== FALLBACK_IMAGE
         })}
-      >
-        <Image
-          rounded
-          src={currentImageSrc}
-          className={classNames('h-100 w-100 product-image', {
-            'clickable-image': enableZoom && currentImageSrc !== FALLBACK_IMAGE
-          })}
+        style={{
+          ...getImageStyle(displayMode),
+          cursor: enableZoom && currentImageSrc !== FALLBACK_IMAGE ? 'zoom-in' : 'default'
+        }}
+        alt={libelle || 'Image produit'}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        onClick={handleImageClick}
+        {...getResponsiveImageConfig(layout)}
+      />
+      
+      {/* Overlay subtil pour améliorer la visibilité */}
+      <div className="image-overlay" />
+      
+      {/* Icône de zoom si activé */}
+      {enableZoom && currentImageSrc !== FALLBACK_IMAGE && (
+        <div 
+          className="zoom-icon"
           style={{
-            ...getImageStyle(displayMode),
-            cursor:
-              enableZoom && currentImageSrc !== FALLBACK_IMAGE
-                ? 'zoom-in'
-                : 'default'
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: 'none'
           }}
-          alt={libelle || 'Image produit'}
-          onError={handleImageError}
-          onLoad={handleImageLoad}
-          onClick={handleImageClick}
-          {...getResponsiveImageConfig(layout)}
-        />
-
-        {/* Overlay subtil pour améliorer la visibilité */}
-        <div className="image-overlay" />
-
-        {/* Icône de zoom si activé */}
-        {enableZoom && currentImageSrc !== FALLBACK_IMAGE && (
-          <div
-            className="zoom-icon"
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              backgroundColor: 'rgba(0, 0, 0, 0.6)',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0,
-              transition: 'opacity 0.3s ease',
-              pointerEvents: 'none'
-            }}
-          >
-            <i
-              className="fas fa-search-plus"
-              style={{ color: 'white', fontSize: '12px' }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Modal de zoom */}
-      {enableZoom && (
-        <ImageZoomModal
-          show={zoomModal.show}
-          onHide={hideZoom}
-          imageSrc={zoomModal.imageSrc}
-          imageAlt={zoomModal.imageAlt}
-          title={zoomModal.title}
-        />
+        >
+          <i className="fas fa-search-plus" style={{ color: 'white', fontSize: '12px' }} />
+        </div>
       )}
-    </>
+    </div>
+    
+    {/* Modal de zoom */}
+    {enableZoom && (
+      <ImageZoomModal
+        show={zoomModal.show}
+        onHide={hideZoom}
+        imageSrc={zoomModal.imageSrc}
+        imageAlt={zoomModal.imageAlt}
+        title={zoomModal.title}
+      />
+    )}
+  </>
   );
 };
 

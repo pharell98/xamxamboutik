@@ -39,23 +39,17 @@ const DownloadStockPDF = ({ selectedProducts }) => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text("LISTE D'APPROVISIONNEMENT", 105, 15, { align: 'center' });
+      doc.text('LISTE D\'APPROVISIONNEMENT', 105, 15, { align: 'center' });
 
       // Sous-titre
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text('Produits en rupture ou faible stock', 105, 25, {
-        align: 'center'
-      });
+      doc.text('Produits en rupture ou faible stock', 105, 25, { align: 'center' });
 
       // Informations de la boutique
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      doc.text(
-        `Boutique: ${shopSettings.shopName || 'Nom de la boutique'}`,
-        14,
-        35
-      );
+      doc.text(`Boutique: ${shopSettings.shopName || 'Nom de la boutique'}`, 14, 35);
 
       // Section des informations de contact
       doc.setTextColor(...secondaryColor);
@@ -128,44 +122,35 @@ const DownloadStockPDF = ({ selectedProducts }) => {
           0: { cellWidth: 60 }, // Produit
           1: { cellWidth: 35 }, // Prix
           2: { cellWidth: 35 }, // Stock
-          3: { cellWidth: 35 } // Quantité à commander
+          3: { cellWidth: 35 }  // Quantité à commander
         },
         margin: { top: 10 }
       });
 
       // Pied de page avec informations supplémentaires
       const finalY = doc.lastAutoTable.finalY + 10;
-
+      
       doc.setTextColor(...accentColor);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.text('Instructions:', 14, finalY);
-
+      
       doc.setTextColor(...secondaryColor);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(
-        '• Remplissez la colonne "Quantité à Commander" selon vos besoins',
-        14,
-        finalY + 5
-      );
-      doc.text("• Vérifiez les prix avant d'acheter", 14, finalY + 10);
-      doc.text(
-        '• Gardez cette liste pour le suivi de vos achats',
-        14,
-        finalY + 15
-      );
+      doc.text('• Remplissez la colonne "Quantité à Commander" selon vos besoins', 14, finalY + 5);
+      doc.text('• Vérifiez les prix avant d\'acheter', 14, finalY + 10);
+      doc.text('• Gardez cette liste pour le suivi de vos achats', 14, finalY + 15);
 
       // Nom du fichier avec date
       const date = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
-      const time = new Date()
-        .toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-        .replace(/:/g, '-');
-
+      const time = new Date().toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }).replace(/:/g, '-');
+      
       doc.save(`approvisionnement_${date}_${time}.pdf`);
+
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error);
       alert('Erreur lors de la génération du PDF. Veuillez réessayer.');

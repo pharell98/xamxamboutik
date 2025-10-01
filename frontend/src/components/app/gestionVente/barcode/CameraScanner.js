@@ -19,7 +19,7 @@ const CameraScanner = ({ onScan }) => {
   const [needsPermission, setNeedsPermission] = useState(true);
 
   // Validate any non-empty code
-  const isValidCode = useCallback(code => {
+  const isValidCode = useCallback((code) => {
     return typeof code === 'string' && code.trim().length > 0;
   }, []);
 
@@ -35,25 +35,22 @@ const CameraScanner = ({ onScan }) => {
   }, []);
 
   // Handle detected code
-  const handleDetection = useCallback(
-    result => {
-      const state = scanStateRef.current;
+  const handleDetection = useCallback((result) => {
+    const state = scanStateRef.current;
+    
+    if (state.isProcessing) return;
 
-      if (state.isProcessing) return;
+    const code = result.codeResult.code;
+    
+    if (!isValidCode(code) || state.lastScan === code) return;
 
-      const code = result.codeResult.code;
-
-      if (!isValidCode(code) || state.lastScan === code) return;
-
-      state.isProcessing = true;
-      state.lastScan = code;
-
-      onScan(code);
-
-      state.timeoutId = setTimeout(resetScanState, SCAN_DELAY);
-    },
-    [onScan, isValidCode, resetScanState]
-  );
+    state.isProcessing = true;
+    state.lastScan = code;
+    
+    onScan(code);
+    
+    state.timeoutId = setTimeout(resetScanState, SCAN_DELAY);
+  }, [onScan, isValidCode, resetScanState]);
 
   // Initialize ZXing scanner
   const startZxing = useCallback(async () => {
@@ -62,7 +59,7 @@ const CameraScanner = ({ onScan }) => {
       if (!zxingVideoRef.current) {
         throw new Error('Video element not found');
       }
-
+      
       if (!codeReaderRef.current) {
         codeReaderRef.current = new BrowserMultiFormatReader();
       }
@@ -72,15 +69,14 @@ const CameraScanner = ({ onScan }) => {
       if (!devices?.length) {
         throw new Error('No camera available');
       }
-
+      
       // Prefer back/environment camera
-      const preferred =
-        devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
+      const preferred = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
 
       await codeReader.decodeFromVideoDevice(
         preferred.deviceId,
         zxingVideoRef.current,
-        result => {
+        (result) => {
           if (result?.getText) {
             const text = result.getText();
             if (text) {
@@ -102,17 +98,17 @@ const CameraScanner = ({ onScan }) => {
   // Initialize when component mounts
   useEffect(() => {
     const state = scanStateRef.current;
-
+    
     if (state.isInitialized) return;
 
     const cleanup = () => {
       try {
         resetScanState();
-
+        
         if (codeReaderRef.current) {
           codeReaderRef.current.reset();
         }
-
+        
         state.isInitialized = false;
       } catch (_) {}
     };
@@ -124,11 +120,7 @@ const CameraScanner = ({ onScan }) => {
 
   return (
     <div className="border rounded-1 overflow-hidden position-relative">
-      <div
-        id={targetIdRef.current}
-        ref={videoRef}
-        style={{ width: '100%', height: '200px', position: 'relative' }}
-      >
+      <div id={targetIdRef.current} ref={videoRef} style={{ width: '100%', height: '200px', position: 'relative' }}>
         <video
           id={`${targetIdRef.current}-video`}
           ref={zxingVideoRef}
@@ -138,16 +130,7 @@ const CameraScanner = ({ onScan }) => {
           autoPlay
         />
         {needsPermission && (
-          <div
-            className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center"
-            style={{
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              zIndex: 20,
-              color: 'white',
-              textAlign: 'center',
-              padding: '20px'
-            }}
-          >
+          <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 20, color: 'white', textAlign: 'center', padding: '20px' }}>
             <i className="fas fa-video mb-3" style={{ fontSize: '32px' }} />
             <div className="mb-3">
               <div className="fw-bold mb-1">Accès caméra requis</div>
@@ -165,21 +148,17 @@ const CameraScanner = ({ onScan }) => {
                 💡 Si bloqué, vérifiez les paramètres de votre navigateur
               </small>
               <div className="mt-2">
-                <button
+                <button 
                   className="btn btn-sm btn-outline-light"
                   onClick={async () => {
                     try {
-                      const stream = await navigator.mediaDevices.getUserMedia({
-                        video: true
-                      });
+                      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                       if (zxingVideoRef.current) {
                         zxingVideoRef.current.srcObject = stream;
                       }
                       setNeedsPermission(false);
                     } catch (err) {
-                      alert(
-                        `Erreur caméra: ${err.message}\n\nVérifiez :\n- Préférences Système > Confidentialité > Caméra\n- Paramètres navigateur`
-                      );
+                      alert(`Erreur caméra: ${err.message}\n\nVérifiez :\n- Préférences Système > Confidentialité > Caméra\n- Paramètres navigateur`);
                     }
                   }}
                 >
@@ -190,33 +169,26 @@ const CameraScanner = ({ onScan }) => {
           </div>
         )}
       </div>
-
+      
       {/* Status indicator */}
-      <div
+      <div 
         className="position-absolute top-0 start-0 m-2"
         style={{
           fontSize: '10px',
           color: '#fff',
           padding: '2px 6px',
-          backgroundColor: state.hasError
-            ? 'rgba(220, 53, 69, 0.8)'
-            : 'rgba(0, 0, 0, 0.7)',
+          backgroundColor: state.hasError ? 'rgba(220, 53, 69, 0.8)' : 'rgba(0, 0, 0, 0.7)',
           borderRadius: '3px',
           zIndex: 10
         }}
       >
-        {state.hasError
-          ? 'Erreur caméra'
-          : state.isInitialized
-          ? 'Scanner caméra actif'
-          : needsPermission
-          ? 'Autorisation requise'
-          : 'Initialisation...'}
+        {state.hasError ? 'Erreur caméra' : 
+         state.isInitialized ? 'Scanner caméra actif' : (needsPermission ? 'Autorisation requise' : 'Initialisation...')}
       </div>
-
+      
       {/* Error message */}
       {state.hasError && (
-        <div
+        <div 
           className="position-absolute d-flex align-items-center justify-content-center"
           style={{
             top: 0,
@@ -232,13 +204,10 @@ const CameraScanner = ({ onScan }) => {
           }}
         >
           <div>
-            <i
-              className="fas fa-exclamation-triangle mb-2"
-              style={{ fontSize: '24px' }}
-            />
+            <i className="fas fa-exclamation-triangle mb-2" style={{ fontSize: '24px' }} />
             <div className="mb-2">Scanner caméra indisponible</div>
             <small className="d-block mb-3">Utilisez le scanner USB</small>
-            <button
+            <button 
               className="btn btn-sm btn-outline-primary"
               onClick={() => {
                 const state = scanStateRef.current;
@@ -252,10 +221,10 @@ const CameraScanner = ({ onScan }) => {
           </div>
         </div>
       )}
-
+      
       {/* Scan area overlay */}
       {!state.hasError && state.isInitialized && (
-        <div
+        <div 
           className="position-absolute"
           style={{
             top: '50%',
