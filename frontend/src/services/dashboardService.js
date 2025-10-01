@@ -3,12 +3,12 @@ import apiClient from './apiClient';
 const dashboardService = {
   /**
    * Récupère le bénéfice cumulatif depuis le début de l'activité.
-   * Endpoint backend : GET /api/v1/statistiques/benefice/cumulatif
+   * Endpoint backend : GET /statistiques/benefice/cumulatif
    */
   getCumulativeBenefit: async () => {
     try {
       const response = await apiClient.get(
-        '/api/v1/statistiques/benefice/cumulatif'
+        '/statistiques/benefice/cumulatif'
       );
       // La réponse devrait être au format { message, data } où data contient le bénéfice.
       return response.data;
@@ -23,13 +23,13 @@ const dashboardService = {
 
   /**
    * Récupère le bénéfice total entre deux dates (dates au format "yyyy-MM-dd").
-   * Endpoint backend : GET /api/v1/statistiques/benefice
+   * Endpoint backend : GET /statistiques/benefice
    * @param {string} startDate - Date de début en "yyyy-MM-dd"
    * @param {string} endDate   - Date de fin en "yyyy-MM-dd"
    */
   getBenefitBetweenDates: async (startDate, endDate) => {
     try {
-      const response = await apiClient.get('/api/v1/statistiques/benefice', {
+      const response = await apiClient.get('/statistiques/benefice', {
         params: {
           startDate,
           endDate
@@ -48,11 +48,11 @@ const dashboardService = {
 
   /**
    * Récupère les dates de la première et dernière vente effectuées.
-   * Endpoint backend : GET /api/v1/statistiques/sales-dates
+   * Endpoint backend : GET /statistiques/sales-dates
    */
   getSalesDateRange: async () => {
     try {
-      const response = await apiClient.get('/api/v1/statistiques/sales-dates');
+      const response = await apiClient.get('/statistiques/sales-dates');
       // La réponse devrait contenir un objet ApiResponse avec data: { firstSaleDate, lastSaleDate }
       return response.data;
     } catch (error) {
