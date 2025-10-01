@@ -5,317 +5,323 @@ const CATEGORY_ENDPOINT = '/categories';
 const STOCK_ENDPOINT = '/stock';
 const APPROVISIONNEMENT_ENDPOINT = '/approvisionnement';
 
+/**
+ * Utilitaire pour exécuter une requête API avec gestion d'erreur et log.
+ * @param {Function} fn - Fonction asynchrone à exécuter
+ * @param {string} logPrefix - Préfixe pour les logs d'erreur
+ * @returns {Promise<any>} Résultat de la fonction ou throw l'erreur
+ */
+async function safeApiCall(fn, logPrefix) {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
+    throw error;
+  }
+}
+
 const apiServiceV1 = {
   // PRODUITS
-  getAllProducts: async (page = 1, size = 10, filters = {}) => {
-    try {
-      const response = await apiClient.get(PRODUCT_ENDPOINT, {
-        params: { page, size, ...filters }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getAllProducts:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère tous les produits avec pagination et filtres.
+   * @param {number} page
+   * @param {number} size
+   * @param {object} filters
+   */
+  getAllProducts: async (page = 1, size = 10, filters = {}) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(PRODUCT_ENDPOINT, { params: { page, size, ...filters } })
+          .then(r => r.data),
+      'getAllProducts'
+    ),
 
-  getDeletedProducts: async (page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(`${PRODUCT_ENDPOINT}/deleted`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getDeletedProducts:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère les produits supprimés.
+   */
+  getDeletedProducts: async (page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${PRODUCT_ENDPOINT}/deleted`, { params: { page, size } })
+          .then(r => r.data),
+      'getDeletedProducts'
+    ),
 
-  getProductSuggestions: async (query, page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(`${PRODUCT_ENDPOINT}/suggestions`, {
-        params: { query, page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getProductSuggestions:', error);
-      throw error;
-    }
-  },
+  /**
+   * Suggestions de produits par nom.
+   */
+  getProductSuggestions: async (query, page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${PRODUCT_ENDPOINT}/suggestions`, {
+            params: { query, page, size }
+          })
+          .then(r => r.data),
+      'getProductSuggestions'
+    ),
 
-  getApprovisionnementSuggestions: async (query, page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(
-        `${PRODUCT_ENDPOINT}/approvisionnement/suggestions`,
-        { params: { query, page, size } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        '[apiServiceV1] Erreur approvisionnement suggestions:',
-        error
-      );
-      throw error;
-    }
-  },
+  /**
+   * Suggestions d'approvisionnement.
+   */
+  getApprovisionnementSuggestions: async (query, page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${PRODUCT_ENDPOINT}/approvisionnement/suggestions`, {
+            params: { query, page, size }
+          })
+          .then(r => r.data),
+      'getApprovisionnementSuggestions'
+    ),
 
-  getProductsByCategory: async (categorieId, page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(
-        `${PRODUCT_ENDPOINT}/category/${categorieId}`,
-        { params: { page, size } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getProductsByCategory:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère les produits d'une catégorie.
+   */
+  getProductsByCategory: async (categorieId, page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${PRODUCT_ENDPOINT}/category/${categorieId}`, {
+            params: { page, size }
+          })
+          .then(r => r.data),
+      'getProductsByCategory'
+    ),
 
-  getProductByBarcode: async barcode => {
-    try {
-      const response = await apiClient.get(`/api/products/barcode/${barcode}`, {
-        headers: { 'X-Client-Type': 'web' }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getProductByBarcode:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère un produit par code-barres.
+   */
+  getProductByBarcode: async barcode =>
+    safeApiCall(
+      () => {
+        console.log('[apiServiceV1] Appel API pour barcode:', barcode);
+        console.log('[apiServiceV1] URL complète:', `${apiClient.defaults.baseURL}/products/barcode/${barcode}`);
+        console.log('[apiServiceV1] Headers:', apiClient.defaults.headers);
+        return apiClient
+          .get(`/products/barcode/${barcode}`)
+          .then(r => {
+            console.log('[apiServiceV1] Réponse API barcode:', r.data);
+            return r.data;
+          })
+          .catch(error => {
+            console.error('[apiServiceV1] Erreur détaillée pour barcode:', barcode, error);
+            throw error;
+          });
+      },
+      'getProductByBarcode'
+    ),
 
-  saveProduct: async (formData, isEditMode = false, id = null) => {
-    try {
-      const rawProduit = formData.get('produit');
-      if (rawProduit) {
-        const text = rawProduit.text ? await rawProduit.text() : rawProduit;
-        let produitObj;
-        try {
-          produitObj = JSON.parse(text);
-          } catch (parseErr) {
-          console.warn('[apiServiceV1] parse JSON produit error:', parseErr);
-        }
+  /**
+   * Importation en masse de produits via Excel pour l'approvisionnement.
+   */
+  bulkImportProducts: async products =>
+    safeApiCall(() => {
+      // === LOG AVANCÉ DU SERVICE API ===
+      if (Array.isArray(products) && products.length > 0) {
       }
 
-      for (const [key, value] of formData.entries()) {
-        }
+      return apiClient
+        .post(`${APPROVISIONNEMENT_ENDPOINT}/import/excel`, products)
+        .then(r => r.data);
+    }, 'bulkImportProducts'),
 
-      const method = isEditMode ? 'put' : 'post';
-      const url = isEditMode ? `${PRODUCT_ENDPOINT}/${id}` : PRODUCT_ENDPOINT;
-      const response = await apiClient[method](url, formData);
+  /**
+   * Supprime un produit.
+   */
+  deleteProduct: async id =>
+    safeApiCall(
+      () => apiClient.delete(`${PRODUCT_ENDPOINT}/${id}`).then(r => r.data),
+      'deleteProduct'
+    ),
 
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur saveProduct:', error);
-      throw error;
-    }
-  },
+  /**
+   * Restaure un produit supprimé.
+   */
+  restoreProduct: async id =>
+    safeApiCall(
+      () =>
+        apiClient.put(`${PRODUCT_ENDPOINT}/${id}/restore`).then(r => r.data),
+      'restoreProduct'
+    ),
 
-  bulkImportProducts: async products => {
-    try {
-      // Vérifier et préparer les données pour le backend
-      const preparedProducts = products.map((product, index) => {
-        const preparedProduct = {
-          id: product.id || null,
-          codeProduit: product.codeProduit || '',
-          libelle: product.libelle || '',
-          prixAchat: product.prixAchat || 0,
-          prixVente: product.prixVente || 0,
-          stockDisponible: product.stockDisponible || 0,
-          seuilRuptureStock: product.seuilRuptureStock || 0,
-          categorieId: product.categorieId || 0,
-          categorieName: product.categorieName || '',
-          imageURL: product.imageURL || '',
-          useImageURL: product.useImageURL || false,
-          image: null
-        };
-
-        return preparedProduct;
-      });
-
-      const response = await apiClient.post(
-        `${PRODUCT_ENDPOINT}/import/excel`,
-        preparedProducts
-      );
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur bulkImportProducts:', error);
-      throw error;
-    }
-  },
-
-  deleteProduct: async id => {
-    try {
-      const response = await apiClient.delete(`${PRODUCT_ENDPOINT}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur deleteProduct:', error);
-      throw error;
-    }
-  },
-
-  restoreProduct: async id => {
-    try {
-      const response = await apiClient.put(`${PRODUCT_ENDPOINT}/${id}/restore`);
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur restoreProduct:', error);
-      throw error;
-    }
-  },
-
-  updateStock: async payload => {
-    try {
-      const response = await apiClient.post(
-        `${PRODUCT_ENDPOINT}/update-stock`,
-        payload
-      );
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur updateStock:', error);
-      throw error;
-    }
-  },
+  /**
+   * Met à jour le stock d'un produit.
+   */
+  updateStock: async payload =>
+    safeApiCall(
+      () =>
+        apiClient
+          .post(`${PRODUCT_ENDPOINT}/update-stock`, payload)
+          .then(r => r.data),
+      'updateStock'
+    ),
 
   // CATEGORIES
-  getAllCategories: async (page = 1, size = 3) => {
-    try {
-      const response = await apiClient.get(CATEGORY_ENDPOINT, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getAllCategories:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère toutes les catégories.
+   */
+  getAllCategories: async (page = 1, size = 3) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(CATEGORY_ENDPOINT, { params: { page, size } })
+          .then(r => r.data),
+      'getAllCategories'
+    ),
 
-  getDeletedCategories: async (page = 1, size = 3) => {
-    try {
-      const response = await apiClient.get(`${CATEGORY_ENDPOINT}/deleted`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getDeletedCategories:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère les catégories supprimées.
+   */
+  getDeletedCategories: async (page = 1, size = 3) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${CATEGORY_ENDPOINT}/deleted`, { params: { page, size } })
+          .then(r => r.data),
+      'getDeletedCategories'
+    ),
 
-  suggestionsCategories: async (query, page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(`${CATEGORY_ENDPOINT}/suggestions`, {
-        params: { query, page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur suggestionsCategories:', error);
-      throw error;
-    }
-  },
+  /**
+   * Suggestions de catégories.
+   */
+  suggestionsCategories: async (query, page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${CATEGORY_ENDPOINT}/suggestions`, {
+            params: { query, page, size }
+          })
+          .then(r => r.data),
+      'suggestionsCategories'
+    ),
 
-  categorieSearch: async (query, page = 1, size = 1) => {
-    try {
-      const response = await apiClient.get(`${CATEGORY_ENDPOINT}/search`, {
-        params: { query, page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur categorieSearch:', error);
-      throw error;
-    }
-  },
+  /**
+   * Recherche de catégories.
+   */
+  categorieSearch: async (query, page = 1, size = 1) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${CATEGORY_ENDPOINT}/search`, { params: { query, page, size } })
+          .then(r => r.data),
+      'categorieSearch'
+    ),
 
-  saveCategory: async data => {
-    try {
+  /**
+   * Crée ou modifie une catégorie.
+   */
+  saveCategory: async data =>
+    safeApiCall(() => {
       const method = data.id ? 'put' : 'post';
       const url = data.id
         ? `${CATEGORY_ENDPOINT}/${data.id}`
         : CATEGORY_ENDPOINT;
-      const response = await apiClient[method](url, data);
-      return response.data;
-    } catch (error) {
-      consolePreference('[apiServiceV1] Erreur saveCategory:', error);
-      throw error;
-    }
-  },
+      return apiClient[method](url, data).then(r => r.data);
+    }, 'saveCategory'),
 
-  deleteCategory: async id => {
-    try {
-      const response = await apiClient.delete(`${CATEGORY_ENDPOINT}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur deleteCategory:', error);
-      throw error;
-    }
-  },
+  /**
+   * Crée un produit.
+   */
+  createProduct: async data =>
+    safeApiCall(
+      () => apiClient.post(PRODUCT_ENDPOINT, data).then(r => r.data),
+      'createProduct'
+    ),
 
-  restoreCategory: async id => {
-    try {
-      const response = await apiClient.put(
-        `${CATEGORY_ENDPOINT}/${id}/restore`
-      );
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur restoreCategory:', error);
-      throw error;
-    }
-  },
+  /**
+   * Met à jour un produit.
+   */
+  updateProduct: async (id, data) =>
+    safeApiCall(
+      () => apiClient.put(`${PRODUCT_ENDPOINT}/${id}`, data).then(r => r.data),
+      'updateProduct'
+    ),
+
+  /**
+   * Crée ou met à jour un produit.
+   */
+  saveProduct: async (formData, isEditMode = false, productId = null) =>
+    safeApiCall(() => {
+      const method = isEditMode ? 'put' : 'post';
+      const url = isEditMode
+        ? `${PRODUCT_ENDPOINT}/${productId}`
+        : PRODUCT_ENDPOINT;
+      return apiClient[method](url, formData).then(r => r.data);
+    }, 'saveProduct'),
+
+  /**
+   * Supprime une catégorie.
+   */
+  deleteCategory: async id =>
+    safeApiCall(
+      () => apiClient.delete(`${CATEGORY_ENDPOINT}/${id}`).then(r => r.data),
+      'deleteCategory'
+    ),
+
+  /**
+   * Restaure une catégorie supprimée.
+   */
+  restoreCategory: async id =>
+    safeApiCall(
+      () =>
+        apiClient.put(`${CATEGORY_ENDPOINT}/${id}/restore`).then(r => r.data),
+      'restoreCategory'
+    ),
 
   // STOCK
-  getRuptureStockProducts: async (page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(`${STOCK_ENDPOINT}/rupture`, {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur rupture stock:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère les produits en rupture de stock.
+   */
+  getRuptureStockProducts: async (page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`${STOCK_ENDPOINT}/rupture`, { params: { page, size } })
+          .then(r => r.data),
+      'getRuptureStockProducts'
+    ),
 
   // APPROVISIONNEMENT
-  createApprovisionnement: async formData => {
-    try {
-      const response = await apiClient.post(
-        `${APPROVISIONNEMENT_ENDPOINT}/supply`,
-        formData
-      );
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur createApprovisionnement:', error);
-      throw error;
-    }
-  },
+  /**
+   * Crée un approvisionnement.
+   */
+  createApprovisionnement: async formData =>
+    safeApiCall(
+      () =>
+        apiClient
+          .post(`${APPROVISIONNEMENT_ENDPOINT}/supply`, formData)
+          .then(r => r.data),
+      'createApprovisionnement'
+    ),
 
-  getApprovisionnements: async (page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get('/approvisionnements', {
-        params: { page, size }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('[apiServiceV1] Erreur getApprovisionnements:', error);
-      throw error;
-    }
-  },
+  /**
+   * Récupère la liste des approvisionnements.
+   */
+  getApprovisionnements: async (page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get('/approvisionnements', { params: { page, size } })
+          .then(r => r.data),
+      'getApprovisionnements'
+    ),
 
-  getProductsByApprovisionnement: async (approId, page = 1, size = 10) => {
-    try {
-      const response = await apiClient.get(
-        `/approvisionnements/${approId}/products`,
-        { params: { page, size } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error(
-        '[apiServiceV1] Erreur getProductsByApprovisionnement:',
-        error
-      );
-      throw error;
-    }
-  }
+  /**
+   * Récupère les produits d'un approvisionnement.
+   */
+  getProductsByApprovisionnement: async (approId, page = 1, size = 10) =>
+    safeApiCall(
+      () =>
+        apiClient
+          .get(`/approvisionnements/${approId}/products`, {
+            params: { page, size }
+          })
+          .then(r => r.data),
+      'getProductsByApprovisionnement'
+    )
 };
 
 export default apiServiceV1;
