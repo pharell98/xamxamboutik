@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Form } from 'react-bootstrap';
+import { useAppContext } from 'providers/AppProvider';
 import PropTypes from 'prop-types';
 
 const ActionInput = forwardRef(
@@ -16,13 +17,14 @@ const ActionInput = forwardRef(
     },
     ref
   ) => {
+    const { config: { isDark } } = useAppContext();
     const error = errors[name];
     const safeOptions = Array.isArray(options) ? options : [];
 
     return (
       <Form.Group {...formGroupProps}>
         {label && (
-          <Form.Label className="fw-medium text-dark">{label}</Form.Label>
+          <Form.Label className={`fw-medium ${isDark ? 'text-light' : 'text-dark'}`}>{label}</Form.Label>
         )}
         {type === 'select' ? (
           <Form.Select
@@ -30,10 +32,11 @@ const ActionInput = forwardRef(
             name={name}
             isInvalid={!!error}
             {...formControlProps}
+            className={isDark ? 'bg-dark text-light border-secondary' : ''}
             style={{
               borderRadius: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+              boxShadow: isDark ? '0 2px 4px rgba(255, 255, 255, 0.06)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
             }}
             onFocus={e =>
               (e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)')
@@ -57,10 +60,11 @@ const ActionInput = forwardRef(
             placeholder={placeholder}
             isInvalid={!!error}
             {...formControlProps}
+            className={isDark ? 'bg-dark text-light border-secondary' : ''}
             style={{
               borderRadius: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+              boxShadow: isDark ? '0 2px 4px rgba(255, 255, 255, 0.06)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
             }}
             onFocus={e =>
               (e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)')

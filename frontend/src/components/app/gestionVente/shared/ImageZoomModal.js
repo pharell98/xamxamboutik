@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Image } from 'react-bootstrap';
+import { useAppContext } from 'providers/AppProvider';
 import PropTypes from 'prop-types';
 
 /**
@@ -12,6 +13,7 @@ const ImageZoomModal = ({
   imageAlt = 'Image agrandie',
   title = 'Aperçu du produit'
 }) => {
+  const { config: { isDark } } = useAppContext();
   return (
     <Modal 
       show={show} 
@@ -19,12 +21,13 @@ const ImageZoomModal = ({
       centered 
       size="lg"
       className="image-zoom-modal"
+      contentClassName={isDark ? 'bg-dark text-light' : ''}
     >
-      <Modal.Header closeButton>
+      <Modal.Header closeButton className={isDark ? 'bg-dark text-light border-secondary' : ''}>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       
-      <Modal.Body className="text-center p-0">
+      <Modal.Body className={`text-center p-0 ${isDark ? 'bg-dark' : ''}`}>
         <div 
           style={{
             maxHeight: '70vh',
@@ -32,7 +35,7 @@ const ImageZoomModal = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#f8f9fa'
+            backgroundColor: isDark ? '#2d3748' : '#f8f9fa'
           }}
         >
           <Image
@@ -60,8 +63,8 @@ const ImageZoomModal = ({
         </div>
       </Modal.Body>
       
-      <Modal.Footer className="justify-content-center">
-        <small className="text-muted">
+      <Modal.Footer className={`justify-content-center ${isDark ? 'bg-dark border-secondary' : ''}`}>
+        <small className={isDark ? 'text-secondary' : 'text-muted'}>
           Cliquez sur l'image pour zoomer/dézoomer
         </small>
       </Modal.Footer>

@@ -1,166 +1,227 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Modal, Button } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPrint, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Card, Button } from 'react-bootstrap';
+import apiServiceSettings from '../../../../services/api.service.settings';
+import { useAppContext } from 'providers/AppProvider';
 
-const currency = n => `${(n || 0).toLocaleString('fr-FR')} XOF`;
-
-const InvoicePreview = ({
-  company,
-  saleData,
-  items = [],
-  customerInfo = {},
-  onPrint
+const InvoicePreview = ({ 
+  show, 
+  onHide, 
+  saleData, 
+  items, 
+  customerInfo = {}, 
+  userInfo = {},
+  onPrint 
 }) => {
-  const today = useMemo(
-    () => format(new Date(), 'dd/MM/yyyy', { locale: fr }),
-    []
-  );
-  const total = useMemo(
-    () =>
-      items.reduce((acc, it) => {
-        const unit =
-          it.prixVente ||
-          Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
-          0;
-        const qty = it.quantity || it.quantiteVendu || 1;
-        return acc + unit * qty;
-      }, 0),
-    [items]
-  );
+  const { config: { isDark } } = useAppContext();
+  const [company, setCompany] = useState({
+    name: 'Boutique',
+    logo: null,
+    email: '',
+    phone: '',
+    address: '',
+    neighborhood: '',
+    region: '',
+    country: ''
+  });
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const settings = await apiServiceSettings.getSettings();
+        const computedLogo = settings && settings.logo
+          ? (typeof settings.logo === 'string' ? settings.logo : (settings.logo.preview || null))
+          : null;
+        
+        setCompany({
+          name: settings.shopName || 'Boutique',
+          logo: computedLogo,
+          email: settings.email || '',
+          phone: settings.phone || '',
+          address: settings.street || '',
+          neighborhood: settings.neighborhood || '',
+          region: settings.region || '',
+          country: settings.country || ''
+        });
+      } catch (error) {
+        console.error('Erreur récupération paramètres:', error);
+      }
+    };
+
+    if (show) {
+      fetchCompany();
+    }
+  }, [show]);
+
+  const currency = (n) => (n || 0).toLocaleString('fr-FR') + ' XOF';
+  const today = format(new Date(), 'dd/MM/yyyy', { locale: fr });
+
+  const total = (items || []).reduce((acc, item) => {
+    const unitPrice = item.prixVente || Math.floor((item.totalPrice || 0) / (item.quantity || 1)) || 0;
+    const quantity = item.quantity || item.quantiteVendu || 1;
+    return acc + (unitPrice * quantity);
+  }, 0);
+
+  const locationParts = [company.country, company.region, company.neighborhood]
+    .filter(Boolean)
+    .join('-');
+  const footerLine = `${locationParts}${
+    company.address ? ' Rue: ' + company.address : ''
+  }${company.phone ? ' Tél: ' + company.phone : ''}${
+    company.email ? ' Email: ' + company.email : ''
+  }`.trim();
 
   return (
-    <div className="p-3">
-      <div
-        className="brand-bar rounded p-3 mb-3 d-flex justify-content-between align-items-center"
-        style={{ background: '#1a237e', color: '#fff' }}
+    <Modal 
+      show={show} 
+      onHide={onHide} 
+      size="lg" 
+      centered
+      contentClassName={isDark ? 'bg-dark text-light' : ''}
+    >
+      <Modal.Header 
+        closeButton
+        className={isDark ? 'bg-dark text-light border-secondary' : ''}
       >
-        <div className="d-flex align-items-center">
-          {company?.logo && (
-            <img
-              src={company.logo}
-              alt="logo"
-              style={{ height: 34 }}
-              className="me-2"
-            />
-          )}
-          <h5 className="m-0">{company?.name || 'Boutique'}</h5>
-        </div>
-        <h4 className="m-0">FACTURE</h4>
-      </div>
-
-      <div className="row g-3 mb-3">
-        <div className="col-12 col-md-8">
-          <Card className="border-primary">
-            <Card.Body className="py-2">
-              <div>{company?.address}</div>
-              <div>{company?.neighborhood}</div>
-              <div>Tél: {company?.phone}</div>
-              <div>Email: {company?.email}</div>
-            </Card.Body>
-          </Card>
-        </div>
-        <div className="col-12 col-md-4">
-          <Card className="border-primary">
-            <Card.Header className="py-1 text-center fw-bold bg-primary text-white">
-              DÉTAILS
-            </Card.Header>
-            <Card.Body className="py-2">
-              <div>Date: {today}</div>
-              <div>N°: {customerInfo?.id || ''}</div>
-              <div>Client: {customerInfo?.phoneNumber || 'Non spécifié'}</div>
-            </Card.Body>
-          </Card>
-        </div>
-      </div>
-
-      <div className="row mb-3">
-        <div className="col-12 col-md-6">
-          <Card className="border-primary">
-            <Card.Header className="py-1 fw-bold">FACTURÉ À</Card.Header>
-            <Card.Body className="py-2">
-              <div>{customerInfo?.fullName || 'Client'}</div>
-              {customerInfo?.phoneNumber && (
-                <div>{customerInfo.phoneNumber}</div>
+        <Modal.Title>
+          <FontAwesomeIcon icon={faPrint} className="me-2" />
+          Aperçu de la facture
+        </Modal.Title>
+      </Modal.Header>
+      
+      <Modal.Body 
+        style={{ maxHeight: '70vh', overflowY: 'auto' }}
+        className={isDark ? 'bg-dark text-light' : ''}
+      >
+        <div className="invoice-preview">
+          {/* Header */}
+          <div className="row align-items-center border-bottom pb-2 mb-3">
+            <div className="col d-flex align-items-center">
+              {company.logo && (
+                <img 
+                  src={company.logo} 
+                  alt="logo" 
+                  className="me-2" 
+                  style={{ height: '34px' }}
+                />
               )}
-            </Card.Body>
-          </Card>
-        </div>
-      </div>
+              <div>
+                <h5 className="m-0">{company.name}</h5>
+                <div className="small text-muted">
+                  {[company.phone ? `Tél: ${company.phone}` : '', company.email ? `Email: ${company.email}` : '']
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+              </div>
+            </div>
+            <div className="col text-end">
+              <h5 className="m-0">FACTURE</h5>
+            </div>
+          </div>
 
-      <div className="mb-2 fw-semibold">Informations de paiement</div>
-      <div className="row mb-3">
-        <div className="col-12 col-md-6">
-          Mode: {(saleData?.modePaiement || '').toUpperCase()}
-        </div>
-        <div className="col-12 col-md-6 text-md-end">Date: {today}</div>
-      </div>
+          {/* Détails facture */}
+          <div className="row g-3 mb-3">
+            <div className="col-12 col-md-4 ms-auto">
+              <div className={`card ${isDark ? 'bg-secondary border-secondary' : 'border'}`}>
+                <div className={`card-header py-1 text-center fw-semibold ${isDark ? 'bg-dark border-secondary' : ''}`}>
+                  DÉTAILS
+                </div>
+                <div className="card-body py-2">
+                  <div>Date: {today}</div>
+                  <div>N°: {customerInfo.id || ''}</div>
+                  <div>Client: {customerInfo.phoneNumber || 'Non spécifié'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div className="table-responsive">
-        <table className="table table-sm align-middle">
-          <thead className="table-primary">
-            <tr>
-              <th className="text-center" style={{ width: '6%' }}>
-                N°
-              </th>
-              <th>Description du produit</th>
-              <th className="text-center" style={{ width: '12%' }}>
-                Qté
-              </th>
-              <th className="text-end" style={{ width: '18%' }}>
-                Prix unitaire
-              </th>
-              <th className="text-end" style={{ width: '18%' }}>
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it, idx) => {
-              const unit =
-                it.prixVente ||
-                Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
-                0;
-              const qty = it.quantity || it.quantiteVendu || 1;
-              const line = unit * qty;
-              return (
-                <tr key={idx}>
-                  <td className="text-center">{idx + 1}</td>
-                  <td>{it.libelle || 'Produit'}</td>
-                  <td className="text-center">{qty}</td>
-                  <td className="text-end">{currency(unit)}</td>
-                  <td className="text-end fw-semibold">{currency(line)}</td>
+          {/* Client */}
+          <div className="row mb-3">
+            <div className="col-12 col-md-6">
+              <div className={`card ${isDark ? 'bg-secondary border-secondary' : 'border'}`}>
+                <div className={`card-header py-1 fw-bold ${isDark ? 'bg-dark border-secondary' : ''}`}>
+                  FACTURÉ À
+                </div>
+                <div className="card-body py-2">
+                  <div>{customerInfo.fullName || 'Client'}</div>
+                  {customerInfo.phoneNumber && <div>{customerInfo.phoneNumber}</div>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mode de paiement */}
+          <div className="mb-2 fw-semibold">Informations de paiement</div>
+          <div className="row mb-2">
+            <div className="col-12 col-md-6">Mode: {(saleData.modePaiement || '').toUpperCase()}</div>
+            <div className="col-12 col-md-6 text-md-end">Date: {today}</div>
+          </div>
+
+          {/* Tableau produits */}
+          <div className="table-responsive">
+            <table className={`table table-sm align-middle ${isDark ? 'table-dark' : ''}`}>
+              <thead>
+                <tr>
+                  <th className="text-center" style={{ width: '6%' }}>N°</th>
+                  <th>Description du produit</th>
+                  <th className="text-center" style={{ width: '12%' }}>Qté</th>
+                  <th className="text-end" style={{ width: '18%' }}>Prix unitaire</th>
+                  <th className="text-end" style={{ width: '18%' }}>Total</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {(items || []).map((item, index) => {
+                  const unitPrice = item.prixVente || Math.floor((item.totalPrice || 0) / (item.quantity || 1)) || 0;
+                  const quantity = item.quantity || item.quantiteVendu || 1;
+                  const lineTotal = unitPrice * quantity;
+                  
+                  return (
+                    <tr key={index}>
+                      <td className="text-center">{index + 1}</td>
+                      <td>{item.libelle || 'Produit'}</td>
+                      <td className="text-center">{quantity}</td>
+                      <td className="text-end">{currency(unitPrice)}</td>
+                      <td className="text-end fw-semibold">{currency(lineTotal)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="d-flex justify-content-end my-4">
-        <Card style={{ minWidth: 320, border: '2px solid #3490dc' }}>
-          <Card.Body className="d-flex justify-content-between align-items-center">
-            <div className="fw-bold text-primary">TOTAL À PAYER:</div>
-            <div className="fs-4 fw-bold text-success">{currency(total)}</div>
-          </Card.Body>
-        </Card>
-      </div>
+          {/* Total */}
+          <div className="d-flex justify-content-end my-3">
+            <div className={`card ${isDark ? 'bg-secondary border-secondary' : ''}`} style={{ minWidth: '300px' }}>
+              <div className="card-body d-flex justify-content-between align-items-center">
+                <div className="fw-semibold text-primary">TOTAL À PAYER</div>
+                <div className="fw-bold text-success">{currency(total)}</div>
+              </div>
+            </div>
+          </div>
 
-      <div className="mt-2 small text-muted">
-        {[company?.country, company?.region, company?.neighborhood]
-          .filter(Boolean)
-          .join('-')}
-        {company?.address ? ` Rue: ${company.address}` : ''}
-        {company?.phone ? ` Tél: ${company.phone}` : ''}
-        {company?.email ? ` Email: ${company.email}` : ''}
-      </div>
+          {/* Footer */}
+          <div className="invoice-footer text-center">
+            <hr />
+            <div className="text-secondary">Merci pour votre confiance et à bientôt !</div>
+            <div className="small text-muted">{footerLine}</div>
+          </div>
+        </div>
+      </Modal.Body>
 
-      <div className="text-end mt-3">
+      <Modal.Footer className={isDark ? 'bg-dark border-secondary' : ''}>
+        <Button variant="secondary" onClick={onHide}>
+          <FontAwesomeIcon icon={faTimes} className="me-2" />
+          Fermer
+        </Button>
         <Button variant="primary" onClick={onPrint}>
+          <FontAwesomeIcon icon={faPrint} className="me-2" />
           Imprimer
         </Button>
-      </div>
-    </div>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

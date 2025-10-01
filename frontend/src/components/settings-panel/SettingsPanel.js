@@ -92,11 +92,11 @@ const SettingsPanel = () => {
       </Offcanvas.Header>
       {/* <ScrollBarCustom> */}
       <Offcanvas.Body className="scrollbar">
-        <h5 className="fs-9">Schéma de couleurs</h5>
-        <p className="fs-10">
+        <h5 className="fs-9 mb-1">Schéma de couleurs</h5>
+        <p className="fs-10 mb-2">
           Choisissez le mode de couleurs idéal pour votre application.
         </p>
-        <ButtonGroup className="btn-group-navbar-style">
+        <ButtonGroup className="btn-group-navbar-style flex-wrap gap-2">
           <RadioItem
             name="theme-mode"
             label="light"
@@ -202,7 +202,7 @@ const SettingsPanel = () => {
           Vertical Navbar Style{' '}
         </h5>
         <p className="fs-10">Switch between styles for your vertical navbar</p>
-        <ButtonGroup className="btn-group-navbar-style">
+        <ButtonGroup className="btn-group-navbar-style flex-wrap gap-2">
           {navbars.slice(0, 2).map(item => (
             <RadioItem
               key={item.name}
@@ -214,7 +214,7 @@ const SettingsPanel = () => {
             />
           ))}
         </ButtonGroup>
-        <ButtonGroup className="btn-group-navbar-style">
+        <ButtonGroup className="btn-group-navbar-style flex-wrap gap-2">
           {navbars.slice(2, 4).map(item => (
             <RadioItem
               key={item.name}

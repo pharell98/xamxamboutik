@@ -22,6 +22,8 @@ import InvoiceGenerator from '../facture/InvoiceGenerator';
 import QuantityController from '../QuantityController';
 import CalculatorModal from './CalculatorModal';
 import InvoiceAccordion from '../facture/InvoiceAccordion';
+import InvoicePreview from '../facture/InvoicePreview';
+import { printInvoice as printInvoiceHtml } from '../facture/print/printInvoiceHtml';
 import { 
   isValidQuantity, 
   normalizeQuantity, 
@@ -30,15 +32,6 @@ import {
 } from '../../validatore/cardShema';
 
 // Constants
-const COMPANY_INFO = {
-  name: 'Daraou Salam Boutique',
-  address: 'Rio, Rifusque, Dakar, Sénégal',
-  city: 'Rifusque',
-  zipCode: '12345',
-  phone: '+221 77 793 06 09',
-  email: 'sowboubacar327@gmail.com',
-  website: 'www.darousalamboutique.com'
-};
 
 const TOAST_DURATION = {
   SHORT: 4000,
@@ -317,36 +310,53 @@ const CartActions = ({
   onCalculator, 
   onClose, 
   onValidate, 
+  onPreview,
   isLoan, 
   isValidCustomer 
 }) => (
   <div className="d-flex flex-wrap gap-2 justify-content-between mt-3">
-    <Button
-      variant="outline-secondary"
-      onClick={onCalculator}
-      className="btn-sm"
-    >
-      <FontAwesomeIcon icon={faCalculator} className="me-1" />
-      <span className="d-none d-sm-inline">Calculatrice</span>
-      <span className="d-inline d-sm-none">Calc</span>
-    </Button>
-
-    {onClose && (
-      <Button variant="secondary" onClick={onClose} className="btn-sm">
-        <FontAwesomeIcon icon={faTimes} className="me-1" />
-        <span className="d-none d-sm-inline">Fermer</span>
-        <span className="d-inline d-sm-none">X</span>
+    <div className="d-flex gap-2">
+      <Button
+        variant="outline-secondary"
+        onClick={onCalculator}
+        className="btn-sm"
+      >
+        <FontAwesomeIcon icon={faCalculator} className="me-1" />
+        <span className="d-none d-sm-inline">Calculatrice</span>
+        <span className="d-inline d-sm-none">Calc</span>
       </Button>
-    )}
 
-    <Button
-      variant="success"
-      onClick={onValidate}
-      disabled={!isValidCustomer}
-      className="btn-sm"
-    >
-      {isLoan ? 'Valider Crédit' : 'Valider Vente'}
-    </Button>
+      {onPreview && (
+        <Button
+          variant="outline-info"
+          onClick={onPreview}
+          className="btn-sm"
+        >
+          <FontAwesomeIcon icon={faPrint} className="me-1" />
+          <span className="d-none d-sm-inline">Aperçu Facture</span>
+          <span className="d-inline d-sm-none">Aperçu</span>
+        </Button>
+      )}
+    </div>
+
+    <div className="d-flex gap-2">
+      {onClose && (
+        <Button variant="secondary" onClick={onClose} className="btn-sm">
+          <FontAwesomeIcon icon={faTimes} className="me-1" />
+          <span className="d-none d-sm-inline">Fermer</span>
+          <span className="d-inline d-sm-none">X</span>
+        </Button>
+      )}
+
+      <Button
+        variant="success"
+        onClick={onValidate}
+        disabled={!isValidCustomer}
+        className="btn-sm"
+      >
+        {isLoan ? 'Valider Crédit' : 'Valider Vente'}
+      </Button>
+    </div>
   </div>
 );
 
@@ -364,6 +374,7 @@ const CartSection = ({ onClose, show = true }) => {
   const [printInvoice, setPrintInvoice] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Custom hooks
   const paymentModes = usePaymentModes();
@@ -477,27 +488,42 @@ const CartSection = ({ onClose, show = true }) => {
             quantiteVendu: item.quantity
           }));
 
-          const fileName = InvoiceGenerator.downloadInvoice(
-            saleData,
-            invoiceItems,
-            customerInfo,
-            COMPANY_INFO
-          );
+          // Utiliser la nouvelle méthode HTML en priorité
+          await printInvoiceHtml(saleData, invoiceItems, customerInfo, {});
 
           addToast({
             title: 'Facture générée',
-            message: `La facture ${fileName} a été téléchargée`,
+            message: 'La facture a été générée avec succès',
             type: 'success',
             duration: TOAST_DURATION.MEDIUM
           });
         } catch (invoiceError) {
-          console.error('Erreur génération facture:', invoiceError);
-          addToast({
-            title: 'Erreur',
-            message: 'Impossible de générer la facture',
-            type: 'error',
-            duration: TOAST_DURATION.MEDIUM
-          });
+          console.error('Erreur génération facture HTML:', invoiceError);
+          
+          // Fallback vers l'ancienne méthode PDF
+          try {
+            const fileName = InvoiceGenerator.downloadInvoice(
+              saleData,
+              invoiceItems,
+              customerInfo,
+              {}
+            );
+
+            addToast({
+              title: 'Facture générée',
+              message: `La facture ${fileName} a été téléchargée`,
+              type: 'success',
+              duration: TOAST_DURATION.MEDIUM
+            });
+          } catch (pdfError) {
+            console.error('Erreur génération facture PDF:', pdfError);
+            addToast({
+              title: 'Erreur',
+              message: 'Impossible de générer la facture',
+              type: 'error',
+              duration: TOAST_DURATION.MEDIUM
+            });
+          }
         }
       }
 
@@ -532,6 +558,14 @@ const CartSection = ({ onClose, show = true }) => {
   const handleToggleView = useCallback(() => {
     setShowInvoices(!showInvoices);
   }, [showInvoices]);
+
+  const handleShowPreview = useCallback(() => {
+    setShowPreviewModal(true);
+  }, []);
+
+  const handleClosePreview = useCallback(() => {
+    setShowPreviewModal(false);
+  }, []);
 
   if (!show) return null;
 
@@ -608,6 +642,7 @@ const CartSection = ({ onClose, show = true }) => {
                 onCalculator={() => setShowCalculator(true)}
                 onClose={onClose}
                 onValidate={handleValidateSale}
+                onPreview={handleShowPreview}
                 isLoan={isLoan}
                 isValidCustomer={isValidCustomer}
               />
@@ -620,6 +655,51 @@ const CartSection = ({ onClose, show = true }) => {
         show={showCalculator}
         onClose={() => setShowCalculator(false)}
         totalCost={totalCost}
+      />
+
+      <InvoicePreview
+        show={showPreviewModal}
+        onHide={handleClosePreview}
+        saleData={{
+          modePaiement: paymentMode,
+          montantTotal: totalCost
+        }}
+        items={cartItems.map(item => ({
+          ...item,
+          prixVente: modifiedPrices[item.id] ?? Math.floor(item.totalPrice / item.quantity),
+          quantiteVendu: item.quantity
+        }))}
+        customerInfo={customerInfo}
+        onPrint={async () => {
+          try {
+            const invoiceItems = cartItems.map(item => ({
+              ...item,
+              prixVente: modifiedPrices[item.id] ?? Math.floor(item.totalPrice / item.quantity),
+              quantiteVendu: item.quantity
+            }));
+
+            await printInvoiceHtml({
+              modePaiement: paymentMode,
+              montantTotal: totalCost
+            }, invoiceItems, customerInfo, {});
+
+            handleClosePreview();
+            addToast({
+              title: 'Facture générée',
+              message: 'La facture a été générée avec succès',
+              type: 'success',
+              duration: TOAST_DURATION.MEDIUM
+            });
+          } catch (error) {
+            console.error('Erreur génération facture:', error);
+            addToast({
+              title: 'Erreur',
+              message: 'Impossible de générer la facture',
+              type: 'error',
+              duration: TOAST_DURATION.MEDIUM
+            });
+          }
+        }}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Col, Form, Row, Table } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
@@ -67,7 +67,8 @@ const BestSellingTableRow = ({ product, totalPrice, totalOrder }) => {
   );
 };
 
-const BestSellingProducts = ({ products }) => {
+const BestSellingProducts = ({ products, onRefresh }) => {
+  const [loading, setLoading] = useState(false);
   const totalPrice = getTotalPrice(products);
   const totalOrder = getTotalOrder(products);
 
@@ -114,11 +115,25 @@ const BestSellingProducts = ({ products }) => {
               <option>Last Year</option>
             </Form.Select>
           </Col>
-          <Col xs="auto">
-            <Button variant="falcon-default" size="sm" as={Link} to="#!">
-              View All
-            </Button>
-          </Col>
+          {onRefresh && (
+            <Col xs="auto">
+              <Button
+                variant="falcon-default"
+                size="sm"
+                disabled={loading}
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await onRefresh();
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? 'Rafraîchissement…' : 'Rafraîchir'}
+              </Button>
+            </Col>
+          )}
         </Row>
       </Card.Footer>
     </Card>
@@ -139,7 +154,8 @@ BestSellingTableRow.propTypes = {
 };
 
 BestSellingProducts.propTypes = {
-  products: PropTypes.arrayOf(BestSellingTableRow.propTypes.product).isRequired
+  products: PropTypes.arrayOf(BestSellingTableRow.propTypes.product).isRequired,
+  onRefresh: PropTypes.func
 };
 
 export default BestSellingProducts;

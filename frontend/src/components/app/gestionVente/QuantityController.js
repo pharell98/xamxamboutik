@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
+import { useAppContext } from 'providers/AppProvider';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Constants
@@ -64,6 +65,7 @@ const QuantityController = ({
   max = Infinity,
   disabled = false
 }) => {
+  const { config: { isDark } } = useAppContext();
   const [inputValue, setInputValue] = useState(quantity.toString());
   const [isEditing, setIsEditing] = useState(false);
 
@@ -125,7 +127,10 @@ const QuantityController = ({
 
   return (
     <div style={{ width: '100%', maxWidth: '140px', minWidth: '120px' }}>
-      <InputGroup size="sm" style={containerStyle}>
+      <InputGroup size="sm" style={{
+        ...containerStyle,
+        boxShadow: isDark ? '0 1px 3px rgba(255, 255, 255, 0.08)' : containerStyle.boxShadow
+      }}>
         {/* Bouton diminuer */}
         <InputGroup.Text
           as={Button}
@@ -134,6 +139,9 @@ const QuantityController = ({
           disabled={!canDecrease}
           style={{
             ...buttonStyle,
+            backgroundColor: isDark ? '#2d3748' : buttonStyle.backgroundColor,
+            border: isDark ? '1px solid #495057' : buttonStyle.border,
+            color: isDark ? '#e9ecef' : undefined,
             borderRadius: '6px 0 0 6px',
             borderRight: 'none'
           }}
@@ -150,7 +158,12 @@ const QuantityController = ({
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            backgroundColor: isDark ? '#1f2937' : 'white',
+            color: isDark ? '#e9ecef' : undefined,
+            borderColor: isDark ? '#495057' : '#dee2e6'
+          }}
         />
 
         {/* Bouton augmenter */}
@@ -161,6 +174,9 @@ const QuantityController = ({
           disabled={!canIncrease}
           style={{
             ...buttonStyle,
+            backgroundColor: isDark ? '#2d3748' : buttonStyle.backgroundColor,
+            border: isDark ? '1px solid #495057' : buttonStyle.border,
+            color: isDark ? '#e9ecef' : undefined,
             borderRadius: '0 6px 6px 0',
             borderLeft: 'none'
           }}

@@ -13,8 +13,10 @@ import venteServiceV1 from 'services/vente.service.v1';
 import dashboardService from 'services/dashboardService';
 import PageHeader from '../../../common/PageHeader';
 import SaleActionForm from './SaleActionForm';
+import { useAppContext } from 'providers/AppProvider';
 
 const Sales = ({ onEdit }) => {
+  const { config: { isDark } } = useAppContext();
   const [filters, setFilters] = useState({ period: 'daily', specificDate: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -193,13 +195,13 @@ const Sales = ({ onEdit }) => {
         `}
       </style>
       <Col md={12}>
-        <PageHeader title="Liste des ventes" titleTag="h5" className="mb-4" />
+        <PageHeader title="Liste des ventes" titleTag="h5" className={`mb-4 ${isDark ? 'text-light' : ''}`} />
         <AdvanceTableProvider {...table}>
           <Row className="sales-container">
             {/* Colonne pour le tableau des ventes */}
             <Col md={showActionForm && selectedSale ? 9 : 12}>
-              <Card className="mb-3">
-                <Card.Header className="bg-body-tertiary">
+              <Card className={`mb-3 ${isDark ? 'bg-dark text-light border-secondary' : ''}`}>
+                <Card.Header className={`${isDark ? 'bg-dark border-secondary' : 'bg-body-tertiary'}`}>
                   <Col xs={8} sm="auto" className="ms-auto text-end ps-0">
                     <div id="orders-actions">
                       <IconButton
@@ -236,7 +238,7 @@ const Sales = ({ onEdit }) => {
                     </div>
                   </Col>
                 </Card.Header>
-                <Card.Body className="p-1">
+                <Card.Body className={`p-1 ${isDark ? 'bg-dark text-light' : ''}`}>
                   {salesFilters.length === 0 ? (
                     <div className="text-center text-danger">
                       Aucun filtre disponible.
@@ -262,7 +264,7 @@ const Sales = ({ onEdit }) => {
                     }}
                   />
                 </Card.Body>
-                <Card.Footer className="bg-body-tertiary py-2">
+                <Card.Footer className={`${isDark ? 'bg-dark border-secondary text-light' : 'bg-body-tertiary'} py-2`}>
                   <AdvanceTablePagination totalAmount={totalAmount} />
                 </Card.Footer>
               </Card>

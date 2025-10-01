@@ -16,6 +16,7 @@ import PropTypes from 'prop-types';
 import ActionInput from './ActionInput';
 import apiServiceV1 from 'services/api.service.v1';
 import { Autocomplete, TextField } from '@mui/material';
+import { useAppContext } from 'providers/AppProvider';
 
 const SaleActionForm = ({
   detailVenteId,
@@ -26,6 +27,7 @@ const SaleActionForm = ({
   quantiteVendu,
   status
 }) => {
+  const { config: { isDark } } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const motifRef = useRef(null);
 
@@ -316,7 +318,7 @@ const SaleActionForm = ({
         {`
           .form-container {
             animation: slideIn 0.4s ease-out;
-            background: #ffffff;
+            background: var(--form-bg, #ffffff);
             border-radius: 10px;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
@@ -373,11 +375,19 @@ const SaleActionForm = ({
             text-align: center;
             font-size: 0.9rem;
           }
+          /* Thème sombre */
+          [data-bs-theme="dark"] .form-container {
+            --form-bg: #1f2937;
+            box-shadow: 0 3px 15px rgba(255, 255, 255, 0.06);
+          }
+          [data-bs-theme="dark"] .form-container:hover {
+            box-shadow: 0 4px 18px rgba(255, 255, 255, 0.08);
+          }
         `}
       </style>
       <Col md={12}>
-        <Card className="form-container">
-          <Card.Header className="bg-primary text-white d-flex align-items-center">
+        <Card className={`form-container ${isDark ? 'bg-dark text-light border-secondary' : ''}`}>
+          <Card.Header className={`d-flex align-items-center ${isDark ? 'bg-dark border-secondary text-light' : 'bg-primary text-white'}`}>
             <h5 className="mb-0">
               {actionConfigs[selectedAction].icon}
               {actionConfigs[selectedAction].title}
@@ -386,7 +396,7 @@ const SaleActionForm = ({
               <Spinner animation="border" size="sm" className="ms-auto" />
             )}
           </Card.Header>
-          <Card.Body>
+          <Card.Body className={isDark ? 'bg-dark text-light' : ''}>
             {isActionDisabled ? (
               <div className="disabled-message">
                 Action non disponible : le produit a déjà été retourné ou échangé.
@@ -396,7 +406,7 @@ const SaleActionForm = ({
               </div>
             ) : (
               <>
-                <p className="text-muted mb-2 fs-10">
+                <p className={`${isDark ? 'text-secondary' : 'text-muted'} mb-2 fs-10`}>
                   {actionConfigs[selectedAction].description}
                 </p>
                 <Form onSubmit={handleSubmit(onFormSubmit)} noValidate>
@@ -404,7 +414,7 @@ const SaleActionForm = ({
                     <Form.Group key={field.name} className="position-relative">
                       {field.name === 'produitRemplacementId' ? (
                         <>
-                          <Form.Label className="fw-medium text-dark">
+                          <Form.Label className={`fw-medium ${isDark ? 'text-light' : 'text-dark'}`}>
                             {field.label}
                           </Form.Label>
                           <Controller
@@ -443,6 +453,10 @@ const SaleActionForm = ({
                                     size="small"
                                     error={!!errors.produitRemplacementId}
                                     helperText={errors.produitRemplacementId?.message}
+                                    InputProps={{
+                                      ...params.InputProps,
+                                      sx: isDark ? { backgroundColor: '#1f2937', color: '#e5e7eb', '& .MuiSvgIcon-root': { color: '#e5e7eb' } } : {}
+                                    }}
                                   />
                                 )}
                               />
@@ -487,12 +501,12 @@ const SaleActionForm = ({
                             </Tooltip>
                           </Overlay>
                           {errors[field.name] && (
-                            <Form.Text className="text-danger fs-10">
+                          <Form.Text className="text-danger fs-10">
                               {errors[field.name].message}
                             </Form.Text>
                           )}
                           {!errors[field.name] && watch(field.name) && (
-                            <Form.Text className="text-success fs-10">
+                          <Form.Text className="text-success fs-10">
                               Valide
                             </Form.Text>
                           )}

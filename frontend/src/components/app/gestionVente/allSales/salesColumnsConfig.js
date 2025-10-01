@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext } from 'providers/AppProvider';
 import { Dropdown } from 'react-bootstrap';
 import { FaExchangeAlt, FaUndo } from 'react-icons/fa';
 
@@ -12,6 +13,7 @@ export const getSalesColumns = (
   setSelectedSale,
   setSelectedAction
 ) => {
+  const { config: { isDark } } = useAppContext();
   return [
     {
       accessorKey: 'image',
@@ -58,7 +60,7 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-left text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-left fs-9 fw-medium ${cellWrapperClass(
+        const css = `text-left fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
           row.original
         )}`;
         return (
@@ -76,7 +78,7 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${cellWrapperClass(
+        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
           row.original
         )}`;
         const prix = row.original.prixVendu || row.original.prixVente;
@@ -91,7 +93,7 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${cellWrapperClass(
+        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
           row.original
         )}`;
         const qty = row.original.quantiteVendu || row.original.quantiteVendue;
@@ -104,7 +106,7 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${cellWrapperClass(
+        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
           row.original
         )}`;
         return (
@@ -122,7 +124,7 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-left text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-left fs-9 fw-medium ${cellWrapperClass(
+        const css = `text-left fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
           row.original
         )}`;
         return <div className={css}>{row.original.dateVente ?? '—'}</div>;

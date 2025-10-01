@@ -8,7 +8,7 @@ const dashboardService = {
   getCumulativeBenefit: async () => {
     try {
       const response = await apiClient.get(
-        '/api/v1/statistiques/benefice/cumulatif'
+        '/statistiques/benefice/cumulatif'
       );
       // La réponse devrait être au format { message, data } où data contient le bénéfice.
       return response.data;
@@ -29,7 +29,7 @@ const dashboardService = {
    */
   getBenefitBetweenDates: async (startDate, endDate) => {
     try {
-      const response = await apiClient.get('/api/v1/statistiques/benefice', {
+      const response = await apiClient.get('/statistiques/benefice', {
         params: {
           startDate,
           endDate
@@ -52,7 +52,7 @@ const dashboardService = {
    */
   getSalesDateRange: async () => {
     try {
-      const response = await apiClient.get('/api/v1/statistiques/sales-dates');
+      const response = await apiClient.get('/statistiques/sales-dates');
       // La réponse devrait contenir un objet ApiResponse avec data: { firstSaleDate, lastSaleDate }
       return response.data;
     } catch (error) {

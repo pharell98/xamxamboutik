@@ -143,7 +143,7 @@ export const printInvoice = async (
         </div>
       </div>
 
-      <div class="row mb-2">
+      <div class="row mb-3">
         <div class="col-12 col-md-6">
           <div class="card card-border">
             <div class="card-header py-1 fw-bold">FACTURÉ À</div>
@@ -161,12 +161,8 @@ export const printInvoice = async (
 
       <div class="mb-2 fw-semibold">Informations de paiement</div>
       <div class="row mb-2">
-        <div class="col-12 col-md-6">
-          <div>Mode: ${String(saleData.modePaiement || '').toUpperCase()}</div>
-        </div>
-        <div class="col-12 col-md-6 text-md-end">
-          <div>Date: ${today}</div>
-        </div>
+        <div class="col-12 col-md-6">Mode: ${String(saleData.modePaiement || '').toUpperCase()}</div>
+        <div class="col-12 col-md-6 text-md-end">Date: ${today}</div>
       </div>
 
       <table class="table table-sm align-middle">

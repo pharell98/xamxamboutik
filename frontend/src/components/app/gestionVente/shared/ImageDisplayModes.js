@@ -11,10 +11,14 @@ export const IMAGE_DISPLAY_MODES = {
 };
 
 export const getImageStyle = (mode = IMAGE_DISPLAY_MODES.CONTAIN, customStyle = {}) => {
+  const isDark =
+    typeof document !== 'undefined' &&
+    document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
   const baseStyle = {
     objectPosition: 'center',
     padding: '4px',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: isDark ? '#2d3748' : '#f8f9fa',
     transition: 'all 0.3s ease',
     ...customStyle
   };
