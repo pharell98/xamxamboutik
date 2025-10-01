@@ -8,17 +8,17 @@ $benefice-transition: all 0.3s ease;
 // Conteneur principal
 .benefice-card {
   background-color: transparent;
-  
+
   .card-header {
     position: relative;
     overflow: hidden;
   }
-  
+
   .benefice-content {
     position: relative;
     z-index: 2;
   }
-  
+
   .benefice-title {
     color: var(--#{$prefix}primary);
     font-size: 1.5rem;
@@ -34,7 +34,7 @@ $benefice-transition: all 0.3s ease;
   align-items: center;
   gap: 1rem;
   min-height: 80px;
-  
+
   @media (max-width: 767px) {
     flex-direction: column;
     align-items: stretch;
@@ -45,11 +45,11 @@ $benefice-transition: all 0.3s ease;
 // Conteneurs de DatePicker
 .benefice-date-picker {
   width: 200px;
-  
+
   @media (max-width: 767px) {
     width: 100%;
   }
-  
+
   .benefice-date-input {
     height: 38px;
     font-size: 0.875rem;
@@ -61,18 +61,18 @@ $benefice-transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: $benefice-transition;
     color: var(--#{$prefix}body-color);
-    
+
     &:focus {
       border-color: var(--#{$prefix}primary);
       box-shadow: 0 0 0 3px rgba(var(--#{$prefix}primary-rgb), 0.2);
       outline: none;
     }
-    
+
     &::placeholder {
       color: var(--#{$prefix}secondary-color);
     }
   }
-  
+
   .benefice-calendar-icon {
     position: absolute;
     right: 12px;
@@ -88,30 +88,30 @@ $benefice-transition: all 0.3s ease;
 .benefice-filter-actions {
   display: flex;
   gap: 0.5rem;
-  
+
   @media (max-width: 767px) {
     width: 100%;
-    
+
     .btn {
       flex: 1;
     }
   }
-  
+
   .btn {
     border-radius: var(--#{$prefix}border-radius);
     padding: 0.5rem 1rem;
     transition: $benefice-transition;
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
-    
+
     &:active:not(:disabled) {
       transform: translateY(0);
     }
   }
-  
+
   .btn-reset {
     padding: 0.5rem 0.75rem;
   }
@@ -120,7 +120,7 @@ $benefice-transition: all 0.3s ease;
 // Affichage du chiffre d'affaires
 .benefice-revenue {
   padding: 1rem 0;
-  
+
   .revenue-label {
     color: var(--#{$prefix}secondary-color);
     font-size: 0.75rem;
@@ -129,13 +129,13 @@ $benefice-transition: all 0.3s ease;
     letter-spacing: 0.5px;
     margin-bottom: 0.5rem;
   }
-  
+
   .revenue-amount {
     color: var(--#{$prefix}body-emphasis-color);
     font-size: 1.75rem;
     font-weight: 700;
     margin-bottom: 0;
-    
+
     @media (max-width: 767px) {
       font-size: 1.5rem;
     }
@@ -145,40 +145,40 @@ $benefice-transition: all 0.3s ease;
 // Personnalisation du DatePicker
 .custom-datepicker-popper {
   z-index: 9999 !important;
-  
+
   .react-datepicker {
     background-color: var(--#{$prefix}body-bg);
     border-color: var(--#{$prefix}border-color);
     color: var(--#{$prefix}body-color);
-    
+
     &__header {
       background-color: var(--#{$prefix}secondary-bg);
       border-bottom-color: var(--#{$prefix}border-color);
     }
-    
+
     &__current-month,
     &__day-name {
       color: var(--#{$prefix}body-color);
     }
-    
+
     &__day {
       color: var(--#{$prefix}body-color);
-      
+
       &:hover {
         background-color: var(--#{$prefix}secondary-bg);
       }
-      
+
       &--selected,
       &--keyboard-selected {
         background-color: var(--#{$prefix}primary);
         color: white;
       }
-      
+
       &--disabled {
         color: var(--#{$prefix}secondary-color);
       }
     }
-    
+
     &__navigation {
       &:hover {
         *::before {
@@ -196,7 +196,7 @@ $benefice-transition: all 0.3s ease;
   background-position: right bottom;
   z-index: -1;
   pointer-events: none;
-  
+
   @media (min-width: 768px) {
     display: block;
   }

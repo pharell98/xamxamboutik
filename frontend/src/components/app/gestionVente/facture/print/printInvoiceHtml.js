@@ -5,9 +5,12 @@ import apiServiceSettings from '../../../../../services/api.service.settings';
 const getCompany = async () => {
   try {
     const settings = await apiServiceSettings.getSettings();
-    const computedLogo = settings && settings.logo
-      ? (typeof settings.logo === 'string' ? settings.logo : (settings.logo.preview || null))
-      : null;
+    const computedLogo =
+      settings && settings.logo
+        ? typeof settings.logo === 'string'
+          ? settings.logo
+          : settings.logo.preview || null
+        : null;
     return {
       name: settings.shopName || 'Boutique',
       logo: computedLogo,
@@ -32,14 +35,22 @@ const getCompany = async () => {
   }
 };
 
-const currency = (n) => (n || 0).toLocaleString('fr-FR') + ' XOF';
+const currency = n => (n || 0).toLocaleString('fr-FR') + ' XOF';
 
-export const printInvoice = async (saleData, items, customerInfo = {}, userInfo = {}) => {
+export const printInvoice = async (
+  saleData,
+  items,
+  customerInfo = {},
+  userInfo = {}
+) => {
   const company = await getCompany();
   const today = format(new Date(), 'dd/MM/yyyy', { locale: fr });
 
   const total = (items || []).reduce((acc, it) => {
-    const unit = it.prixVente || Math.floor((it.totalPrice || 0) / (it.quantity || 1)) || 0;
+    const unit =
+      it.prixVente ||
+      Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
+      0;
     const qty = it.quantity || it.quantiteVendu || 1;
     return acc + unit * qty;
   }, 0);
@@ -47,17 +58,24 @@ export const printInvoice = async (saleData, items, customerInfo = {}, userInfo 
   const locationParts = [company.country, company.region, company.neighborhood]
     .filter(Boolean)
     .join('-');
-  const footerLine = `${locationParts}${company.address ? ' Rue: ' + company.address : ''}${company.phone ? ' Tél: ' + company.phone : ''}${company.email ? ' Email: ' + company.email : ''}`.trim();
+  const footerLine = `${locationParts}${
+    company.address ? ' Rue: ' + company.address : ''
+  }${company.phone ? ' Tél: ' + company.phone : ''}${
+    company.email ? ' Email: ' + company.email : ''
+  }`.trim();
 
   const rows = (items || [])
     .map((it, idx) => {
-      const unit = it.prixVente || Math.floor((it.totalPrice || 0) / (it.quantity || 1)) || 0;
+      const unit =
+        it.prixVente ||
+        Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
+        0;
       const qty = it.quantity || it.quantiteVendu || 1;
       const line = unit * qty;
       return `
         <tr>
           <td class="text-center">${idx + 1}</td>
-          <td>${(it.libelle || 'Produit')}</td>
+          <td>${it.libelle || 'Produit'}</td>
           <td class="text-center">${qty}</td>
           <td class="text-end">${currency(unit)}</td>
           <td class="text-end fw-semibold">${currency(line)}</td>
@@ -92,10 +110,19 @@ export const printInvoice = async (saleData, items, customerInfo = {}, userInfo 
     <div class="a4">
       <div class="row align-items-center brand-bar px-3 py-2 mb-2">
         <div class="col d-flex align-items-center">
-          ${company.logo ? `<img src="${company.logo}" alt="logo" class="me-2" style="height:34px"/>` : ''}
+          ${
+            company.logo
+              ? `<img src="${company.logo}" alt="logo" class="me-2" style="height:34px"/>`
+              : ''
+          }
           <div>
             <h5 class="m-0">${company.name}</h5>
-            <div class="small text-muted">${[company.phone ? `Tél: ${company.phone}` : '', company.email ? `Email: ${company.email}` : ''].filter(Boolean).join(' · ')}</div>
+            <div class="small text-muted">${[
+              company.phone ? `Tél: ${company.phone}` : '',
+              company.email ? `Email: ${company.email}` : ''
+            ]
+              .filter(Boolean)
+              .join(' · ')}</div>
           </div>
         </div>
         <div class="col text-end">
@@ -122,7 +149,11 @@ export const printInvoice = async (saleData, items, customerInfo = {}, userInfo 
             <div class="card-header py-1 fw-bold">FACTURÉ À</div>
             <div class="card-body py-2">
               <div>${customerInfo.fullName || 'Client'}</div>
-              ${customerInfo.phoneNumber ? `<div>${customerInfo.phoneNumber}</div>` : ''}
+              ${
+                customerInfo.phoneNumber
+                  ? `<div>${customerInfo.phoneNumber}</div>`
+                  : ''
+              }
             </div>
           </div>
         </div>
@@ -187,5 +218,3 @@ export const printInvoice = async (saleData, items, customerInfo = {}, userInfo 
 };
 
 export default printInvoice;
-
-

@@ -95,24 +95,28 @@ const apiServiceV1 = {
    * Récupère un produit par code-barres.
    */
   getProductByBarcode: async barcode =>
-    safeApiCall(
-      () => {
-        console.log('[apiServiceV1] Appel API pour barcode:', barcode);
-        console.log('[apiServiceV1] URL complète:', `${apiClient.defaults.baseURL}/products/barcode/${barcode}`);
-        console.log('[apiServiceV1] Headers:', apiClient.defaults.headers);
-        return apiClient
-          .get(`/products/barcode/${barcode}`)
-          .then(r => {
-            console.log('[apiServiceV1] Réponse API barcode:', r.data);
-            return r.data;
-          })
-          .catch(error => {
-            console.error('[apiServiceV1] Erreur détaillée pour barcode:', barcode, error);
-            throw error;
-          });
-      },
-      'getProductByBarcode'
-    ),
+    safeApiCall(() => {
+      console.log('[apiServiceV1] Appel API pour barcode:', barcode);
+      console.log(
+        '[apiServiceV1] URL complète:',
+        `${apiClient.defaults.baseURL}/products/barcode/${barcode}`
+      );
+      console.log('[apiServiceV1] Headers:', apiClient.defaults.headers);
+      return apiClient
+        .get(`/products/barcode/${barcode}`)
+        .then(r => {
+          console.log('[apiServiceV1] Réponse API barcode:', r.data);
+          return r.data;
+        })
+        .catch(error => {
+          console.error(
+            '[apiServiceV1] Erreur détaillée pour barcode:',
+            barcode,
+            error
+          );
+          throw error;
+        });
+    }, 'getProductByBarcode'),
 
   /**
    * Importation en masse de produits via Excel pour l'approvisionnement.

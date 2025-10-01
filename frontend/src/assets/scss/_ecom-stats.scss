@@ -20,7 +20,8 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -40,28 +41,28 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
   background-color: var(--#{$prefix}secondary-bg);
   border: 1px solid var(--#{$prefix}border-color);
   transition: $ecom-transition;
-  
+
   &:hover {
     box-shadow: $ecom-hover-shadow;
   }
-  
-  [data-bs-theme="dark"] & {
+
+  [data-bs-theme='dark'] & {
     &:hover {
       box-shadow: $ecom-hover-shadow-dark;
     }
   }
-  
+
   .caisse-title {
     color: var(--#{$prefix}body-color);
     font-weight: 600;
     margin-bottom: 0.5rem;
   }
-  
+
   .caisse-date {
     color: var(--#{$prefix}secondary-color);
     font-size: 0.875rem;
   }
-  
+
   .badge-status {
     animation: pulse 2s infinite;
   }
@@ -71,10 +72,10 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
 .caisse-actions {
   display: flex;
   gap: 0.5rem;
-  
+
   .btn {
     transition: $ecom-transition;
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-2px);
     }
@@ -85,7 +86,7 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
 .ecom-loading-state {
   text-align: center;
   padding: 2rem;
-  
+
   .loading-text {
     margin-top: 1rem;
     color: var(--#{$prefix}secondary-color);
@@ -106,39 +107,39 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
   border-radius: var(--#{$prefix}border-radius);
   padding: 1.5rem;
   transition: $ecom-transition;
-  
+
   &:hover {
     box-shadow: $ecom-hover-shadow;
     transform: translateY(-2px);
   }
-  
-  [data-bs-theme="dark"] & {
+
+  [data-bs-theme='dark'] & {
     &:hover {
       box-shadow: $ecom-hover-shadow-dark;
     }
   }
-  
+
   .stat-title {
     color: var(--#{$prefix}secondary-color);
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
   }
-  
+
   .stat-amount {
     color: var(--#{$prefix}body-color);
     font-size: 1.5rem;
     font-weight: 700;
   }
-  
+
   .stat-trend {
     font-size: 0.75rem;
     margin-top: 0.25rem;
-    
+
     &.positive {
       color: var(--#{$prefix}success);
     }
-    
+
     &.negative {
       color: var(--#{$prefix}danger);
     }
@@ -149,11 +150,11 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
 .stats-grid {
   display: grid;
   gap: 1rem;
-  
+
   @media (min-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (min-width: 1200px) {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -165,11 +166,11 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
     background-color: var(--#{$prefix}body-bg);
     border-color: var(--#{$prefix}border-color);
   }
-  
+
   .modal-header {
     border-bottom-color: var(--#{$prefix}border-color);
   }
-  
+
   .modal-footer {
     border-top-color: var(--#{$prefix}border-color);
   }
@@ -179,25 +180,25 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
 @media (max-width: 767px) {
   .caisse-status-header {
     padding: 0.75rem;
-    
+
     .caisse-title {
       font-size: 1rem;
     }
-    
+
     .caisse-actions {
       margin-top: 0.5rem;
       width: 100%;
-      
+
       .btn {
         flex: 1;
         font-size: 0.875rem;
       }
     }
   }
-  
+
   .ecom-stat-card {
     padding: 1rem;
-    
+
     .stat-amount {
       font-size: 1.25rem;
     }
@@ -211,12 +212,12 @@ $ecom-hover-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.35);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  
+
   &.badge-open {
     background-color: var(--#{$prefix}success);
     color: white;
   }
-  
+
   &.badge-closed {
     background-color: var(--#{$prefix}secondary);
     color: white;

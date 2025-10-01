@@ -19,7 +19,10 @@ const ResponsiveProvider = ({ children }) => {
   // Configuration automatique du layout selon la page (avec protection contre les boucles)
   useEffect(() => {
     // Éviter les re-configurations inutiles
-    if (lastPathnameRef.current === location.pathname || isConfiguringRef.current) {
+    if (
+      lastPathnameRef.current === location.pathname ||
+      isConfiguringRef.current
+    ) {
       return;
     }
 
@@ -31,7 +34,10 @@ const ResponsiveProvider = ({ children }) => {
       try {
         responsive.autoConfigureLayout(location.pathname);
       } catch (error) {
-        console.warn('Erreur lors de la configuration automatique du layout:', error);
+        console.warn(
+          'Erreur lors de la configuration automatique du layout:',
+          error
+        );
       } finally {
         isConfiguringRef.current = false;
       }
@@ -47,102 +53,108 @@ const ResponsiveProvider = ({ children }) => {
   const contextValue = {
     ...responsive,
     // Méthodes utilitaires globales
-    getResponsiveValue: (values) => {
+    getResponsiveValue: values => {
       if (typeof values === 'function') {
         return values(responsive);
       }
       if (typeof values === 'object') {
-        if (responsive.isMobile) return values.mobile || values.xs || values.default;
-        if (responsive.isTablet) return values.tablet || values.sm || values.default;
-        if (responsive.isDesktop) return values.desktop || values.lg || values.default;
+        if (responsive.isMobile)
+          return values.mobile || values.xs || values.default;
+        if (responsive.isTablet)
+          return values.tablet || values.sm || values.default;
+        if (responsive.isDesktop)
+          return values.desktop || values.lg || values.default;
         return values.default;
       }
       return values;
     },
-    
+
     // Configuration des composants
     getComponentConfig: (componentType, customConfig = {}) => {
       const baseConfigs = {
         table: {
-          mobile: { 
-            size: 'sm', 
-            striped: true, 
+          mobile: {
+            size: 'sm',
+            striped: true,
             hover: false,
             className: 'table-mobile'
           },
-          tablet: { 
-            size: 'sm', 
-            striped: true, 
+          tablet: {
+            size: 'sm',
+            striped: true,
             hover: true,
             className: 'table-tablet'
           },
-          desktop: { 
-            size: '', 
-            striped: true, 
+          desktop: {
+            size: '',
+            striped: true,
             hover: true,
             className: 'table-desktop'
           }
         },
         card: {
-          mobile: { 
+          mobile: {
             className: 'mb-2 card-mobile',
             style: { borderRadius: 0 }
           },
-          tablet: { 
+          tablet: {
             className: 'mb-3 card-tablet',
             style: { borderRadius: '0.375rem' }
           },
-          desktop: { 
+          desktop: {
             className: 'mb-4 card-desktop',
             style: { borderRadius: '0.5rem' }
           }
         },
         button: {
-          mobile: { 
+          mobile: {
             size: 'sm',
             className: 'btn-mobile'
           },
-          tablet: { 
+          tablet: {
             size: 'sm',
             className: 'btn-tablet'
           },
-          desktop: { 
+          desktop: {
             size: '',
             className: 'btn-desktop'
           }
         },
         form: {
-          mobile: { 
+          mobile: {
             className: 'mb-2 form-mobile'
           },
-          tablet: { 
+          tablet: {
             className: 'mb-3 form-tablet'
           },
-          desktop: { 
+          desktop: {
             className: 'mb-4 form-desktop'
           }
         },
         modal: {
-          mobile: { 
+          mobile: {
             className: 'modal-mobile',
             style: { margin: '0.5rem' }
           },
-          tablet: { 
+          tablet: {
             className: 'modal-tablet',
             style: { margin: '1rem' }
           },
-          desktop: { 
+          desktop: {
             className: 'modal-desktop',
             style: { margin: '1.75rem' }
           }
         }
       };
 
-      const deviceType = responsive.isMobile ? 'mobile' : 
-                        responsive.isTablet ? 'tablet' : 'desktop';
-      
+      const deviceType = responsive.isMobile
+        ? 'mobile'
+        : responsive.isTablet
+        ? 'tablet'
+        : 'desktop';
+
       const baseConfig = baseConfigs[componentType]?.[deviceType] || {};
-      
+
       return {
         ...baseConfig,
         ...customConfig
@@ -150,23 +162,23 @@ const ResponsiveProvider = ({ children }) => {
     },
 
     // Configuration des breakpoints
-    getBreakpointConfig: (config) => {
+    getBreakpointConfig: config => {
       if (typeof config === 'function') {
         return config(responsive);
       }
-      
+
       if (typeof config === 'object') {
         const currentBreakpoint = responsive.responsive.currentBreakpoint();
         return config[currentBreakpoint] || config.default || config;
       }
-      
+
       return config;
     },
 
     // Classes CSS conditionnelles
-    getConditionalClasses: (classes) => {
+    getConditionalClasses: classes => {
       if (typeof classes === 'string') return classes;
-      
+
       if (typeof classes === 'object') {
         return Object.entries(classes)
           .filter(([condition, value]) => {
@@ -174,22 +186,38 @@ const ResponsiveProvider = ({ children }) => {
             if (typeof value === 'string') {
               // Évaluer les conditions
               switch (condition) {
-                case 'mobile': return responsive.isMobile;
-                case 'tablet': return responsive.isTablet;
-                case 'desktop': return responsive.isDesktop;
-                case 'xs': return responsive.isXs;
-                case 'sm': return responsive.isSm;
-                case 'md': return responsive.isMd;
-                case 'lg': return responsive.isLg;
-                case 'xl': return responsive.isXl;
-                case 'xxl': return responsive.isXxl;
-                case 'landscape': return responsive.isLandscape;
-                case 'portrait': return responsive.isPortrait;
-                case 'touch': return responsive.capabilities.hasTouch;
-                case 'hover': return responsive.capabilities.hasHover;
-                case 'lowEnd': return responsive.isLowEnd;
-                case 'reducedMotion': return responsive.shouldReduceMotion;
-                default: return false;
+                case 'mobile':
+                  return responsive.isMobile;
+                case 'tablet':
+                  return responsive.isTablet;
+                case 'desktop':
+                  return responsive.isDesktop;
+                case 'xs':
+                  return responsive.isXs;
+                case 'sm':
+                  return responsive.isSm;
+                case 'md':
+                  return responsive.isMd;
+                case 'lg':
+                  return responsive.isLg;
+                case 'xl':
+                  return responsive.isXl;
+                case 'xxl':
+                  return responsive.isXxl;
+                case 'landscape':
+                  return responsive.isLandscape;
+                case 'portrait':
+                  return responsive.isPortrait;
+                case 'touch':
+                  return responsive.capabilities.hasTouch;
+                case 'hover':
+                  return responsive.capabilities.hasHover;
+                case 'lowEnd':
+                  return responsive.isLowEnd;
+                case 'reducedMotion':
+                  return responsive.shouldReduceMotion;
+                default:
+                  return false;
               }
             }
             return false;
@@ -197,7 +225,7 @@ const ResponsiveProvider = ({ children }) => {
           .map(([, value]) => value)
           .join(' ');
       }
-      
+
       return '';
     }
   };

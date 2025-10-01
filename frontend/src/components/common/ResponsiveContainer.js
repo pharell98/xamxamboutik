@@ -16,14 +16,15 @@ const ResponsiveContainer = ({
   centered = true,
   ...props
 }) => {
-  const { getColumnConfig, getSpacingConfig, layoutClasses } = useResponsiveLayout();
+  const { getColumnConfig, getSpacingConfig, layoutClasses } =
+    useResponsiveLayout();
 
   const containerClasses = classNames(
     'responsive-container',
     layoutClasses,
     {
       'container-fluid': fluid,
-      'container': !fluid,
+      container: !fluid,
       'mx-auto': centered && !fluid,
       [`spacing-${spacing}`]: spacing !== 'normal'
     },
@@ -96,7 +97,7 @@ const ResponsiveCol = ({
 
   // Configuration automatique des colonnes
   const columnConfig = getColumnConfig(size);
-  
+
   const colClasses = classNames(
     'responsive-col',
     layoutClasses,
@@ -133,24 +134,31 @@ const ResponsiveWrapper = ({
   desktop = {},
   ...props
 }) => {
-  const { isMobile, isTablet, isDesktop, responsive: responsiveUtils } = useResponsiveLayout();
+  const {
+    isMobile,
+    isTablet,
+    isDesktop,
+    responsive: responsiveUtils
+  } = useResponsiveLayout();
 
   const Component = component;
 
   // Configuration responsive
-  const config = responsive ? responsiveUtils.getConfig({
-    mobile: mobile,
-    tablet: tablet,
-    desktop: desktop,
-    default: {}
-  }) : {};
+  const config = responsive
+    ? responsiveUtils.getConfig({
+        mobile: mobile,
+        tablet: tablet,
+        desktop: desktop,
+        default: {}
+      })
+    : {};
 
   const wrapperClasses = classNames(
     'responsive-wrapper',
     {
-      'mobile': isMobile,
-      'tablet': isTablet,
-      'desktop': isDesktop
+      mobile: isMobile,
+      tablet: isTablet,
+      desktop: isDesktop
     },
     className,
     config.className
@@ -194,8 +202,9 @@ const ResponsiveBreakpoint = ({
     xxl: isXxl
   };
 
-  const shouldShow = show.some(bp => breakpointFlags[bp]) && 
-                   !hide.some(bp => breakpointFlags[bp]);
+  const shouldShow =
+    show.some(bp => breakpointFlags[bp]) &&
+    !hide.some(bp => breakpointFlags[bp]);
 
   if (!shouldShow) return null;
 
@@ -221,17 +230,21 @@ ResponsiveRow.propTypes = {
   className: PropTypes.string,
   spacing: PropTypes.oneOf(['none', 'small', 'normal', 'large']),
   align: PropTypes.oneOf(['start', 'center', 'end', 'stretch', 'baseline']),
-  justify: PropTypes.oneOf(['start', 'center', 'end', 'between', 'around', 'evenly']),
+  justify: PropTypes.oneOf([
+    'start',
+    'center',
+    'end',
+    'between',
+    'around',
+    'evenly'
+  ]),
   wrap: PropTypes.bool
 };
 
 ResponsiveCol.propTypes = {
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
-  size: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.object
-  ]),
+  size: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
   offset: PropTypes.number,
   order: PropTypes.number,
   align: PropTypes.oneOf(['start', 'center', 'end'])
@@ -249,8 +262,12 @@ ResponsiveWrapper.propTypes = {
 
 ResponsiveBreakpoint.propTypes = {
   children: PropTypes.node.isRequired,
-  show: PropTypes.arrayOf(PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', 'xxl'])),
-  hide: PropTypes.arrayOf(PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', 'xxl'])),
+  show: PropTypes.arrayOf(
+    PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', 'xxl'])
+  ),
+  hide: PropTypes.arrayOf(
+    PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', 'xxl'])
+  ),
   className: PropTypes.string
 };
 

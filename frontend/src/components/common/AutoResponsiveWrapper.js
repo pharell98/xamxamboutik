@@ -1,21 +1,25 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ResponsiveContainer, ResponsiveRow, ResponsiveCol } from './ResponsiveContainer';
+import {
+  ResponsiveContainer,
+  ResponsiveRow,
+  ResponsiveCol
+} from './ResponsiveContainer';
 
 /**
  * Wrapper automatique qui applique la responsivité sans configuration
  * Utilise les classes CSS pour l'adaptation automatique
  */
-const AutoResponsiveWrapper = ({ 
-  children, 
-  className = '', 
+const AutoResponsiveWrapper = ({
+  children,
+  className = '',
   fluid = false,
   spacing = 'normal',
-  ...props 
+  ...props
 }) => {
   return (
-    <ResponsiveContainer 
-      fluid={fluid} 
+    <ResponsiveContainer
+      fluid={fluid}
       spacing={spacing}
       className={`auto-responsive-wrapper ${className}`}
       {...props}
@@ -28,14 +32,14 @@ const AutoResponsiveWrapper = ({
 /**
  * Row automatique responsive
  */
-const AutoResponsiveRow = ({ 
-  children, 
-  className = '', 
+const AutoResponsiveRow = ({
+  children,
+  className = '',
   spacing = 'normal',
-  ...props 
+  ...props
 }) => {
   return (
-    <ResponsiveRow 
+    <ResponsiveRow
       spacing={spacing}
       className={`auto-responsive-row ${className}`}
       {...props}
@@ -48,14 +52,14 @@ const AutoResponsiveRow = ({
 /**
  * Colonne automatique responsive
  */
-const AutoResponsiveCol = ({ 
-  children, 
-  className = '', 
+const AutoResponsiveCol = ({
+  children,
+  className = '',
   size = 12,
-  ...props 
+  ...props
 }) => {
   return (
-    <ResponsiveCol 
+    <ResponsiveCol
       size={size}
       className={`auto-responsive-col ${className}`}
       {...props}
@@ -85,10 +89,6 @@ AutoResponsiveCol.propTypes = {
   size: PropTypes.oneOfType([PropTypes.number, PropTypes.object])
 };
 
-export {
-  AutoResponsiveWrapper,
-  AutoResponsiveRow,
-  AutoResponsiveCol
-};
+export { AutoResponsiveWrapper, AutoResponsiveRow, AutoResponsiveCol };
 
 export default AutoResponsiveWrapper;

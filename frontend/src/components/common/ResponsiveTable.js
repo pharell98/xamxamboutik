@@ -24,17 +24,26 @@ const ResponsiveTable = ({
   // Configuration automatique selon l'appareil
   const tableConfig = useMemo(() => {
     const optimalConfig = layoutUtils.getOptimalConfig('table');
-    
+
     return {
-      size: size === 'auto' ? 
-        (isMobile ? 'sm' : isTablet ? 'sm' : '') : size,
+      size: size === 'auto' ? (isMobile ? 'sm' : isTablet ? 'sm' : '') : size,
       striped: striped,
       hover: hover && !isMobile, // Désactiver hover sur mobile
       bordered: bordered,
       responsive: scrollable,
       ...optimalConfig
     };
-  }, [isMobile, isTablet, isDesktop, striped, hover, bordered, size, scrollable, layoutUtils]);
+  }, [
+    isMobile,
+    isTablet,
+    isDesktop,
+    striped,
+    hover,
+    bordered,
+    size,
+    scrollable,
+    layoutUtils
+  ]);
 
   const tableClasses = classNames(
     'responsive-table',
@@ -51,10 +60,7 @@ const ResponsiveTable = ({
 
   return (
     <div className={tableClasses}>
-      <Table
-        {...tableConfig}
-        {...props}
-      >
+      <Table {...tableConfig} {...props}>
         {children}
       </Table>
     </div>
@@ -96,17 +102,11 @@ const ResponsiveTableCard = ({
               {title && <h5 className="mb-0">{title}</h5>}
               {subtitle && <small className="text-muted">{subtitle}</small>}
             </Col>
-            {actions && (
-              <Col xs="auto">
-                {actions}
-              </Col>
-            )}
+            {actions && <Col xs="auto">{actions}</Col>}
           </Row>
         </Card.Header>
       )}
-      <Card.Body className="p-0">
-        {children}
-      </Card.Body>
+      <Card.Body className="p-0">{children}</Card.Body>
     </Card>
   );
 };
@@ -207,7 +207,17 @@ ResponsiveTable.propTypes = {
   hover: PropTypes.bool,
   bordered: PropTypes.bool,
   size: PropTypes.oneOf(['auto', 'sm', 'lg']),
-  variant: PropTypes.oneOf(['default', 'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark']),
+  variant: PropTypes.oneOf([
+    'default',
+    'primary',
+    'secondary',
+    'success',
+    'danger',
+    'warning',
+    'info',
+    'light',
+    'dark'
+  ]),
   scrollable: PropTypes.bool,
   compact: PropTypes.oneOfType([PropTypes.bool, PropTypes.oneOf(['auto'])])
 };
@@ -218,7 +228,17 @@ ResponsiveTableCard.propTypes = {
   subtitle: PropTypes.string,
   actions: PropTypes.node,
   className: PropTypes.string,
-  variant: PropTypes.oneOf(['default', 'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'])
+  variant: PropTypes.oneOf([
+    'default',
+    'primary',
+    'secondary',
+    'success',
+    'danger',
+    'warning',
+    'info',
+    'light',
+    'dark'
+  ])
 };
 
 ResponsiveTableActions.propTypes = {

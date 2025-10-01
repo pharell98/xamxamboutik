@@ -11,7 +11,7 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
     return Math.max(0, recu - totalCost);
   }, [montantRecu, totalCost]);
 
-  const handleMontantChange = (e) => {
+  const handleMontantChange = e => {
     const value = e.target.value;
     // Allow only positive numbers
     if (value === '' || (!isNaN(value) && parseFloat(value) >= 0)) {

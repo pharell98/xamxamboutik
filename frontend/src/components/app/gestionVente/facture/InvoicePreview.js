@@ -5,20 +5,44 @@ import { Card, Button } from 'react-bootstrap';
 
 const currency = n => `${(n || 0).toLocaleString('fr-FR')} XOF`;
 
-const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPrint }) => {
-  const today = useMemo(() => format(new Date(), 'dd/MM/yyyy', { locale: fr }), []);
-  const total = useMemo(() => items.reduce((acc, it) => {
-    const unit = it.prixVente || Math.floor((it.totalPrice || 0) / (it.quantity || 1)) || 0;
-    const qty = it.quantity || it.quantiteVendu || 1;
-    return acc + unit * qty;
-  }, 0), [items]);
+const InvoicePreview = ({
+  company,
+  saleData,
+  items = [],
+  customerInfo = {},
+  onPrint
+}) => {
+  const today = useMemo(
+    () => format(new Date(), 'dd/MM/yyyy', { locale: fr }),
+    []
+  );
+  const total = useMemo(
+    () =>
+      items.reduce((acc, it) => {
+        const unit =
+          it.prixVente ||
+          Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
+          0;
+        const qty = it.quantity || it.quantiteVendu || 1;
+        return acc + unit * qty;
+      }, 0),
+    [items]
+  );
 
   return (
     <div className="p-3">
-      <div className="brand-bar rounded p-3 mb-3 d-flex justify-content-between align-items-center" style={{background:'#1a237e', color:'#fff'}}>
+      <div
+        className="brand-bar rounded p-3 mb-3 d-flex justify-content-between align-items-center"
+        style={{ background: '#1a237e', color: '#fff' }}
+      >
         <div className="d-flex align-items-center">
           {company?.logo && (
-            <img src={company.logo} alt="logo" style={{height:34}} className="me-2" />
+            <img
+              src={company.logo}
+              alt="logo"
+              style={{ height: 34 }}
+              className="me-2"
+            />
           )}
           <h5 className="m-0">{company?.name || 'Boutique'}</h5>
         </div>
@@ -38,7 +62,9 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
         </div>
         <div className="col-12 col-md-4">
           <Card className="border-primary">
-            <Card.Header className="py-1 text-center fw-bold bg-primary text-white">DÉTAILS</Card.Header>
+            <Card.Header className="py-1 text-center fw-bold bg-primary text-white">
+              DÉTAILS
+            </Card.Header>
             <Card.Body className="py-2">
               <div>Date: {today}</div>
               <div>N°: {customerInfo?.id || ''}</div>
@@ -54,7 +80,9 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
             <Card.Header className="py-1 fw-bold">FACTURÉ À</Card.Header>
             <Card.Body className="py-2">
               <div>{customerInfo?.fullName || 'Client'}</div>
-              {customerInfo?.phoneNumber && <div>{customerInfo.phoneNumber}</div>}
+              {customerInfo?.phoneNumber && (
+                <div>{customerInfo.phoneNumber}</div>
+              )}
             </Card.Body>
           </Card>
         </div>
@@ -62,7 +90,9 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
 
       <div className="mb-2 fw-semibold">Informations de paiement</div>
       <div className="row mb-3">
-        <div className="col-12 col-md-6">Mode: {(saleData?.modePaiement || '').toUpperCase()}</div>
+        <div className="col-12 col-md-6">
+          Mode: {(saleData?.modePaiement || '').toUpperCase()}
+        </div>
         <div className="col-12 col-md-6 text-md-end">Date: {today}</div>
       </div>
 
@@ -70,16 +100,27 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
         <table className="table table-sm align-middle">
           <thead className="table-primary">
             <tr>
-              <th className="text-center" style={{width:'6%'}}>N°</th>
+              <th className="text-center" style={{ width: '6%' }}>
+                N°
+              </th>
               <th>Description du produit</th>
-              <th className="text-center" style={{width:'12%'}}>Qté</th>
-              <th className="text-end" style={{width:'18%'}}>Prix unitaire</th>
-              <th className="text-end" style={{width:'18%'}}>Total</th>
+              <th className="text-center" style={{ width: '12%' }}>
+                Qté
+              </th>
+              <th className="text-end" style={{ width: '18%' }}>
+                Prix unitaire
+              </th>
+              <th className="text-end" style={{ width: '18%' }}>
+                Total
+              </th>
             </tr>
           </thead>
           <tbody>
             {items.map((it, idx) => {
-              const unit = it.prixVente || Math.floor((it.totalPrice || 0) / (it.quantity || 1)) || 0;
+              const unit =
+                it.prixVente ||
+                Math.floor((it.totalPrice || 0) / (it.quantity || 1)) ||
+                0;
               const qty = it.quantity || it.quantiteVendu || 1;
               const line = unit * qty;
               return (
@@ -97,7 +138,7 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
       </div>
 
       <div className="d-flex justify-content-end my-4">
-        <Card style={{minWidth:320, border:'2px solid #3490dc'}}>
+        <Card style={{ minWidth: 320, border: '2px solid #3490dc' }}>
           <Card.Body className="d-flex justify-content-between align-items-center">
             <div className="fw-bold text-primary">TOTAL À PAYER:</div>
             <div className="fs-4 fw-bold text-success">{currency(total)}</div>
@@ -115,12 +156,12 @@ const InvoicePreview = ({ company, saleData, items = [], customerInfo = {}, onPr
       </div>
 
       <div className="text-end mt-3">
-        <Button variant="primary" onClick={onPrint}>Imprimer</Button>
+        <Button variant="primary" onClick={onPrint}>
+          Imprimer
+        </Button>
       </div>
     </div>
   );
 };
 
 export default InvoicePreview;
-
-

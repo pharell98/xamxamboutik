@@ -13,25 +13,27 @@ const useAutoCloseSidebar = () => {
 
   useEffect(() => {
     // Vérifier si on est sur une page de vente
-    const isVentePage = pathname.includes('vente') || 
-                       pathname.includes('gestion-vente') || 
-                       pathname.includes('allSales') ||
-                       pathname.includes('customer-details') ||
-                       pathname.includes('Products') ||
-                       pathname.includes('product-list') ||
-                       pathname.includes('product-grid') ||
-                       pathname.includes('/dashboard/e-commerce') ||
-                       pathname.includes('/gestion-stock/allSales');
+    const isVentePage =
+      pathname.includes('vente') ||
+      pathname.includes('gestion-vente') ||
+      pathname.includes('allSales') ||
+      pathname.includes('customer-details') ||
+      pathname.includes('Products') ||
+      pathname.includes('product-list') ||
+      pathname.includes('product-grid') ||
+      pathname.includes('/dashboard/e-commerce') ||
+      pathname.includes('/gestion-stock/allSales');
 
-    const wasVentePage = previousPathRef.current.includes('vente') || 
-                        previousPathRef.current.includes('gestion-vente') || 
-                        previousPathRef.current.includes('allSales') ||
-                        previousPathRef.current.includes('customer-details') ||
-                        previousPathRef.current.includes('Products') ||
-                        previousPathRef.current.includes('product-list') ||
-                        previousPathRef.current.includes('product-grid') ||
-                        previousPathRef.current.includes('/dashboard/e-commerce') ||
-                        previousPathRef.current.includes('/gestion-stock/allSales');
+    const wasVentePage =
+      previousPathRef.current.includes('vente') ||
+      previousPathRef.current.includes('gestion-vente') ||
+      previousPathRef.current.includes('allSales') ||
+      previousPathRef.current.includes('customer-details') ||
+      previousPathRef.current.includes('Products') ||
+      previousPathRef.current.includes('product-list') ||
+      previousPathRef.current.includes('product-grid') ||
+      previousPathRef.current.includes('/dashboard/e-commerce') ||
+      previousPathRef.current.includes('/gestion-stock/allSales');
 
     // Fermer automatiquement la sidebar si on entre sur une page de vente
     // Note: Les boutons toggle peuvent toujours ouvrir/fermer manuellement
@@ -41,14 +43,14 @@ const useAutoCloseSidebar = () => {
         setConfig('showBurgerMenu', false);
         autoClosedRef.current = true;
       }
-      
+
       // Sur desktop, réduire la sidebar si elle est étendue
       if (window.innerWidth >= 768 && !config.isNavbarVerticalCollapsed) {
         setConfig('isNavbarVerticalCollapsed', true);
         autoClosedRef.current = true;
       }
     }
-    
+
     // Réinitialiser le flag quand on change de page
     if (!isVentePage && wasVentePage) {
       autoClosedRef.current = false;
@@ -60,15 +62,16 @@ const useAutoCloseSidebar = () => {
   // Écouter les changements de taille d'écran
   useEffect(() => {
     const handleResize = () => {
-      const isVentePage = pathname.includes('vente') || 
-                         pathname.includes('gestion-vente') || 
-                         pathname.includes('allSales') ||
-                         pathname.includes('customer-details') ||
-                         pathname.includes('Products') ||
-                         pathname.includes('product-list') ||
-                         pathname.includes('product-grid') ||
-                         pathname.includes('/dashboard/e-commerce') ||
-                         pathname.includes('/gestion-stock/allSales');
+      const isVentePage =
+        pathname.includes('vente') ||
+        pathname.includes('gestion-vente') ||
+        pathname.includes('allSales') ||
+        pathname.includes('customer-details') ||
+        pathname.includes('Products') ||
+        pathname.includes('product-list') ||
+        pathname.includes('product-grid') ||
+        pathname.includes('/dashboard/e-commerce') ||
+        pathname.includes('/gestion-stock/allSales');
 
       if (isVentePage) {
         if (window.innerWidth < 768) {
@@ -88,16 +91,17 @@ const useAutoCloseSidebar = () => {
   // Pour le débogage (optionnel) - peut être supprimé en production
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      const isVentePage = pathname.includes('vente') || 
-                         pathname.includes('gestion-vente') || 
-                         pathname.includes('allSales') ||
-                         pathname.includes('customer-details') ||
-                         pathname.includes('Products') ||
-                         pathname.includes('product-list') ||
-                         pathname.includes('product-grid') ||
-                         pathname.includes('/dashboard/e-commerce') ||
-                         pathname.includes('/gestion-stock/allSales');
-      
+      const isVentePage =
+        pathname.includes('vente') ||
+        pathname.includes('gestion-vente') ||
+        pathname.includes('allSales') ||
+        pathname.includes('customer-details') ||
+        pathname.includes('Products') ||
+        pathname.includes('product-list') ||
+        pathname.includes('product-grid') ||
+        pathname.includes('/dashboard/e-commerce') ||
+        pathname.includes('/gestion-stock/allSales');
+
       if (isVentePage) {
         console.log('🔄 Auto-close sidebar: Page de vente détectée');
       }

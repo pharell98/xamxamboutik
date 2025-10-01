@@ -134,7 +134,7 @@ export const StompProvider = ({ children }) => {
             if (!success) {
               pendingSubscriptionsRef.current.push({ topic, callback });
             } else {
-              }
+            }
           });
 
           if (pendingSubscriptionsRef.current.length === 0) {
@@ -247,7 +247,7 @@ export const StompProvider = ({ children }) => {
       try {
         subscriptionsRef.current[index].unsubscribe();
         subscriptionsRef.current.splice(index, 1);
-        } catch (error) {
+      } catch (error) {
         console.warn(
           `Erreur lors de la désinscription pour ${subscriptionId}:`,
           error

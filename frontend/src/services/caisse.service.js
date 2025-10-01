@@ -51,7 +51,7 @@ const caisseService = {
       );
       throw error;
     }
-}
+  }
 };
 
 export default caisseService;

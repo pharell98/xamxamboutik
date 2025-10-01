@@ -8,14 +8,15 @@ import classNames from 'classnames';
 /**
  * Normalise les données d'un produit
  */
-export const normalizeProduct = (product) => ({
+export const normalizeProduct = product => ({
   id: product?.id || product?.produitId || 'unknown',
   libelle: product?.libelle || product?.nom || 'Produit sans nom',
   image: product?.image || product?.imageUrl || null,
   prixVente: Number(product?.prixVente || product?.prix || 0),
   prixAchat: Number(product?.prixAchat || 0),
   stockDisponible: Number(product?.stockDisponible || product?.stock || 0),
-  categorieLibelle: product?.categorieLibelle || product?.categorie || 'Sans catégorie'
+  categorieLibelle:
+    product?.categorieLibelle || product?.categorie || 'Sans catégorie'
 });
 
 /**
@@ -68,10 +69,7 @@ export const ProductStock = ({ stock, className = 'fs-9' }) => {
 
   return (
     <p className={`${stockClassName} mb-2`} style={ELLIPSIS_STYLE}>
-      Stock:{' '}
-      <strong>
-        {isInStock ? `${stock} dispo` : 'Rupture'}
-      </strong>
+      Stock: <strong>{isInStock ? `${stock} dispo` : 'Rupture'}</strong>
     </p>
   );
 };
@@ -79,12 +77,12 @@ export const ProductStock = ({ stock, className = 'fs-9' }) => {
 /**
  * Bouton d'ajout au panier
  */
-export const AddToCartButton = ({ 
-  onAddToCart, 
-  isInStock, 
+export const AddToCartButton = ({
+  onAddToCart,
+  isInStock,
   variant = 'falcon-default',
   size = 'sm',
-  className = 'w-100' 
+  className = 'w-100'
 }) => (
   <OverlayTrigger
     placement="top"
@@ -93,7 +91,7 @@ export const AddToCartButton = ({
     <Button
       variant={variant}
       size={size}
-      onClick={(e) => {
+      onClick={e => {
         e.stopPropagation();
         onAddToCart(1);
       }}
@@ -111,9 +109,7 @@ export const AddToCartButton = ({
  * Conteneur de détails produit (pour masquer sur mobile)
  */
 export const ProductDetails = ({ children, showOnMobile = false }) => (
-  <div className={showOnMobile ? '' : 'd-none d-md-block'}>
-    {children}
-  </div>
+  <div className={showOnMobile ? '' : 'd-none d-md-block'}>{children}</div>
 );
 
 // Styles partagés

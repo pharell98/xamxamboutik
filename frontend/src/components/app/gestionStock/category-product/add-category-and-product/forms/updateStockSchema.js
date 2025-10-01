@@ -73,14 +73,18 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
   const {
     config: { isDark }
   } = useAppContext();
-  
+
   const { data: stompData } = useStompClient();
 
   // Écouter les notifications de mise à jour de stock
   useEffect(() => {
     if (stompData && stompData.length > 0) {
       const lastMessage = stompData[stompData.length - 1];
-      if (lastMessage && lastMessage.action === 'UPDATE' && lastMessage.type === 'STOCK_UPDATE') {
+      if (
+        lastMessage &&
+        lastMessage.action === 'UPDATE' &&
+        lastMessage.type === 'STOCK_UPDATE'
+      ) {
         // Rafraîchir les données si nécessaire
         onSuccess?.();
       }
@@ -101,14 +105,19 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
         type: 'success'
       });
       reset(defaultValues);
-      
+
       // Déclencher un événement personnalisé pour rafraîchir les composants
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('stock-updated', {
-          detail: { produitId: data.produit.id, produitLibelle: data.produit.libelle }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('stock-updated', {
+            detail: {
+              produitId: data.produit.id,
+              produitLibelle: data.produit.libelle
+            }
+          })
+        );
       }, 1000);
-      
+
       onSuccess?.();
     } catch (error) {
       const msg =
