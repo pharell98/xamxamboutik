@@ -22,13 +22,11 @@ export const ProductContext = createContext(INITIAL_STATE);
  */
 export const useProductContext = () => {
   const context = useContext(ProductContext);
-
+  
   if (!context) {
-    throw new Error(
-      'useProductContext doit être utilisé dans un ProductProvider'
-    );
+    throw new Error('useProductContext doit être utilisé dans un ProductProvider');
   }
-
+  
   return context;
 };
 
@@ -36,24 +34,19 @@ export const useProductContext = () => {
  * Provider pour la gestion des produits et du panier
  */
 const ProductProvider = ({ children }) => {
-  const [productsState, productsDispatch] = useReducer(
-    productReducer,
-    INITIAL_STATE
-  );
+  const [productsState, productsDispatch] = useReducer(productReducer, INITIAL_STATE);
 
   // Fonctions utilitaires mémoïsées
   const contextValue = useMemo(() => {
-    const isInShoppingCart = id =>
+    const isInShoppingCart = (id) =>
       productsState.cartItems.some(cartItem => cartItem.id === id);
 
-    const getCartItemById = id =>
+    const getCartItemById = (id) =>
       productsState.cartItems.find(cartItem => cartItem.id === id);
 
     const getCartTotal = () =>
-      productsState.cartItems.reduce(
-        (total, item) =>
-          total + (item.totalPrice || item.prixVente * item.quantity),
-        0
+      productsState.cartItems.reduce((total, item) => 
+        total + (item.totalPrice || (item.prixVente * item.quantity)), 0
       );
 
     const getCartItemsCount = () =>

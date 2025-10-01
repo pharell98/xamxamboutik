@@ -2,8 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalculator } from '@fortawesome/free-solid-svg-icons';
+import { useAppContext } from 'providers/AppProvider';
 
 const CalculatorModal = ({ show, onClose, totalCost }) => {
+  const { config: { isDark } } = useAppContext();
   const [montantRecu, setMontantRecu] = useState('');
 
   const montantRendu = useMemo(() => {
@@ -25,22 +27,31 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
   };
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" centered>
-      <Modal.Header closeButton>
+    <Modal 
+      show={show} 
+      onHide={handleClose} 
+      backdrop="static" 
+      centered
+      contentClassName={isDark ? 'bg-dark text-light' : ''}
+    >
+      <Modal.Header 
+        closeButton
+        className={isDark ? 'bg-dark text-light border-secondary' : ''}
+      >
         <Modal.Title>
           <FontAwesomeIcon icon={faCalculator} className="me-2" />
           Calculatrice
         </Modal.Title>
       </Modal.Header>
 
-      <Modal.Body>
+      <Modal.Body className={isDark ? 'bg-dark text-light' : ''}>
         <div className="mb-3">
           <Form.Label className="fw-semibold">Total à payer</Form.Label>
           <Form.Control
             type="text"
             readOnly
             value={`${totalCost.toLocaleString()} XOF`}
-            className="bg-light fw-bold"
+            className={`fw-bold ${isDark ? 'bg-secondary text-light' : 'bg-light'}`}
           />
         </div>
 
@@ -54,6 +65,7 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
             onChange={handleMontantChange}
             placeholder="Entrez le montant payé"
             autoFocus
+            className={isDark ? 'bg-dark text-light border-secondary' : ''}
           />
         </Form.Group>
 
@@ -63,12 +75,12 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
             type="text"
             readOnly
             value={`${montantRendu.toLocaleString()} XOF`}
-            className={`fw-bold ${montantRendu > 0 ? 'text-success' : ''}`}
+            className={`fw-bold ${montantRendu > 0 ? 'text-success' : ''} ${isDark ? 'bg-secondary text-light' : ''}`}
           />
         </Form.Group>
       </Modal.Body>
 
-      <Modal.Footer>
+      <Modal.Footer className={isDark ? 'bg-dark border-secondary' : ''}>
         <Button variant="secondary" onClick={handleClose}>
           Fermer
         </Button>

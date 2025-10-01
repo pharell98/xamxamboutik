@@ -11,8 +11,8 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <AppProvider>
-      <RouterProvider
-        router={router}
+      <RouterProvider 
+        router={router} 
         future={{
           v7_startTransition: true
         }}

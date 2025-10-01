@@ -4,6 +4,7 @@ import { Col } from 'react-bootstrap';
 import classNames from 'classnames';
 
 import Flex from 'components/common/Flex';
+import { useAppContext } from 'providers/AppProvider';
 import { useProductContext } from 'providers/ProductProvider';
 import useProductHook from './useProductHook';
 import ProductImage from './ProductImage';
@@ -23,6 +24,7 @@ import {
  * Composant carte produit en mode grille
  */
 const ProductGrid = ({ product, ...rest }) => {
+  const { config: { isDark } } = useAppContext();
   const validatedProduct = normalizeProduct(product);
   const {
     id,
@@ -54,7 +56,8 @@ const ProductGrid = ({ product, ...rest }) => {
   }, [handleCardClick, isInStock, isInCart]);
 
   const cardClassName = classNames('border rounded-1 p-2 product-card fade-in', {
-    'bg-light': isInCart,
+    'bg-light': isInCart && !isDark,
+    'bg-dark text-light border-secondary': isDark,
     'cursor-pointer': isInStock && !isInCart,
     'cursor-not-allowed': !isInStock
   });

@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import Flex from 'components/common/Flex';
 import IconButton from 'components/common/IconButton';
 import { useProductContext } from 'providers/ProductProvider';
+import { useAppContext } from 'providers/AppProvider';
 import useProductHook from './useProductHook';
 import ProductImage from './ProductImage';
 import {
@@ -43,6 +44,7 @@ const ListAddToCartButton = ({ onAddToCart, isInStock }) => (
  * Composant produit en mode liste
  */
 const ProductList = ({ product, index }) => {
+  const { config: { isDark } } = useAppContext();
   const validatedProduct = normalizeProduct(product);
   const {
     id,
@@ -74,8 +76,9 @@ const ProductList = ({ product, index }) => {
   }, [handleRowClick, isInStock, isInCart]);
 
   const rowClassName = classNames('py-2 px-1 fade-in product-list-item', {
-    'bg-100': index % 2 !== 0,
-    'bg-light': isInCart,
+    'bg-100': index % 2 !== 0 && !isDark,
+    'bg-dark text-light border-secondary': isDark,
+    'bg-light': isInCart && !isDark,
     'cursor-pointer': isInStock && !isInCart,
     'cursor-not-allowed': !isInStock
   });

@@ -8,22 +8,14 @@ const useImageLoader = (imageUrl, fallbackUrl = '/no-image.svg') => {
   // Fonction pour vérifier si une URL semble être une image valide
   const isValidImageUrl = url => {
     if (!url) return false;
-
+    
     // Vérifier si c'est une URL complète
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return true;
     }
-
+    
     // Vérifier les extensions d'image
-    const imageExtensions = [
-      '.jpg',
-      '.jpeg',
-      '.png',
-      '.gif',
-      '.bmp',
-      '.webp',
-      '.svg'
-    ];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
     const lowerUrl = url.toLowerCase();
     return (
       imageExtensions.some(ext => lowerUrl.endsWith(ext)) ||
@@ -42,7 +34,7 @@ const useImageLoader = (imageUrl, fallbackUrl = '/no-image.svg') => {
     setHasError(false);
 
     const img = new Image();
-
+    
     img.onload = () => {
       setImageSrc(imageUrl);
       setIsLoading(false);
@@ -50,9 +42,7 @@ const useImageLoader = (imageUrl, fallbackUrl = '/no-image.svg') => {
     };
 
     img.onerror = () => {
-      console.warn(
-        `[useImageLoader] Échec du chargement de l'image: ${imageUrl}`
-      );
+      console.warn(`[useImageLoader] Échec du chargement de l'image: ${imageUrl}`);
       setImageSrc(fallbackUrl);
       setIsLoading(false);
       setHasError(true);

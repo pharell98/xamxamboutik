@@ -1,4 +1,5 @@
 // src/salesFiltersConfig.js
+// (rien à changer ici côté logique; le styling est géré dans les composants consommateurs)
 export const getSalesFiltersConfig = () => [
   {
     name: 'period',

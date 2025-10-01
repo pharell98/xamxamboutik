@@ -53,7 +53,9 @@ const NavbarVertical = () => {
     <Nav.Item as="li">
       <Row className="mt-3 mb-2 navbar-vertical-label-wrapper">
         <Col xs="auto" className="navbar-vertical-label navbar-vertical-label">
-          {labelIcon && <FontAwesomeIcon icon={labelIcon} className="me-2" />}
+          {labelIcon && (
+            <FontAwesomeIcon icon={labelIcon} className="me-2" />
+          )}
           {label}
         </Col>
         <Col className="ps-0">
@@ -91,10 +93,7 @@ const NavbarVertical = () => {
             {routes.map(route => (
               <Fragment key={route.label}>
                 {!route.labelDisable && (
-                  <NavbarLabel
-                    label={capitalize(route.label)}
-                    labelIcon={route.labelIcon}
-                  />
+                  <NavbarLabel label={capitalize(route.label)} labelIcon={route.labelIcon} />
                 )}
                 <NavbarVerticalMenu routes={route.children} />
               </Fragment>

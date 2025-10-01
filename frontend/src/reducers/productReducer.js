@@ -9,7 +9,7 @@ const DEFAULT_MODAL_STATE = {
 /**
  * Valide et normalise une quantité
  */
-const validateQuantity = quantity => {
+const validateQuantity = (quantity) => {
   const num = Number(quantity);
   return !num || num <= 0 || !Number.isInteger(num) ? 1 : Math.max(1, num);
 };
@@ -34,7 +34,7 @@ const updateExistingCartItem = (cartItems, productId, newProduct) => {
  */
 const updateCartItemQuantity = (cartItems, productId, quantity) => {
   const validQuantity = validateQuantity(quantity);
-
+  
   return cartItems.map(item =>
     item.id === productId
       ? {
@@ -68,7 +68,7 @@ const actions = {
 
   ADD_TO_CART: (state, { product }) => {
     const existingItem = state.cartItems.find(item => item.id === product.id);
-
+    
     const cartItems = existingItem
       ? updateExistingCartItem(state.cartItems, product.id, product)
       : addNewCartItem(state.cartItems, product);
@@ -94,17 +94,17 @@ const actions = {
     cartItems: updateCartItemQuantity(state.cartItems, productId, quantity)
   }),
 
-  SHOW_CART_MODAL: state => ({
+  SHOW_CART_MODAL: (state) => ({
     ...state,
     cartModal: { ...state.cartModal, show: true }
   }),
 
-  HIDE_CART_MODAL: state => ({
+  HIDE_CART_MODAL: (state) => ({
     ...state,
     cartModal: { ...state.cartModal, show: false }
   }),
 
-  CHECKOUT: state => ({
+  CHECKOUT: (state) => ({
     ...state,
     cartItems: [],
     cartModal: DEFAULT_MODAL_STATE
@@ -117,11 +117,11 @@ const actions = {
 export const productReducer = (state, action) => {
   const { type, payload } = action;
   const actionHandler = actions[type];
-
+  
   if (actionHandler) {
     return actionHandler(state, payload);
   }
-
+  
   console.warn(`[productReducer] Action non reconnue: ${type}`);
   return state;
 };

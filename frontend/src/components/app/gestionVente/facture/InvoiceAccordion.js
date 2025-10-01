@@ -11,8 +11,9 @@ import { useToast } from 'components/common/Toast';
 import useInvoices from 'hooks/useInvoices';
 import InvoiceItem from './InvoiceItem';
 import InvoiceGenerator from './InvoiceGenerator';
+import { printInvoice } from './print/printInvoiceHtml';
 
-const InvoiceFilters = ({ filters, onFiltersChange, onRefresh }) => {
+const InvoiceFilters = ({ filters, onFiltersChange, onRefresh, isDark }) => {
   const filterOptions = [
     { value: 'today', label: "Aujourd'hui" },
     { value: 'month', label: 'Ce mois' },
@@ -20,9 +21,9 @@ const InvoiceFilters = ({ filters, onFiltersChange, onRefresh }) => {
   ];
 
   return (
-    <div className="mb-3 p-3 bg-light rounded border">
+    <div className={`mb-3 p-3 rounded border ${isDark ? 'bg-dark border-secondary text-light' : 'bg-light'}`}>
       <div className="d-flex justify-content-between align-items-center mb-2">
-        <small className="fw-semibold text-muted">
+        <small className={`fw-semibold ${isDark ? 'text-secondary' : 'text-muted'}`}>
           <FontAwesomeIcon icon={faFilter} className="me-1" />
           Filtres
         </small>
@@ -39,13 +40,14 @@ const InvoiceFilters = ({ filters, onFiltersChange, onRefresh }) => {
       <Row className="g-2">
         <Col md={6}>
           <Form.Group className="mb-0">
-            <Form.Label className="small fw-semibold mb-1">
+            <Form.Label className={`small fw-semibold mb-1 ${isDark ? 'text-light' : ''}`}>
               Période
             </Form.Label>
             <Form.Select
               size="sm"
               value={filters.period}
               onChange={(e) => onFiltersChange({ period: e.target.value })}
+              className={`${isDark ? 'bg-dark text-white border-secondary' : ''}`}
             >
               {filterOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -57,7 +59,7 @@ const InvoiceFilters = ({ filters, onFiltersChange, onRefresh }) => {
         </Col>
         <Col md={6}>
           <Form.Group className="mb-0">
-            <Form.Label className="small fw-semibold mb-1">
+            <Form.Label className={`small fw-semibold mb-1 ${isDark ? 'text-light' : ''}`}>
               Date Spécifique
             </Form.Label>
             <Form.Control
@@ -66,6 +68,7 @@ const InvoiceFilters = ({ filters, onFiltersChange, onRefresh }) => {
               value={filters.specificDate}
               onChange={(e) => onFiltersChange({ specificDate: e.target.value })}
               placeholder="Sélectionner une date"
+              className={`${isDark ? 'bg-dark text-white border-secondary' : ''}`}
             />
           </Form.Group>
         </Col>
@@ -171,21 +174,35 @@ const InvoiceAccordion = () => {
         utilisateurNom: facture.utilisateurNom
       };
 
-      // Générer et télécharger la facture
-      const fileName = await InvoiceGenerator.downloadInvoice(
-        saleData,
-        cartItems,
-        customerInfo,
-        {}, // Company info sera récupéré depuis l'API dans InvoiceGenerator
-        userInfo
-      );
+      // Utiliser la nouvelle méthode HTML en priorité
+      try {
+        await printInvoice(saleData, cartItems, customerInfo, userInfo);
+        
+        addToast({
+          title: 'Succès',
+          message: 'Facture générée avec succès',
+          type: 'success',
+          duration: 4000
+        });
+      } catch (htmlError) {
+        console.error('Erreur génération facture HTML:', htmlError);
+        
+        // Fallback vers l'ancienne méthode PDF
+        const fileName = await InvoiceGenerator.downloadInvoice(
+          saleData,
+          cartItems,
+          customerInfo,
+          {}, // Company info sera récupéré depuis l'API dans InvoiceGenerator
+          userInfo
+        );
 
-      addToast({
-        title: 'Succès',
-        message: `Facture ${fileName} téléchargée avec succès`,
-        type: 'success',
-        duration: 4000
-      });
+        addToast({
+          title: 'Succès',
+          message: `Facture ${fileName} téléchargée avec succès`,
+          type: 'success',
+          duration: 4000
+        });
+      }
     } catch (error) {
       console.error('Erreur génération facture:', error);
       addToast({
@@ -232,6 +249,7 @@ const InvoiceAccordion = () => {
           .invoice-fixed-header.dark {
             background: #212529;
             border-bottom-color: #495057;
+            color: #f8f9fa;
           }
           .invoice-scrollable-content {
             max-height: 60vh;
@@ -274,11 +292,11 @@ const InvoiceAccordion = () => {
       </style>
 
       {/* En-tête et filtres fixes */}
-      <div className={`invoice-fixed-header ${isDark ? 'dark' : ''}`}>
+      <div className={`invoice-fixed-header ${isDark ? 'dark text-light' : ''}`}>
         {/* En-tête */}
         <div className="mb-3">
-          <h6 className="mb-1 fw-bold">Historique des Factures</h6>
-          <small className="text-muted">Consultez et gérez vos factures de vente</small>
+          <h6 className={`mb-1 fw-bold ${isDark ? 'text-light' : ''}`}>Historique des Factures</h6>
+          <small className={isDark ? 'text-secondary' : 'text-muted'}>Consultez et gérez vos factures de vente</small>
         </div>
 
         {/* Filtres */}
@@ -286,6 +304,7 @@ const InvoiceAccordion = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onRefresh={handleRefresh}
+          isDark={isDark}
         />
       </div>
 

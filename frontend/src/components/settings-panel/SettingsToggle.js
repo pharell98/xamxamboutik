@@ -16,13 +16,13 @@ const SettingsToggle = () => {
       style={{
         cursor: 'pointer',
         zIndex: 1000,
-        margin: '16px'
+        margin: '12px'
       }}
     >
       <Card.Body
         className="d-flex align-items-center py-1 px-2"
         style={{
-          borderRadius: '24px',
+          borderRadius: '20px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           transition: 'transform 0.2s'
         }}
@@ -31,12 +31,12 @@ const SettingsToggle = () => {
       >
         <div
           className="bg-primary-subtle rounded-start d-flex align-items-center justify-content-center"
-          style={{ height: '34px', width: '34px', position: 'relative' }}
+          style={{ height: '30px', width: '30px', position: 'relative' }}
         >
           <span className="fa-spin position-absolute top-50 start-50 translate-middle">
             <svg
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 20 20"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -50,8 +50,8 @@ const SettingsToggle = () => {
           </span>
         </div>
         <small
-          className="text-uppercase text-primary fw-bold bg-primary-subtle py-1 ps-3 pe-3 rounded-end"
-          style={{ marginLeft: '4px' }}
+          className="text-uppercase text-primary fw-bold bg-primary-subtle py-1 ps-2 pe-2 rounded-end d-none d-sm-inline"
+          style={{ marginLeft: '4px', fontSize: '11px' }}
         >
           Paramètre
         </small>
