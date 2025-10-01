@@ -22,3 +22,9 @@ yarn-debug.log*
 yarn-error.log*
 .test
 .idea/
+
+node_modules
+build
+.git
+*.md
+.env*
