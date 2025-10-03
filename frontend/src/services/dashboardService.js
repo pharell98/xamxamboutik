@@ -7,9 +7,7 @@ const dashboardService = {
    */
   getCumulativeBenefit: async () => {
     try {
-      const response = await apiClient.get(
-        '/statistiques/benefice/cumulatif'
-      );
+      const response = await apiClient.get('/statistiques/benefice/cumulatif');
       // La réponse devrait être au format { message, data } où data contient le bénéfice.
       return response.data;
     } catch (error) {

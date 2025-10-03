@@ -17,14 +17,20 @@ const ActionInput = forwardRef(
     },
     ref
   ) => {
-    const { config: { isDark } } = useAppContext();
+    const {
+      config: { isDark }
+    } = useAppContext();
     const error = errors[name];
     const safeOptions = Array.isArray(options) ? options : [];
 
     return (
       <Form.Group {...formGroupProps}>
         {label && (
-          <Form.Label className={`fw-medium ${isDark ? 'text-light' : 'text-dark'}`}>{label}</Form.Label>
+          <Form.Label
+            className={`fw-medium ${isDark ? 'text-light' : 'text-dark'}`}
+          >
+            {label}
+          </Form.Label>
         )}
         {type === 'select' ? (
           <Form.Select
@@ -36,7 +42,9 @@ const ActionInput = forwardRef(
             style={{
               borderRadius: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: isDark ? '0 2px 4px rgba(255, 255, 255, 0.06)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
+              boxShadow: isDark
+                ? '0 2px 4px rgba(255, 255, 255, 0.06)'
+                : '0 2px 4px rgba(0, 0, 0, 0.05)'
             }}
             onFocus={e =>
               (e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)')
@@ -64,7 +72,9 @@ const ActionInput = forwardRef(
             style={{
               borderRadius: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: isDark ? '0 2px 4px rgba(255, 255, 255, 0.06)' : '0 2px 4px rgba(0, 0, 0, 0.05)'
+              boxShadow: isDark
+                ? '0 2px 4px rgba(255, 255, 255, 0.06)'
+                : '0 2px 4px rgba(0, 0, 0, 0.05)'
             }}
             onFocus={e =>
               (e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)')

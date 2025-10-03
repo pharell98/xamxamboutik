@@ -13,7 +13,7 @@ const useResponsive = () => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      
+
       setScreenSize({ width, height });
       setIsMobile(width < 768);
       setIsTablet(width >= 768 && width < 1024);

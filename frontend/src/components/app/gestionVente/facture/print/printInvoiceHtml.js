@@ -161,7 +161,9 @@ export const printInvoice = async (
 
       <div class="mb-2 fw-semibold">Informations de paiement</div>
       <div class="row mb-2">
-        <div class="col-12 col-md-6">Mode: ${String(saleData.modePaiement || '').toUpperCase()}</div>
+        <div class="col-12 col-md-6">Mode: ${String(
+          saleData.modePaiement || ''
+        ).toUpperCase()}</div>
         <div class="col-12 col-md-6 text-md-end">Date: ${today}</div>
       </div>
 

@@ -65,7 +65,9 @@ const QuantityController = ({
   max = Infinity,
   disabled = false
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const [inputValue, setInputValue] = useState(quantity.toString());
   const [isEditing, setIsEditing] = useState(false);
 
@@ -76,11 +78,14 @@ const QuantityController = ({
     }
   }, [quantity, isEditing]);
 
-  const updateQuantity = useCallback((newQuantity) => {
-    const validQuantity = validateQuantity(newQuantity, max);
-    setInputValue(validQuantity.toString());
-    handleChange(validQuantity);
-  }, [handleChange, max]);
+  const updateQuantity = useCallback(
+    newQuantity => {
+      const validQuantity = validateQuantity(newQuantity, max);
+      setInputValue(validQuantity.toString());
+      handleChange(validQuantity);
+    },
+    [handleChange, max]
+  );
 
   const handleDecrease = useCallback(() => {
     updateQuantity(quantity - 1);
@@ -90,17 +95,20 @@ const QuantityController = ({
     updateQuantity(quantity + 1);
   }, [quantity, updateQuantity]);
 
-  const handleInputChange = useCallback((e) => {
-    const value = e.target.value;
-    setInputValue(value);
-    
-    if (value !== '') {
-      const validQuantity = validateQuantity(value, max);
-      if (validQuantity !== quantity) {
-        handleChange(validQuantity);
+  const handleInputChange = useCallback(
+    e => {
+      const value = e.target.value;
+      setInputValue(value);
+
+      if (value !== '') {
+        const validQuantity = validateQuantity(value, max);
+        if (validQuantity !== quantity) {
+          handleChange(validQuantity);
+        }
       }
-    }
-  }, [handleChange, max, quantity]);
+    },
+    [handleChange, max, quantity]
+  );
 
   const handleInputBlur = useCallback(() => {
     setIsEditing(false);
@@ -115,22 +123,30 @@ const QuantityController = ({
     setIsEditing(true);
   }, []);
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleInputBlur();
-    }
-  }, [handleInputBlur]);
+  const handleKeyDown = useCallback(
+    e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleInputBlur();
+      }
+    },
+    [handleInputBlur]
+  );
 
   const canDecrease = quantity > MIN_QUANTITY && !disabled;
   const canIncrease = quantity < max && !disabled;
 
   return (
     <div style={{ width: '100%', maxWidth: '140px', minWidth: '120px' }}>
-      <InputGroup size="sm" style={{
-        ...containerStyle,
-        boxShadow: isDark ? '0 1px 3px rgba(255, 255, 255, 0.08)' : containerStyle.boxShadow
-      }}>
+      <InputGroup
+        size="sm"
+        style={{
+          ...containerStyle,
+          boxShadow: isDark
+            ? '0 1px 3px rgba(255, 255, 255, 0.08)'
+            : containerStyle.boxShadow
+        }}
+      >
         {/* Bouton diminuer */}
         <InputGroup.Text
           as={Button}

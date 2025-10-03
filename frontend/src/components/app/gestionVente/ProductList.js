@@ -28,7 +28,7 @@ const ListAddToCartButton = ({ onAddToCart, isInStock }) => (
     size="sm"
     variant="primary"
     icon="plus"
-    onClick={(e) => {
+    onClick={e => {
       e.stopPropagation();
       onAddToCart(1);
     }}
@@ -44,7 +44,9 @@ const ListAddToCartButton = ({ onAddToCart, isInStock }) => (
  * Composant produit en mode liste
  */
 const ProductList = ({ product, index }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const validatedProduct = normalizeProduct(product);
   const {
     id,
@@ -68,12 +70,15 @@ const ProductList = ({ product, index }) => {
     }
   }, [isInStock, isInCart, handleAddToCart]);
 
-  const handleKeyDown = useCallback((e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && isInStock && !isInCart) {
-      e.preventDefault();
-      handleRowClick();
-    }
-  }, [handleRowClick, isInStock, isInCart]);
+  const handleKeyDown = useCallback(
+    e => {
+      if ((e.key === 'Enter' || e.key === ' ') && isInStock && !isInCart) {
+        e.preventDefault();
+        handleRowClick();
+      }
+    },
+    [handleRowClick, isInStock, isInCart]
+  );
 
   const rowClassName = classNames('py-2 px-1 fade-in product-list-item', {
     'bg-100': index % 2 !== 0 && !isDark,
@@ -107,7 +112,7 @@ const ProductList = ({ product, index }) => {
             />
           </div>
         </Col>
-        
+
         {/* Contenu principal */}
         <Col sm={10} md={10}>
           <Row className="h-100">
@@ -118,43 +123,31 @@ const ProductList = ({ product, index }) => {
               className="mb-2 mb-md-0"
             >
               {/* Prix */}
-              <ProductPrice 
-                price={prixVente} 
-                className="fs-7 text-warning mb-1" 
+              <ProductPrice
+                price={prixVente}
+                className="fs-7 text-warning mb-1"
               />
-              
+
               {/* Titre */}
-              <ProductTitle 
-                title={libelle} 
-                className="fs-8 mb-1" 
-              />
-              
+              <ProductTitle title={libelle} className="fs-8 mb-1" />
+
               {/* Détails (cachés sur mobile) */}
               <ProductDetails>
-                <ProductCategory 
-                  category={categorieLibelle} 
-                  className="fs-8" 
-                />
-                <ProductPurchasePrice 
-                  price={prixAchat} 
-                  className="fs-8" 
-                />
-                <ProductStock 
-                  stock={stockDisponible} 
-                  className="fs-8" 
-                />
+                <ProductCategory category={categorieLibelle} className="fs-8" />
+                <ProductPurchasePrice price={prixAchat} className="fs-8" />
+                <ProductStock stock={stockDisponible} className="fs-8" />
               </ProductDetails>
             </Col>
-            
+
             {/* Actions */}
             <Col
               xs="auto"
               className="d-flex align-items-center mt-auto mt-md-0"
             >
               <div className="product-actions">
-                <ListAddToCartButton 
-                  onAddToCart={handleAddToCart} 
-                  isInStock={isInStock} 
+                <ListAddToCartButton
+                  onAddToCart={handleAddToCart}
+                  isInStock={isInStock}
                 />
               </div>
             </Col>

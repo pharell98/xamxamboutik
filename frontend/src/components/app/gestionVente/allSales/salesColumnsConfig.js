@@ -13,7 +13,9 @@ export const getSalesColumns = (
   setSelectedSale,
   setSelectedAction
 ) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   return [
     {
       accessorKey: 'image',
@@ -60,9 +62,9 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-left text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-left fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
-          row.original
-        )}`;
+        const css = `text-left fs-9 fw-medium ${
+          isDark ? 'text-light' : ''
+        } ${cellWrapperClass(row.original)}`;
         return (
           <div className={css}>
             {row.original.libelleProduit !== undefined
@@ -78,9 +80,9 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
-          row.original
-        )}`;
+        const css = `text-right fs-9 fw-medium ${
+          isDark ? 'text-light' : ''
+        } ${cellWrapperClass(row.original)}`;
         const prix = row.original.prixVendu || row.original.prixVente;
         return (
           <div className={css}>{prix !== undefined ? prix + ' CFA' : '—'}</div>
@@ -93,9 +95,9 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
-          row.original
-        )}`;
+        const css = `text-right fs-9 fw-medium ${
+          isDark ? 'text-light' : ''
+        } ${cellWrapperClass(row.original)}`;
         const qty = row.original.quantiteVendu || row.original.quantiteVendue;
         return <div className={css}>{qty ?? '—'}</div>;
       }
@@ -106,9 +108,9 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-right text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-right fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
-          row.original
-        )}`;
+        const css = `text-right fs-9 fw-medium ${
+          isDark ? 'text-light' : ''
+        } ${cellWrapperClass(row.original)}`;
         return (
           <div className={css}>
             {row.original.montantTotal !== undefined
@@ -124,9 +126,9 @@ export const getSalesColumns = (
       meta: { headerProps: { className: 'text-left text-900' } },
       cell: ({ row }) => {
         if (row.original.empty) return '';
-        const css = `text-left fs-9 fw-medium ${isDark ? 'text-light' : ''} ${cellWrapperClass(
-          row.original
-        )}`;
+        const css = `text-left fs-9 fw-medium ${
+          isDark ? 'text-light' : ''
+        } ${cellWrapperClass(row.original)}`;
         return <div className={css}>{row.original.dateVente ?? '—'}</div>;
       }
     },

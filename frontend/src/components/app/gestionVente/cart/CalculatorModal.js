@@ -5,7 +5,9 @@ import { faCalculator } from '@fortawesome/free-solid-svg-icons';
 import { useAppContext } from 'providers/AppProvider';
 
 const CalculatorModal = ({ show, onClose, totalCost }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const [montantRecu, setMontantRecu] = useState('');
 
   const montantRendu = useMemo(() => {
@@ -13,7 +15,7 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
     return Math.max(0, recu - totalCost);
   }, [montantRecu, totalCost]);
 
-  const handleMontantChange = (e) => {
+  const handleMontantChange = e => {
     const value = e.target.value;
     // Allow only positive numbers
     if (value === '' || (!isNaN(value) && parseFloat(value) >= 0)) {
@@ -27,14 +29,14 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
   };
 
   return (
-    <Modal 
-      show={show} 
-      onHide={handleClose} 
-      backdrop="static" 
+    <Modal
+      show={show}
+      onHide={handleClose}
+      backdrop="static"
       centered
       contentClassName={isDark ? 'bg-dark text-light' : ''}
     >
-      <Modal.Header 
+      <Modal.Header
         closeButton
         className={isDark ? 'bg-dark text-light border-secondary' : ''}
       >
@@ -51,7 +53,9 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
             type="text"
             readOnly
             value={`${totalCost.toLocaleString()} XOF`}
-            className={`fw-bold ${isDark ? 'bg-secondary text-light' : 'bg-light'}`}
+            className={`fw-bold ${
+              isDark ? 'bg-secondary text-light' : 'bg-light'
+            }`}
           />
         </div>
 
@@ -75,7 +79,9 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
             type="text"
             readOnly
             value={`${montantRendu.toLocaleString()} XOF`}
-            className={`fw-bold ${montantRendu > 0 ? 'text-success' : ''} ${isDark ? 'bg-secondary text-light' : ''}`}
+            className={`fw-bold ${montantRendu > 0 ? 'text-success' : ''} ${
+              isDark ? 'bg-secondary text-light' : ''
+            }`}
           />
         </Form.Group>
       </Modal.Body>

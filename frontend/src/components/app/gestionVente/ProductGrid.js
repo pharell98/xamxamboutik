@@ -24,7 +24,9 @@ import {
  * Composant carte produit en mode grille
  */
 const ProductGrid = ({ product, ...rest }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const validatedProduct = normalizeProduct(product);
   const {
     id,
@@ -48,26 +50,33 @@ const ProductGrid = ({ product, ...rest }) => {
     }
   }, [isInStock, isInCart, handleAddToCart]);
 
-  const handleKeyDown = useCallback((e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && isInStock && !isInCart) {
-      e.preventDefault();
-      handleCardClick();
-    }
-  }, [handleCardClick, isInStock, isInCart]);
+  const handleKeyDown = useCallback(
+    e => {
+      if ((e.key === 'Enter' || e.key === ' ') && isInStock && !isInCart) {
+        e.preventDefault();
+        handleCardClick();
+      }
+    },
+    [handleCardClick, isInStock, isInCart]
+  );
 
-  const cardClassName = classNames('border rounded-1 p-2 product-card fade-in', {
-    'bg-light': isInCart && !isDark,
-    'bg-dark text-light border-secondary': isDark,
-    'cursor-pointer': isInStock && !isInCart,
-    'cursor-not-allowed': !isInStock
-  });
+  const cardClassName = classNames(
+    'border rounded-1 p-2 product-card fade-in',
+    {
+      'bg-light': isInCart && !isDark,
+      'bg-dark text-light border-secondary': isDark,
+      'cursor-pointer': isInStock && !isInCart,
+      'cursor-not-allowed': !isInStock
+    }
+  );
 
   const cardStyle = {
     height: 'auto',
     transition: 'all 0.2s ease',
-    ...(isInStock && !isInCart && {
-      cursor: 'pointer'
-    })
+    ...(isInStock &&
+      !isInCart && {
+        cursor: 'pointer'
+      })
   };
 
   return (
@@ -84,33 +93,33 @@ const ProductGrid = ({ product, ...rest }) => {
       >
         {/* Image */}
         <div className="product-image mb-2">
-          <ProductImage 
-            libelle={libelle} 
-            id={id} 
-            image={image} 
+          <ProductImage
+            libelle={libelle}
+            id={id}
+            image={image}
             layout="grid"
             enableZoom={true}
           />
         </div>
-        
+
         {/* Prix */}
         <ProductPrice price={prixVente} />
-        
+
         {/* Titre */}
         <ProductTitle title={libelle} />
-        
+
         {/* Détails (cachés sur mobile) */}
         <ProductDetails>
           <ProductCategory category={categorieLibelle} />
           <ProductPurchasePrice price={prixAchat} />
           <ProductStock stock={stockDisponible} />
         </ProductDetails>
-        
+
         {/* Actions */}
         <div className="mt-auto product-actions">
-          <AddToCartButton 
-            onAddToCart={handleAddToCart} 
-            isInStock={isInStock} 
+          <AddToCartButton
+            onAddToCart={handleAddToCart}
+            isInStock={isInStock}
           />
         </div>
       </Flex>

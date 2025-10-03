@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faCalculator, 
-  faPrint, 
-  faBox, 
-  faMoneyBill, 
+import {
+  faCalculator,
+  faPrint,
+  faBox,
+  faMoneyBill,
   faHandHoldingUsd,
   faShoppingCart,
   faTrash,
@@ -24,11 +24,11 @@ import CalculatorModal from './CalculatorModal';
 import InvoiceAccordion from '../facture/InvoiceAccordion';
 import InvoicePreview from '../facture/InvoicePreview';
 import { printInvoice as printInvoiceHtml } from '../facture/print/printInvoiceHtml';
-import { 
-  isValidQuantity, 
-  normalizeQuantity, 
-  getInvalidCartItems, 
-  getValidationErrorMessage 
+import {
+  isValidQuantity,
+  normalizeQuantity,
+  getInvalidCartItems,
+  getValidationErrorMessage
 } from '../../validatore/cardShema';
 
 // Constants
@@ -51,7 +51,10 @@ const usePaymentModes = () => {
           setPaymentModes(response.data);
         }
       } catch (error) {
-        console.error('Erreur lors de la récupération des modes de paiement', error);
+        console.error(
+          'Erreur lors de la récupération des modes de paiement',
+          error
+        );
       }
     };
     fetchPaymentModes();
@@ -64,7 +67,8 @@ const useCartCalculations = (cartItems, modifiedPrices) => {
   return useMemo(() => {
     const totalCost = cartItems.reduce((acc, item) => {
       const customPrice = modifiedPrices[item.id];
-      const unitPrice = customPrice ?? Math.floor(item.totalPrice / item.quantity);
+      const unitPrice =
+        customPrice ?? Math.floor(item.totalPrice / item.quantity);
       return acc + unitPrice * item.quantity;
     }, 0);
 
@@ -76,7 +80,10 @@ const useCartCalculations = (cartItems, modifiedPrices) => {
 const CartHeader = ({ showInvoices, onToggleView }) => (
   <div className="cart-header mb-3 d-flex justify-content-between align-items-center">
     <h5 className="mb-0 fw-bold">
-      <FontAwesomeIcon icon={showInvoices ? faFileInvoice : faShoppingCart} className="me-2" />
+      <FontAwesomeIcon
+        icon={showInvoices ? faFileInvoice : faShoppingCart}
+        className="me-2"
+      />
       {showInvoices ? 'Mes Factures' : 'Votre Panier'}
     </h5>
     <Button
@@ -93,9 +100,11 @@ const CartHeader = ({ showInvoices, onToggleView }) => (
 );
 
 const CartTableHeader = ({ isDark }) => (
-  <div className={`row fw-bold px-2 mb-2 py-2 rounded ${
-    isDark ? 'bg-dark text-white' : 'bg-light text-dark'
-  }`}>
+  <div
+    className={`row fw-bold px-2 mb-2 py-2 rounded ${
+      isDark ? 'bg-dark text-white' : 'bg-light text-dark'
+    }`}
+  >
     <div className="col-5">
       <FontAwesomeIcon icon={faBox} className="me-1" />
       Produit
@@ -108,14 +117,14 @@ const CartTableHeader = ({ isDark }) => (
   </div>
 );
 
-const CartItem = ({ 
-  item, 
-  index, 
-  isDark, 
-  modifiedPrices, 
-  onPriceChange, 
-  onQuantityChange, 
-  onRemove 
+const CartItem = ({
+  item,
+  index,
+  isDark,
+  modifiedPrices,
+  onPriceChange,
+  onQuantityChange,
+  onRemove
 }) => {
   const customPrice = modifiedPrices[item.id];
   const unitPrice = customPrice ?? Math.floor(item.totalPrice / item.quantity);
@@ -165,8 +174,12 @@ const CartItem = ({
           <div className="col-6 col-md-3 d-flex justify-content-center">
             <QuantityController
               quantity={item.quantity}
-              handleIncrease={() => onQuantityChange(item.id, item.quantity + 1)}
-              handleDecrease={() => onQuantityChange(item.id, item.quantity - 1)}
+              handleIncrease={() =>
+                onQuantityChange(item.id, item.quantity + 1)
+              }
+              handleDecrease={() =>
+                onQuantityChange(item.id, item.quantity - 1)
+              }
               handleChange={val => onQuantityChange(item.id, val)}
               btnClassName="px-1"
               max={item.quantiteDisponible || Infinity}
@@ -182,21 +195,26 @@ const CartItem = ({
               className={`text-end input-spin-none ${
                 hasInvalidQuantity ? 'border-danger' : ''
               }`}
-              style={{ 
+              style={{
                 width: '100px',
                 WebkitAppearance: 'none',
                 MozAppearance: 'textfield',
                 appearance: 'none'
               }}
               value={unitPrice}
-              onChange={e => onPriceChange(
-                item.id,
-                Math.min(parseInt(e.target.value, 10) || 0, 999999)
-              )}
+              onChange={e =>
+                onPriceChange(
+                  item.id,
+                  Math.min(parseInt(e.target.value, 10) || 0, 999999)
+                )
+              }
             />
             {hasInvalidQuantity && (
               <div className="text-danger small mt-1">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="me-1" />
+                <FontAwesomeIcon
+                  icon={faExclamationTriangle}
+                  className="me-1"
+                />
                 Quantité requise
               </div>
             )}
@@ -232,7 +250,13 @@ const PaymentModeSelector = ({ paymentModes, paymentMode, setPaymentMode }) => {
   );
 };
 
-const CartTotal = ({ totalCost, isLoan, printInvoice, setIsLoan, setPrintInvoice }) => (
+const CartTotal = ({
+  totalCost,
+  isLoan,
+  printInvoice,
+  setIsLoan,
+  setPrintInvoice
+}) => (
   <div className="cart-total d-flex align-items-center justify-content-between mb-2 p-3 rounded">
     <div className="d-flex flex-wrap gap-3">
       <Form.Check
@@ -264,28 +288,36 @@ const CartTotal = ({ totalCost, isLoan, printInvoice, setIsLoan, setPrintInvoice
     </div>
     <h5 className="mb-0 fw-bold">
       <FontAwesomeIcon icon={faCalculator} className="me-2" />
-      Total <span className="ms-2 text-primary">XOF {totalCost.toLocaleString()}</span>
+      Total{' '}
+      <span className="ms-2 text-primary">
+        XOF {totalCost.toLocaleString()}
+      </span>
     </h5>
   </div>
 );
 
-const CustomerInfoForm = ({ isLoan, printInvoice, customerInfo, setCustomerInfo }) => {
+const CustomerInfoForm = ({
+  isLoan,
+  printInvoice,
+  customerInfo,
+  setCustomerInfo
+}) => {
   if (!isLoan && !printInvoice) return null;
 
   return (
     <div className="mt-3">
       <Form.Group className="mb-3">
-        <Form.Label>
-          Nom complet {isLoan ? '(Prêt)' : '(Facture)'}
-        </Form.Label>
+        <Form.Label>Nom complet {isLoan ? '(Prêt)' : '(Facture)'}</Form.Label>
         <Form.Control
           type="text"
           placeholder="Entrez le nom complet"
           value={customerInfo.fullName}
-          onChange={e => setCustomerInfo(prev => ({
-            ...prev,
-            fullName: e.target.value
-          }))}
+          onChange={e =>
+            setCustomerInfo(prev => ({
+              ...prev,
+              fullName: e.target.value
+            }))
+          }
           required
         />
       </Form.Group>
@@ -295,10 +327,12 @@ const CustomerInfoForm = ({ isLoan, printInvoice, customerInfo, setCustomerInfo 
           type="tel"
           placeholder="Ex: 77 123 45 67"
           value={customerInfo.phoneNumber}
-          onChange={e => setCustomerInfo(prev => ({
-            ...prev,
-            phoneNumber: e.target.value
-          }))}
+          onChange={e =>
+            setCustomerInfo(prev => ({
+              ...prev,
+              phoneNumber: e.target.value
+            }))
+          }
           required
         />
       </Form.Group>
@@ -306,13 +340,13 @@ const CustomerInfoForm = ({ isLoan, printInvoice, customerInfo, setCustomerInfo 
   );
 };
 
-const CartActions = ({ 
-  onCalculator, 
-  onClose, 
-  onValidate, 
+const CartActions = ({
+  onCalculator,
+  onClose,
+  onValidate,
   onPreview,
-  isLoan, 
-  isValidCustomer 
+  isLoan,
+  isValidCustomer
 }) => (
   <div className="d-flex flex-wrap gap-2 justify-content-between mt-3">
     <div className="d-flex gap-2">
@@ -327,11 +361,7 @@ const CartActions = ({
       </Button>
 
       {onPreview && (
-        <Button
-          variant="outline-info"
-          onClick={onPreview}
-          className="btn-sm"
-        >
+        <Button variant="outline-info" onClick={onPreview} className="btn-sm">
           <FontAwesomeIcon icon={faPrint} className="me-1" />
           <span className="d-none d-sm-inline">Aperçu Facture</span>
           <span className="d-inline d-sm-none">Aperçu</span>
@@ -362,14 +392,22 @@ const CartActions = ({
 
 // Main component
 const CartSection = ({ onClose, show = true }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const { addToast } = useToast();
-  const { productsState: { cartItems }, productsDispatch } = useProductContext();
+  const {
+    productsState: { cartItems },
+    productsDispatch
+  } = useProductContext();
 
   // State
   const [modifiedPrices, setModifiedPrices] = useState({});
   const [isLoan, setIsLoan] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({ fullName: '', phoneNumber: '' });
+  const [customerInfo, setCustomerInfo] = useState({
+    fullName: '',
+    phoneNumber: ''
+  });
   const [paymentMode, setPaymentMode] = useState('espece');
   const [printInvoice, setPrintInvoice] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
@@ -383,14 +421,18 @@ const CartSection = ({ onClose, show = true }) => {
   // Validation
   const isValidCustomer = useMemo(() => {
     if (!isLoan && !printInvoice) return true;
-    return customerInfo.fullName.trim() !== '' && customerInfo.phoneNumber.trim() !== '';
+    return (
+      customerInfo.fullName.trim() !== '' &&
+      customerInfo.phoneNumber.trim() !== ''
+    );
   }, [isLoan, printInvoice, customerInfo]);
 
   // Validation optimisée avec schéma centralisé
   const hasValidQuantities = useMemo(() => {
-    return cartItems.every(item => 
-      isValidQuantity(item.quantity) && 
-      item.quantity <= (item.quantiteDisponible || Infinity)
+    return cartItems.every(
+      item =>
+        isValidQuantity(item.quantity) &&
+        item.quantity <= (item.quantiteDisponible || Infinity)
     );
   }, [cartItems]);
 
@@ -399,22 +441,28 @@ const CartSection = ({ onClose, show = true }) => {
     setModifiedPrices(prev => ({ ...prev, [productId]: newPrice }));
   }, []);
 
-  const handleQuantityChange = useCallback((productId, newQuantity) => {
-    const item = cartItems.find(item => item.id === productId);
-    if (!item) return;
+  const handleQuantityChange = useCallback(
+    (productId, newQuantity) => {
+      const item = cartItems.find(item => item.id === productId);
+      if (!item) return;
 
-    const maxQuantity = item.quantiteDisponible || Infinity;
-    const validQuantity = normalizeQuantity(newQuantity, maxQuantity);
+      const maxQuantity = item.quantiteDisponible || Infinity;
+      const validQuantity = normalizeQuantity(newQuantity, maxQuantity);
 
-    productsDispatch({
-      type: 'UPDATE_CART_ITEM_QUANTITY',
-      payload: { productId, quantity: validQuantity }
-    });
-  }, [cartItems, productsDispatch]);
+      productsDispatch({
+        type: 'UPDATE_CART_ITEM_QUANTITY',
+        payload: { productId, quantity: validQuantity }
+      });
+    },
+    [cartItems, productsDispatch]
+  );
 
-  const handleRemoveItem = useCallback((product) => {
-    productsDispatch({ type: 'REMOVE_FROM_CART', payload: { product } });
-  }, [productsDispatch]);
+  const handleRemoveItem = useCallback(
+    product => {
+      productsDispatch({ type: 'REMOVE_FROM_CART', payload: { product } });
+    },
+    [productsDispatch]
+  );
 
   const validateCart = useCallback(() => {
     if (!cartItems?.length) {
@@ -427,11 +475,12 @@ const CartSection = ({ onClose, show = true }) => {
       return false;
     }
 
-    const invalidItems = cartItems.filter(item => 
-      !item.quantity || 
-      item.quantity <= 0 || 
-      !Number.isInteger(item.quantity) ||
-      item.quantity > (item.quantiteDisponible || Infinity)
+    const invalidItems = cartItems.filter(
+      item =>
+        !item.quantity ||
+        item.quantity <= 0 ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity > (item.quantiteDisponible || Infinity)
     );
 
     if (invalidItems.length > 0) {
@@ -463,7 +512,8 @@ const CartSection = ({ onClose, show = true }) => {
 
     const detailVenteList = cartItems.map(item => {
       const customPrice = modifiedPrices[item.id];
-      const unitPrice = customPrice ?? Math.floor(item.totalPrice / item.quantity);
+      const unitPrice =
+        customPrice ?? Math.floor(item.totalPrice / item.quantity);
       return {
         produitId: item.id,
         prixVente: unitPrice,
@@ -484,7 +534,9 @@ const CartSection = ({ onClose, show = true }) => {
         try {
           const invoiceItems = cartItems.map(item => ({
             ...item,
-            prixVente: modifiedPrices[item.id] ?? Math.floor(item.totalPrice / item.quantity),
+            prixVente:
+              modifiedPrices[item.id] ??
+              Math.floor(item.totalPrice / item.quantity),
             quantiteVendu: item.quantity
           }));
 
@@ -499,7 +551,7 @@ const CartSection = ({ onClose, show = true }) => {
           });
         } catch (invoiceError) {
           console.error('Erreur génération facture HTML:', invoiceError);
-          
+
           // Fallback vers l'ancienne méthode PDF
           try {
             const fileName = InvoiceGenerator.downloadInvoice(
@@ -545,7 +597,10 @@ const CartSection = ({ onClose, show = true }) => {
       productsDispatch({ type: 'CHECKOUT' });
       onClose?.();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la création de la vente';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Erreur lors de la création de la vente';
       addToast({
         title: 'Erreur',
         message: errorMessage,
@@ -553,7 +608,18 @@ const CartSection = ({ onClose, show = true }) => {
         duration: TOAST_DURATION.LONG
       });
     }
-  }, [validateCart, cartItems, modifiedPrices, paymentMode, totalCost, printInvoice, customerInfo, addToast, productsDispatch, onClose]);
+  }, [
+    validateCart,
+    cartItems,
+    modifiedPrices,
+    paymentMode,
+    totalCost,
+    printInvoice,
+    customerInfo,
+    addToast,
+    productsDispatch,
+    onClose
+  ]);
 
   const handleToggleView = useCallback(() => {
     setShowInvoices(!showInvoices);
@@ -572,21 +638,27 @@ const CartSection = ({ onClose, show = true }) => {
   return (
     <>
       <Card
-        className={`p-3 border-0 cart-section ${isDark ? 'bg-dark text-white' : 'bg-white'}`}
+        className={`p-3 border-0 cart-section ${
+          isDark ? 'bg-dark text-white' : 'bg-white'
+        }`}
         style={{ maxHeight: '75vh', overflowY: 'auto' }}
       >
-        <CartHeader 
+        <CartHeader
           showInvoices={showInvoices}
           onToggleView={handleToggleView}
         />
 
         {/* Alerte de validation si des quantités sont invalides */}
         {!showInvoices && cartItems.length > 0 && !hasValidQuantities && (
-          <div className="alert alert-warning d-flex align-items-center mb-3" role="alert">
+          <div
+            className="alert alert-warning d-flex align-items-center mb-3"
+            role="alert"
+          >
             <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
             <div>
-              <strong>Attention :</strong> Certaines quantités sont invalides ou vides. 
-              Tous les champs quantité doivent contenir un nombre entier positif.
+              <strong>Attention :</strong> Certaines quantités sont invalides ou
+              vides. Tous les champs quantité doivent contenir un nombre entier
+              positif.
             </div>
           </div>
         )}
@@ -614,7 +686,7 @@ const CartSection = ({ onClose, show = true }) => {
                   />
                 ))}
 
-                <PaymentModeSelector 
+                <PaymentModeSelector
                   paymentModes={paymentModes}
                   paymentMode={paymentMode}
                   setPaymentMode={setPaymentMode}
@@ -666,7 +738,9 @@ const CartSection = ({ onClose, show = true }) => {
         }}
         items={cartItems.map(item => ({
           ...item,
-          prixVente: modifiedPrices[item.id] ?? Math.floor(item.totalPrice / item.quantity),
+          prixVente:
+            modifiedPrices[item.id] ??
+            Math.floor(item.totalPrice / item.quantity),
           quantiteVendu: item.quantity
         }))}
         customerInfo={customerInfo}
@@ -674,14 +748,21 @@ const CartSection = ({ onClose, show = true }) => {
           try {
             const invoiceItems = cartItems.map(item => ({
               ...item,
-              prixVente: modifiedPrices[item.id] ?? Math.floor(item.totalPrice / item.quantity),
+              prixVente:
+                modifiedPrices[item.id] ??
+                Math.floor(item.totalPrice / item.quantity),
               quantiteVendu: item.quantity
             }));
 
-            await printInvoiceHtml({
-              modePaiement: paymentMode,
-              montantTotal: totalCost
-            }, invoiceItems, customerInfo, {});
+            await printInvoiceHtml(
+              {
+                modePaiement: paymentMode,
+                montantTotal: totalCost
+              },
+              invoiceItems,
+              customerInfo,
+              {}
+            );
 
             handleClosePreview();
             addToast({

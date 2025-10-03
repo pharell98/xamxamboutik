@@ -6,8 +6,8 @@ import { Button, Form } from 'react-bootstrap';
 
 const RadioItem = ({ name, label, active = false, onChange, image }) => {
   return (
-    <Button 
-      variant="theme-default" 
+    <Button
+      variant="theme-default"
       className={classNames('p-1 p-sm-2', { active: active })}
       style={{ borderRadius: 8 }}
     >
@@ -21,7 +21,11 @@ const RadioItem = ({ name, label, active = false, onChange, image }) => {
       <Form.Check
         type="radio"
         id={`${name}-${label}`}
-        label={<span className="fs-10 fs-sm-9">{label.charAt(0).toUpperCase() + label.slice(1)}</span>}
+        label={
+          <span className="fs-10 fs-sm-9">
+            {label.charAt(0).toUpperCase() + label.slice(1)}
+          </span>
+        }
         name={name}
         onChange={onChange}
         checked={active}

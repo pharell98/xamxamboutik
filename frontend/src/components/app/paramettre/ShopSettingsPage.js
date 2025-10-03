@@ -1,9 +1,9 @@
 import React from 'react';
 import { Col, Container, Row, Card, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faCog, 
-  faStore, 
+import {
+  faCog,
+  faStore,
   faInfoCircle,
   faSpinner
 } from '@fortawesome/free-solid-svg-icons';
@@ -14,12 +14,12 @@ import Background from '../../common/Background';
 import corner4 from '../../../assets/img/illustrations/corner-4.png';
 
 const ShopSettingsPage = () => {
-  const { 
-    selectedSettings, 
-    editModeSettings, 
-    handleSaveSettings, 
+  const {
+    selectedSettings,
+    editModeSettings,
+    handleSaveSettings,
     refreshKey,
-    isLoading 
+    isLoading
   } = useShopSettings();
 
   if (isLoading) {
@@ -30,8 +30,8 @@ const ShopSettingsPage = () => {
             <Card className="shadow-sm border-0 rounded-3 text-center p-5">
               <div className="mb-4">
                 <div className="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
-                  <FontAwesomeIcon 
-                    icon={faSpinner} 
+                  <FontAwesomeIcon
+                    icon={faSpinner}
                     className="text-primary fa-spin"
                     style={{ fontSize: '2rem' }}
                   />
@@ -69,8 +69,8 @@ const ShopSettingsPage = () => {
                 <Col lg={8}>
                   <div className="d-flex align-items-center mb-2">
                     <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-2">
-                      <FontAwesomeIcon 
-                        icon={faCog} 
+                      <FontAwesomeIcon
+                        icon={faCog}
                         className="text-primary"
                         style={{ width: '18px', height: '18px' }}
                       />
@@ -87,13 +87,15 @@ const ShopSettingsPage = () => {
                 </Col>
                 <Col lg={4} className="text-lg-end">
                   <div className="d-flex align-items-center justify-content-lg-end">
-                    <FontAwesomeIcon 
-                      icon={faStore} 
+                    <FontAwesomeIcon
+                      icon={faStore}
                       className="text-success me-1"
                       style={{ fontSize: '0.875rem' }}
                     />
                     <small className="text-success fw-semibold">
-                      {editModeSettings ? 'Configuration active' : 'Nouvelle configuration'}
+                      {editModeSettings
+                        ? 'Configuration active'
+                        : 'Nouvelle configuration'}
                     </small>
                   </div>
                 </Col>
@@ -102,7 +104,7 @@ const ShopSettingsPage = () => {
           </Card>
         </Col>
       </Row>
-      
+
       <Row className="mb-5">
         <Col xs={12}>
           <ShopSettingsForm
