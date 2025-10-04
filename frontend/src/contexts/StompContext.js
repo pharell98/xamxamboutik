@@ -80,8 +80,6 @@ export const StompProvider = ({ children }) => {
       // Souscriptions par défaut
       subscribeWithErrorHandling('/topic/updates', parsed => {
         setData(prevData => [...prevData, parsed]);
-        // Ajouter aussi dans venteData pour que Products.js puisse les traiter
-        setVenteData(prevData => [...prevData, parsed]);
       });
       subscribeWithErrorHandling('/topic/ventes', parsed => {
         setVenteData(prevData => [...prevData, parsed]);

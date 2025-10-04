@@ -303,49 +303,29 @@ const Products = () => {
   }, [page, loading, hasMore]); // Supprimé debouncedFetchProducts de la dépendance
 
   // Gestion des messages WebSocket - Effet unique après vente
-  const lastProcessedMessageRef = useRef({});
+  const lastProcessedMessageRef = useRef(null);
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
       
-      if (!latestMessage) return;
-      
-      // Créer un identifiant unique pour le message
-      const messageId = `${latestMessage.action || 'unknown'}-${latestMessage.productId || latestMessage.saleId || 'unknown'}-${latestMessage.libelle || 'unknown'}`;
-      
       // Éviter le traitement du même message plusieurs fois
-      if (lastProcessedMessageRef.current[messageId]) {
+      if (lastProcessedMessageRef.current === latestMessage) {
         return;
       }
       
       console.log('[Products] Message de vente reçu:', latestMessage);
-      
-      // Filtrer les messages pour éviter les rechargements inutiles
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
         Array.isArray(latestMessage.soldItems) &&
         latestMessage.soldItems.length > 0
       ) {
-        lastProcessedMessageRef.current[messageId] = true;
+        lastProcessedMessageRef.current = latestMessage;
         console.log('[Products] Rechargement des produits après vente...');
         // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
         }, 500); // Réduit le délai pour plus de fluidité
-      } else if (
-        latestMessage &&
-        latestMessage.action === 'UPDATE' &&
-        latestMessage.productId
-      ) {
-        // Ignorer complètement les mises à jour de produits (stock, prix, etc.)
-        console.log('[Products] Mise à jour produit ignorée pour éviter les boucles:', latestMessage);
-        lastProcessedMessageRef.current[messageId] = true;
-        
-        // Nettoyer les anciens messages après 30 secondes
-        setTimeout(() => {
-          delete lastProcessedMessageRef.current[messageId];
-        }, 30000);
       }
     }
   }, [venteData, reloadProductsAfterSale]);

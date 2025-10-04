@@ -321,33 +321,17 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
     }
 
-    private static final Map<Long, Long> lastNotificationTimes = new HashMap<>();
-    private static final long NOTIFICATION_COOLDOWN_MS = 2000; // 2 secondes entre les notifications
-    
     private void notifyUpdate(Produit produit, String action) {
         try {
-            Long productId = produit.getId();
-            Long currentTime = System.currentTimeMillis();
-            
-            // Vérifier le cooldown pour éviter les notifications trop fréquentes
-            Long lastNotification = lastNotificationTimes.get(productId);
-            if (lastNotification != null && (currentTime - lastNotification) < NOTIFICATION_COOLDOWN_MS) {
-                log.debug("Notification ignorée pour produit {} - cooldown actif", productId);
-                return;
-            }
-            
             Map<String, Object> message = new HashMap<>();
             message.put("action", action);
-            message.put("productId", productId);
+            message.put("productId", produit.getId());
             message.put("libelle", produit.getLibelle());
-            message.put("timestamp", currentTime);
-            
             if (messagingTemplate != null) {
                 messagingTemplate.convertAndSend("/topic/updates", message);
-                lastNotificationTimes.put(productId, currentTime);
-                log.info("Message STOMP envoyé à /topic/updates pour produit ID: {} (action: {})", productId, action);
+                log.info("Message STOMP envoyé à /topic/updates pour produit ID: {}", produit.getId());
             } else {
-                log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour produit ID: {}", productId);
+                log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour produit ID: {}", produit.getId());
             }
         } catch (Exception e) {
             log.error("Échec de l'envoi de la notification WebSocket pour le produit {}: {}", produit.getId(), e.getMessage());

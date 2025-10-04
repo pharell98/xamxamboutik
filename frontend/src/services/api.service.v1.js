@@ -11,15 +11,30 @@ const APPROVISIONNEMENT_ENDPOINT = '/approvisionnement';
  * @param {string} logPrefix - Préfixe pour les logs d'erreur
  * @returns {Promise<any>} Résultat de la fonction ou throw l'erreur
  */
+// Cache pour éviter les requêtes multiples simultanées
+const pendingRequests = new Map();
+
 async function safeApiCall(fn, logPrefix) {
+  const requestKey = `${logPrefix}_${Date.now()}`;
+  
   try {
-    return await fn();
+    // Vérifier si une requête similaire est déjà en cours
+    if (pendingRequests.has(logPrefix)) {
+      console.warn(`[apiServiceV1] Requête ${logPrefix} déjà en cours, ignorée`);
+      throw new Error(`Requête ${logPrefix} déjà en cours`);
+    }
+    
+    pendingRequests.set(logPrefix, requestKey);
+    const result = await fn();
+    pendingRequests.delete(logPrefix);
+    return result;
   } catch (error) {
+    pendingRequests.delete(logPrefix);
     console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
     
     // Gérer les erreurs réseau spécifiques
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, retry possible`);
+      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`);
       // Ne pas lancer d'erreur immédiatement pour les erreurs réseau
       // Laisser le composant décider s'il faut retry
     }
@@ -60,26 +75,16 @@ const apiServiceV1 = {
   /**
    * Suggestions de produits par nom.
    */
-  getProductSuggestions: async (query, page = 1, size = 10) => {
-    // Protection contre les requêtes trop fréquentes
-    if (!query || query.length < 2) {
-      return Promise.resolve({ data: { content: [], totalPages: 0 } });
-    }
-    
-    // Délai de protection pour éviter les requêtes trop fréquentes
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    return safeApiCall(
+  getProductSuggestions: async (query, page = 1, size = 10) =>
+    safeApiCall(
       () =>
         apiClient
           .get(`${PRODUCT_ENDPOINT}/suggestions`, {
-            params: { query, page, size },
-            timeout: 3000 // Timeout réduit à 3 secondes
+            params: { query, page, size }
           })
           .then(r => r.data),
       'getProductSuggestions'
-    );
-  },
+    ),
 
   /**
    * Suggestions d'approvisionnement.

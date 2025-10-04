@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Col, Row } from 'react-bootstrap';
 import AdvanceTable from 'components/common/advance-table/AdvanceTable';
@@ -33,6 +33,9 @@ const Products = ({ onEdit }) => {
     setRefresh(prev => prev + 1);
   }, 500);
 
+  // Protection contre les messages WebSocket dupliqués
+  const lastProcessedMessageRef = useRef(null);
+
   useEffect(() => {
     const fetchCategoriesForFilter = async () => {
       try {
@@ -65,6 +68,12 @@ const Products = ({ onEdit }) => {
     if (Array.isArray(data) && data.length > 0) {
       const latestMessage = data[data.length - 1];
 
+      // Éviter le traitement du même message plusieurs fois
+      const messageKey = JSON.stringify(latestMessage);
+      if (lastProcessedMessageRef.current === messageKey) {
+        return;
+      }
+
       // Vérifier si c'est un message de produit
       if (
         latestMessage &&
@@ -78,6 +87,7 @@ const Products = ({ onEdit }) => {
           latestMessage.message?.includes('product') ||
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
+        lastProcessedMessageRef.current = messageKey;
         console.log(
           '[Products] Message WebSocket reçu, rafraîchissement des données:',
           latestMessage
@@ -87,17 +97,29 @@ const Products = ({ onEdit }) => {
     }
   }, [data, debouncedSetRefresh]);
 
+  // Protection contre les événements personnalisés dupliqués
+  const lastEventTimeRef = useRef(0);
+  const EVENT_THROTTLE_MS = 1000; // 1 seconde entre les événements
+
   // Écouter les événements personnalisés pour les produits
   useEffect(() => {
     const handleProductUpdated = () => {
-      debouncedSetRefresh();
+      const now = Date.now();
+      if (now - lastEventTimeRef.current > EVENT_THROTTLE_MS) {
+        lastEventTimeRef.current = now;
+        debouncedSetRefresh();
+      }
     };
 
     const handleStockUpdated = () => {
-      console.log(
-        '[Products] Événement stock-updated reçu, rafraîchissement des données'
-      );
-      debouncedSetRefresh();
+      const now = Date.now();
+      if (now - lastEventTimeRef.current > EVENT_THROTTLE_MS) {
+        lastEventTimeRef.current = now;
+        console.log(
+          '[Products] Événement stock-updated reçu, rafraîchissement des données'
+        );
+        debouncedSetRefresh();
+      }
     };
 
     window.addEventListener('product-updated', handleProductUpdated);
@@ -204,9 +226,9 @@ const Products = ({ onEdit }) => {
 
   const fetchProducts = useCallback(
     async (pageIndex, pageSize) => {
-      let endpoint = 'unknown'; // Initialiser avec une valeur par défaut
       try {
         let response;
+        let endpoint = '';
 
         const validStates = ['all', 'active', 'deleted'];
         if (filters.state && !validStates.includes(filters.state)) {
@@ -236,10 +258,6 @@ const Products = ({ onEdit }) => {
             );
           }
           endpoint = '/produits/suggestions';
-          
-          // Protection contre les requêtes trop fréquentes
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
           response = await apiServiceV1.getProductSuggestions(
             searchTerm,
             pageIndex + 1,
