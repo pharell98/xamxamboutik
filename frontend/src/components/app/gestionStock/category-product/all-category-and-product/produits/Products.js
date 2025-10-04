@@ -226,9 +226,10 @@ const Products = ({ onEdit }) => {
 
   const fetchProducts = useCallback(
     async (pageIndex, pageSize) => {
+      let endpoint = 'unknown'; // Initialiser endpoint au début
+      
       try {
         let response;
-        let endpoint = '';
 
         const validStates = ['all', 'active', 'deleted'];
         if (filters.state && !validStates.includes(filters.state)) {
@@ -283,7 +284,7 @@ const Products = ({ onEdit }) => {
             message: error.message,
             status: error.response?.status,
             data: error.response?.data,
-            endpoint: endpoint || 'unknown'
+            endpoint: endpoint
           }
         );
         addToast({
