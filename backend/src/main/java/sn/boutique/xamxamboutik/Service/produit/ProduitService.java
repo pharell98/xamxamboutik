@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.requireNonNull;
 
@@ -48,9 +47,6 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     private final SimpMessagingTemplate messagingTemplate;
     private final ImageBackgroundService imageBackgroundService;
     private final ProduitMapper produitMapper;
-    
-    // Protection contre l'envoi de messages WebSocket trop fréquents
-    private final Map<Long, Long> lastNotificationTimes = new ConcurrentHashMap<>();
 
     @Override
     protected ProduitRepository getRepository() {
@@ -325,16 +321,18 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         }
     }
 
+    private static final Map<Long, Long> lastNotificationTimes = new HashMap<>();
+    private static final long NOTIFICATION_COOLDOWN_MS = 2000; // 2 secondes entre les notifications
+    
     private void notifyUpdate(Produit produit, String action) {
         try {
             Long productId = produit.getId();
-            long currentTime = System.currentTimeMillis();
+            Long currentTime = System.currentTimeMillis();
             
-            // Protection contre l'envoi de messages trop fréquents (minimum 2 secondes entre les messages)
-            Long lastTime = lastNotificationTimes.get(productId);
-            if (lastTime != null && (currentTime - lastTime) < 2000) {
-                log.debug("Message WebSocket ignoré pour produit {} - trop fréquent (dernière notification il y a {}ms)", 
-                    productId, currentTime - lastTime);
+            // Vérifier le cooldown pour éviter les notifications trop fréquentes
+            Long lastNotification = lastNotificationTimes.get(productId);
+            if (lastNotification != null && (currentTime - lastNotification) < NOTIFICATION_COOLDOWN_MS) {
+                log.debug("Notification ignorée pour produit {} - cooldown actif", productId);
                 return;
             }
             
@@ -342,6 +340,7 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
             message.put("action", action);
             message.put("productId", productId);
             message.put("libelle", produit.getLibelle());
+            message.put("timestamp", currentTime);
             
             if (messagingTemplate != null) {
                 messagingTemplate.convertAndSend("/topic/updates", message);

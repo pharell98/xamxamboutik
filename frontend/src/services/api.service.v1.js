@@ -60,23 +60,26 @@ const apiServiceV1 = {
   /**
    * Suggestions de produits par nom.
    */
-  getProductSuggestions: async (query, page = 1, size = 10) =>
-    safeApiCall(
-      () => {
-        // Protection contre les requêtes trop fréquentes
-        if (!query || query.length < 2) {
-          return Promise.resolve({ data: { content: [], totalPages: 0 } });
-        }
-        
-        return apiClient
+  getProductSuggestions: async (query, page = 1, size = 10) => {
+    // Protection contre les requêtes trop fréquentes
+    if (!query || query.length < 2) {
+      return Promise.resolve({ data: { content: [], totalPages: 0 } });
+    }
+    
+    // Délai de protection pour éviter les requêtes trop fréquentes
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    return safeApiCall(
+      () =>
+        apiClient
           .get(`${PRODUCT_ENDPOINT}/suggestions`, {
             params: { query, page, size },
-            timeout: 10000 // Timeout de 10 secondes
+            timeout: 3000 // Timeout réduit à 3 secondes
           })
-          .then(r => r.data);
-      },
+          .then(r => r.data),
       'getProductSuggestions'
-    ),
+    );
+  },
 
   /**
    * Suggestions d'approvisionnement.
