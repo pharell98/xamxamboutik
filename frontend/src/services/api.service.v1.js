@@ -11,14 +11,33 @@ const APPROVISIONNEMENT_ENDPOINT = '/approvisionnement';
  * @param {string} logPrefix - Préfixe pour les logs d'erreur
  * @returns {Promise<any>} Résultat de la fonction ou throw l'erreur
  */
-// Cache pour éviter les requêtes multiples simultanées
+// Cache pour éviter les requêtes multiples simultanées (seulement pour les requêtes coûteuses)
 const pendingRequests = new Map();
 
 async function safeApiCall(fn, logPrefix) {
+  try {
+    const result = await fn();
+    return result;
+  } catch (error) {
+    console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
+    
+    // Gérer les erreurs réseau spécifiques
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`);
+      // Ne pas lancer d'erreur immédiatement pour les erreurs réseau
+      // Laisser le composant décider s'il faut retry
+    }
+    
+    throw error;
+  }
+}
+
+// Fonction spéciale pour les requêtes qui peuvent être dupliquées
+async function safeApiCallWithDedup(fn, logPrefix) {
   const requestKey = `${logPrefix}_${Date.now()}`;
   
   try {
-    // Vérifier si une requête similaire est déjà en cours
+    // Vérifier si une requête similaire est déjà en cours (seulement pour certaines requêtes)
     if (pendingRequests.has(logPrefix)) {
       console.warn(`[apiServiceV1] Requête ${logPrefix} déjà en cours, ignorée`);
       throw new Error(`Requête ${logPrefix} déjà en cours`);
@@ -35,8 +54,6 @@ async function safeApiCall(fn, logPrefix) {
     // Gérer les erreurs réseau spécifiques
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
       console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`);
-      // Ne pas lancer d'erreur immédiatement pour les erreurs réseau
-      // Laisser le composant décider s'il faut retry
     }
     
     throw error;
@@ -76,7 +93,7 @@ const apiServiceV1 = {
    * Suggestions de produits par nom.
    */
   getProductSuggestions: async (query, page = 1, size = 10) =>
-    safeApiCall(
+    safeApiCallWithDedup(
       () =>
         apiClient
           .get(`${PRODUCT_ENDPOINT}/suggestions`, {
@@ -90,7 +107,7 @@ const apiServiceV1 = {
    * Suggestions d'approvisionnement.
    */
   getApprovisionnementSuggestions: async (query, page = 1, size = 10) =>
-    safeApiCall(
+    safeApiCallWithDedup(
       () =>
         apiClient
           .get(`${PRODUCT_ENDPOINT}/approvisionnement/suggestions`, {
@@ -215,7 +232,7 @@ const apiServiceV1 = {
    * Suggestions de catégories.
    */
   suggestionsCategories: async (query, page = 1, size = 10) =>
-    safeApiCall(
+    safeApiCallWithDedup(
       () =>
         apiClient
           .get(`${CATEGORY_ENDPOINT}/suggestions`, {
