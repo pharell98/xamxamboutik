@@ -62,12 +62,19 @@ const apiServiceV1 = {
    */
   getProductSuggestions: async (query, page = 1, size = 10) =>
     safeApiCall(
-      () =>
-        apiClient
+      () => {
+        // Protection contre les requêtes trop fréquentes
+        if (!query || query.length < 2) {
+          return Promise.resolve({ data: { content: [], totalPages: 0 } });
+        }
+        
+        return apiClient
           .get(`${PRODUCT_ENDPOINT}/suggestions`, {
-            params: { query, page, size }
+            params: { query, page, size },
+            timeout: 5000 // Timeout de 5 secondes
           })
-          .then(r => r.data),
+          .then(r => r.data);
+      },
       'getProductSuggestions'
     ),
 

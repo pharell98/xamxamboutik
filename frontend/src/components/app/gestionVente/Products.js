@@ -314,6 +314,8 @@ const Products = () => {
       }
       
       console.log('[Products] Message de vente reçu:', latestMessage);
+      
+      // Filtrer les messages pour éviter les rechargements inutiles
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
@@ -326,6 +328,14 @@ const Products = () => {
         setTimeout(() => {
           reloadProductsAfterSale();
         }, 500); // Réduit le délai pour plus de fluidité
+      } else if (
+        latestMessage &&
+        latestMessage.action === 'UPDATE' &&
+        latestMessage.productId
+      ) {
+        // Ignorer les mises à jour de produits (stock, prix, etc.) pour éviter les boucles
+        console.log('[Products] Mise à jour produit ignorée pour éviter les boucles:', latestMessage);
+        lastProcessedMessageRef.current = latestMessage;
       }
     }
   }, [venteData, reloadProductsAfterSale]);

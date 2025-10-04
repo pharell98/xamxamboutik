@@ -204,9 +204,9 @@ const Products = ({ onEdit }) => {
 
   const fetchProducts = useCallback(
     async (pageIndex, pageSize) => {
+      let endpoint = 'unknown'; // Initialiser avec une valeur par défaut
       try {
         let response;
-        let endpoint = '';
 
         const validStates = ['all', 'active', 'deleted'];
         if (filters.state && !validStates.includes(filters.state)) {
@@ -236,6 +236,10 @@ const Products = ({ onEdit }) => {
             );
           }
           endpoint = '/produits/suggestions';
+          
+          // Protection contre les requêtes trop fréquentes
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           response = await apiServiceV1.getProductSuggestions(
             searchTerm,
             pageIndex + 1,
