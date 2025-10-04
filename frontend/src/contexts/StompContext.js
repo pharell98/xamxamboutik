@@ -149,36 +149,44 @@ export const StompProvider = ({ children }) => {
     };
 
     client.onConnect = frame => {
+      console.log('[StompContext] Connexion établie:', frame);
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
 
-      // Ajouter un léger délai pour s'assurer que la connexion est stable
+      // Ajouter un délai pour s'assurer que la connexion est stable
       setTimeout(() => {
         if (stompClientRef.current && stompClientRef.current.connected) {
-          subscribeToTopics();
-          startRetrySubscriptions();
+          const success = subscribeToTopics();
+          if (success) {
+            startRetrySubscriptions();
+          }
         } else {
           console.warn(
-            'Connexion STOMP non stable après délai, en attente de reconnexion...'
+            '[StompContext] Connexion STOMP non stable après délai'
           );
         }
-      }, 100); // Délai de 100ms
+      }, 200); // Délai de 200ms pour plus de stabilité
     };
 
     client.onDisconnect = () => {
+      console.log('[StompContext] Déconnexion détectée');
       setConnected(false);
-      setIsReconnecting(true);
+      setIsReconnecting(false); // Ne pas forcer la reconnexion immédiate
       setIsSubscribed(false);
-      startRetrySubscriptions();
+      // Nettoyer les intervalles existants
+      if (retryIntervalRef.current) {
+        clearInterval(retryIntervalRef.current);
+        retryIntervalRef.current = null;
+      }
     };
 
     client.onStompError = error => {
-      console.error('Erreur STOMP:', error);
+      console.error('[StompContext] Erreur STOMP:', error);
       setConnected(false);
-      setIsReconnecting(true);
+      setIsReconnecting(false); // Éviter les reconnexions en boucle
       setIsSubscribed(false);
-      startRetrySubscriptions();
+      // Ne pas démarrer immédiatement les tentatives de reconnexion
     };
 
     client.activate();
@@ -226,13 +234,18 @@ export const StompProvider = ({ children }) => {
     }
     try {
       const subscription = stompClientRef.current.subscribe(topic, message => {
-        const parsed = parseMessageBody(message.body);
-        callback(parsed);
+        try {
+          const parsed = parseMessageBody(message.body);
+          callback(parsed);
+        } catch (parseError) {
+          console.warn(`[StompContext] Erreur parsing message pour ${topic}:`, parseError);
+        }
       });
       subscriptionsRef.current.push(subscription);
-      return subscription;
+      console.log(`[StompContext] Souscription réussie à ${topic}`);
+      return true; // Retourner true pour indiquer le succès
     } catch (error) {
-      console.error(`Erreur lors de la souscription au topic ${topic}:`, error);
+      console.error(`[StompContext] Erreur lors de la souscription au topic ${topic}:`, error);
       setIsSubscribed(false);
       pendingSubscriptionsRef.current.push({ topic, callback });
       return false;

@@ -261,7 +261,7 @@ const Products = ({ onEdit }) => {
             message: error.message,
             status: error.response?.status,
             data: error.response?.data,
-            endpoint
+            endpoint: endpoint || 'unknown'
           }
         );
         addToast({

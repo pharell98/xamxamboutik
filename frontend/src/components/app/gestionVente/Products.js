@@ -303,9 +303,16 @@ const Products = () => {
   }, [page, loading, hasMore]); // Supprimé debouncedFetchProducts de la dépendance
 
   // Gestion des messages WebSocket - Effet unique après vente
+  const lastProcessedMessageRef = useRef(null);
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
+      
+      // Éviter le traitement du même message plusieurs fois
+      if (lastProcessedMessageRef.current === latestMessage) {
+        return;
+      }
+      
       console.log('[Products] Message de vente reçu:', latestMessage);
       if (
         latestMessage &&
@@ -313,6 +320,7 @@ const Products = () => {
         Array.isArray(latestMessage.soldItems) &&
         latestMessage.soldItems.length > 0
       ) {
+        lastProcessedMessageRef.current = latestMessage;
         console.log('[Products] Rechargement des produits après vente...');
         // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
@@ -320,7 +328,7 @@ const Products = () => {
         }, 500); // Réduit le délai pour plus de fluidité
       }
     }
-  }, [venteData]);
+  }, [venteData, reloadProductsAfterSale]);
 
   // Gestion des événements de checkout - Effet unique
   useEffect(() => {

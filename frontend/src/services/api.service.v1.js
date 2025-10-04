@@ -16,6 +16,14 @@ async function safeApiCall(fn, logPrefix) {
     return await fn();
   } catch (error) {
     console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
+    
+    // Gérer les erreurs réseau spécifiques
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, retry possible`);
+      // Ne pas lancer d'erreur immédiatement pour les erreurs réseau
+      // Laisser le composant décider s'il faut retry
+    }
+    
     throw error;
   }
 }
