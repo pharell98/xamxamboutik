@@ -95,20 +95,40 @@ const BarcodeScanner = () => {
   // Generic scan handler
   const handleScan = useCallback(
     async code => {
+      console.log('[BarcodeScanner] Code scanné:', code, 'Longueur:', code?.length);
+      
+      // Validation du code
+      if (!code || typeof code !== 'string') {
+        showToast('Erreur', 'Code invalide', 'error');
+        return;
+      }
+      
+      const cleanCode = code.trim();
+      if (cleanCode.length < 9 || cleanCode.length > 13) {
+        showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} chiffres)`, 'warning');
+        return;
+      }
+      
+      if (!/^\d+$/.test(cleanCode)) {
+        showToast('Erreur', `Code invalide: ${cleanCode} (doit contenir que des chiffres)`, 'warning');
+        return;
+      }
+      
       try {
-        const response = await apiServiceV1.getProductByBarcode(code);
+        const response = await apiServiceV1.getProductByBarcode(cleanCode);
 
         if (response.success && response.data) {
           addProductToCart(response.data);
+          showToast('Succès', `Produit ajouté: ${response.data.libelle}`, 'success', 2000);
         } else {
           showToast(
             'Produit introuvable',
-            `Code ${code} non enregistré`,
+            `Code ${cleanCode} non enregistré`,
             'warning'
           );
         }
       } catch (error) {
-        handleScanError(error, code);
+        handleScanError(error, cleanCode);
       }
     },
     [addProductToCart, showToast, handleScanError]

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 const SCAN_COOLDOWN = 1000;
 const BARCODE_TIMEOUT = 200;
 const PROCESSING_RESET_DELAY = 1000;
-const BARCODE_LENGTH = 13;
+const MIN_BARCODE_LENGTH = 9;
+const MAX_BARCODE_LENGTH = 13;
 const DUPLICATE_PREVENTION_TIME = 2000;
 
 const NAVIGATION_KEYS = [
@@ -67,7 +68,12 @@ const useBarcodeScanner = (onScan, isActive = true) => {
   const barcodeTimeoutRef = useRef(null);
 
   // Utilitaires de validation
-  const isValidBarcode = useCallback(code => /^\d{13}$/.test(code), []);
+  const isValidBarcode = useCallback(code => {
+    const cleanCode = code.trim();
+    return /^\d+$/.test(cleanCode) && 
+           cleanCode.length >= MIN_BARCODE_LENGTH && 
+           cleanCode.length <= MAX_BARCODE_LENGTH;
+  }, []);
   const isDigit = useCallback(key => key.length === 1 && /^\d$/.test(key), []);
 
   // Vérification des éléments actifs
@@ -123,7 +129,7 @@ const useBarcodeScanner = (onScan, isActive = true) => {
   const handleBarcodeInput = useCallback(
     key => {
       if (key === 'Enter') {
-        const barcode = barcodeBufferRef.current;
+        const barcode = barcodeBufferRef.current.trim();
         if (barcode && isValidBarcode(barcode)) {
           processBarcode(barcode);
         }
@@ -139,8 +145,23 @@ const useBarcodeScanner = (onScan, isActive = true) => {
           clearTimeout(barcodeTimeoutRef.current);
         }
 
-        barcodeTimeoutRef.current = setTimeout(() => {
+        // Traitement automatique quand on atteint la longueur maximale
+        const currentLength = barcodeBufferRef.current.length;
+        if (currentLength >= MAX_BARCODE_LENGTH) {
           const barcode = barcodeBufferRef.current;
+          if (isValidBarcode(barcode)) {
+            processBarcode(barcode);
+            barcodeBufferRef.current = '';
+            if (barcodeTimeoutRef.current) {
+              clearTimeout(barcodeTimeoutRef.current);
+              barcodeTimeoutRef.current = null;
+            }
+            return;
+          }
+        }
+
+        barcodeTimeoutRef.current = setTimeout(() => {
+          const barcode = barcodeBufferRef.current.trim();
           if (barcode && isValidBarcode(barcode)) {
             processBarcode(barcode);
           }

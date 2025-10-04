@@ -18,9 +18,13 @@ const CameraScanner = ({ onScan }) => {
   const zxingVideoRef = useRef(null);
   const [needsPermission, setNeedsPermission] = useState(true);
 
-  // Validate any non-empty code
+  // Validate codes with different lengths (9-13 digits)
   const isValidCode = useCallback(code => {
-    return typeof code === 'string' && code.trim().length > 0;
+    if (typeof code !== 'string') return false;
+    const cleanCode = code.trim();
+    return /^\d+$/.test(cleanCode) && 
+           cleanCode.length >= 9 && 
+           cleanCode.length <= 13;
   }, []);
 
   // Reset scan state
