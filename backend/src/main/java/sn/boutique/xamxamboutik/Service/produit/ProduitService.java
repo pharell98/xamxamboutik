@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.requireNonNull;
 
@@ -47,6 +48,9 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
     private final SimpMessagingTemplate messagingTemplate;
     private final ImageBackgroundService imageBackgroundService;
     private final ProduitMapper produitMapper;
+    
+    // Protection contre l'envoi de messages WebSocket trop fréquents
+    private final Map<Long, Long> lastNotificationTimes = new ConcurrentHashMap<>();
 
     @Override
     protected ProduitRepository getRepository() {
@@ -323,15 +327,28 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
 
     private void notifyUpdate(Produit produit, String action) {
         try {
+            Long productId = produit.getId();
+            long currentTime = System.currentTimeMillis();
+            
+            // Protection contre l'envoi de messages trop fréquents (minimum 2 secondes entre les messages)
+            Long lastTime = lastNotificationTimes.get(productId);
+            if (lastTime != null && (currentTime - lastTime) < 2000) {
+                log.debug("Message WebSocket ignoré pour produit {} - trop fréquent (dernière notification il y a {}ms)", 
+                    productId, currentTime - lastTime);
+                return;
+            }
+            
             Map<String, Object> message = new HashMap<>();
             message.put("action", action);
-            message.put("productId", produit.getId());
+            message.put("productId", productId);
             message.put("libelle", produit.getLibelle());
+            
             if (messagingTemplate != null) {
                 messagingTemplate.convertAndSend("/topic/updates", message);
-                log.info("Message STOMP envoyé à /topic/updates pour produit ID: {}", produit.getId());
+                lastNotificationTimes.put(productId, currentTime);
+                log.info("Message STOMP envoyé à /topic/updates pour produit ID: {} (action: {})", productId, action);
             } else {
-                log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour produit ID: {}", produit.getId());
+                log.warn("SimpMessagingTemplate non disponible, message STOMP non envoyé pour produit ID: {}", productId);
             }
         } catch (Exception e) {
             log.error("Échec de l'envoi de la notification WebSocket pour le produit {}: {}", produit.getId(), e.getMessage());

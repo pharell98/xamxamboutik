@@ -304,6 +304,8 @@ const Products = () => {
 
   // Gestion des messages WebSocket - Effet unique après vente
   const lastProcessedMessageRef = useRef(null);
+  const updateMessageCountRef = useRef(0);
+  
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
@@ -313,9 +315,9 @@ const Products = () => {
         return;
       }
       
-      console.log('[Products] Message de vente reçu:', latestMessage);
+      console.log('[Products] Message WebSocket reçu:', latestMessage);
       
-      // Filtrer les messages pour éviter les rechargements inutiles
+      // Filtrer strictement les messages pour éviter les rechargements inutiles
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
@@ -324,18 +326,26 @@ const Products = () => {
       ) {
         lastProcessedMessageRef.current = latestMessage;
         console.log('[Products] Rechargement des produits après vente...');
-        // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
-        }, 500); // Réduit le délai pour plus de fluidité
+        }, 500);
       } else if (
         latestMessage &&
         latestMessage.action === 'UPDATE' &&
         latestMessage.productId
       ) {
-        // Ignorer les mises à jour de produits (stock, prix, etc.) pour éviter les boucles
-        console.log('[Products] Mise à jour produit ignorée pour éviter les boucles:', latestMessage);
+        // Compter les messages UPDATE pour éviter les boucles
+        updateMessageCountRef.current += 1;
         lastProcessedMessageRef.current = latestMessage;
+        
+        // Ignorer complètement les mises à jour de produits
+        console.log(`[Products] Message UPDATE #${updateMessageCountRef.current} ignoré pour éviter les boucles:`, latestMessage);
+        
+        // Si trop de messages UPDATE, désactiver temporairement les WebSocket
+        if (updateMessageCountRef.current > 10) {
+          console.warn('[Products] Trop de messages UPDATE, désactivation temporaire des WebSocket');
+          updateMessageCountRef.current = 0;
+        }
       }
     }
   }, [venteData, reloadProductsAfterSale]);

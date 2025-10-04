@@ -71,7 +71,7 @@ const apiServiceV1 = {
         return apiClient
           .get(`${PRODUCT_ENDPOINT}/suggestions`, {
             params: { query, page, size },
-            timeout: 5000 // Timeout de 5 secondes
+            timeout: 10000 // Timeout de 10 secondes
           })
           .then(r => r.data);
       },

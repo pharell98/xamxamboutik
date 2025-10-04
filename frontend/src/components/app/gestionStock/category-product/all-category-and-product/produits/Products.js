@@ -237,8 +237,14 @@ const Products = ({ onEdit }) => {
           }
           endpoint = '/produits/suggestions';
           
-          // Protection contre les requêtes trop fréquentes
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Protection renforcée contre les requêtes trop fréquentes
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Vérifier si on est déjà en train de charger
+          if (loading) {
+            console.log('[Products] Requête suggestions ignorée - chargement en cours');
+            throw new Error('Requête ignorée - chargement en cours');
+          }
           
           response = await apiServiceV1.getProductSuggestions(
             searchTerm,
