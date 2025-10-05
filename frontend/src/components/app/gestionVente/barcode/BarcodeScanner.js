@@ -104,7 +104,7 @@ const BarcodeScanner = () => {
       }
       
       const cleanCode = code.trim();
-      if (cleanCode.length < 9 || cleanCode.length > 13) {
+      if (cleanCode.length < 6 || cleanCode.length > 32) {
         showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} caractères)`, 'warning');
         return;
       }

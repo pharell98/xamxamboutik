@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 const SCAN_COOLDOWN = 1000;
 const BARCODE_TIMEOUT = 200;
 const PROCESSING_RESET_DELAY = 1000;
-const MIN_BARCODE_LENGTH = 9;
-const MAX_BARCODE_LENGTH = 13;
+const MIN_BARCODE_LENGTH = 6;
+const MAX_BARCODE_LENGTH = 32;
 const DUPLICATE_PREVENTION_TIME = 2000;
 
 const NAVIGATION_KEYS = [
