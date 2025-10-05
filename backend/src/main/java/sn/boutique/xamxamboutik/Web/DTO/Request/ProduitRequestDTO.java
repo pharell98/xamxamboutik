@@ -6,11 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import sn.boutique.xamxamboutik.Validation.ValidCodeProduit;
 
 @Data
 public class ProduitRequestDTO {
     @NotBlank(message = "Le code produit est obligatoire")
-    @Schema(description = "Code unique du produit", example = "PRD12345 ou 1234653223", required = true)
+    @ValidCodeProduit
+    @Schema(description = "Code unique du produit", example = "PRD12345 ou F16031403LEPMG9AJ", required = true)
     private String codeProduit;
     @Schema(description = "Ancien champ image (upload). Ignoré si useImageURL=true", example = "image.jpg")
     private String image;
