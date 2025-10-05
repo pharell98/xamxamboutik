@@ -70,11 +70,14 @@ const useBarcodeScanner = (onScan, isActive = true) => {
   // Utilitaires de validation
   const isValidBarcode = useCallback(code => {
     const cleanCode = code.trim();
-    return /^\d+$/.test(cleanCode) && 
+    return /^[a-zA-Z0-9\-_\s]+$/.test(cleanCode) && 
            cleanCode.length >= MIN_BARCODE_LENGTH && 
            cleanCode.length <= MAX_BARCODE_LENGTH;
   }, []);
-  const isDigit = useCallback(key => key.length === 1 && /^\d$/.test(key), []);
+  const isValidCharacter = useCallback(key => {
+    // Accepter chiffres, lettres, tirets, underscores et espaces
+    return key.length === 1 && /^[a-zA-Z0-9\-_\s]$/.test(key);
+  }, []);
 
   // Vérification des éléments actifs
   const isElementBlocked = useCallback(element => {
@@ -138,7 +141,7 @@ const useBarcodeScanner = (onScan, isActive = true) => {
           clearTimeout(barcodeTimeoutRef.current);
           barcodeTimeoutRef.current = null;
         }
-      } else if (isDigit(key)) {
+      } else if (isValidCharacter(key)) {
         barcodeBufferRef.current += key;
 
         if (barcodeTimeoutRef.current) {
@@ -170,7 +173,7 @@ const useBarcodeScanner = (onScan, isActive = true) => {
         }, BARCODE_TIMEOUT);
       }
     },
-    [isValidBarcode, processBarcode, isDigit]
+    [isValidBarcode, processBarcode, isValidCharacter]
   );
 
   // Gestionnaire d'événements clavier principal

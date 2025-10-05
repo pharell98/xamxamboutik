@@ -105,12 +105,12 @@ const BarcodeScanner = () => {
       
       const cleanCode = code.trim();
       if (cleanCode.length < 9 || cleanCode.length > 13) {
-        showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} chiffres)`, 'warning');
+        showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} caractères)`, 'warning');
         return;
       }
       
-      if (!/^\d+$/.test(cleanCode)) {
-        showToast('Erreur', `Code invalide: ${cleanCode} (doit contenir que des chiffres)`, 'warning');
+      if (!/^[a-zA-Z0-9\-_\s]+$/.test(cleanCode)) {
+        showToast('Erreur', `Code invalide: ${cleanCode} (caractères non autorisés)`, 'warning');
         return;
       }
       
