@@ -27,8 +27,8 @@ export const StompProvider = ({ children }) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [data, setData] = useState([]);
   const [approvisionnementData, setApprovisionnementData] = useState([]);
-  const [userData, setUserData] = useState([]);
   const [venteData, setVenteData] = useState([]);
+  const [userData, setUserData] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const stompClientRef = useRef(null);
   const subscriptionsRef = useRef([]);
@@ -78,13 +78,13 @@ export const StompProvider = ({ children }) => {
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
-      onWebSocketError: () => {
-        console.error('[StompContext] Erreur WebSocket');
+      onWebSocketError: error => {
+        console.error('[StompContext] Erreur WebSocket:', error);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
-      onWebSocketClose: () => {
+      onWebSocketClose: event => {
         console.warn('[StompContext] Connexion WebSocket fermée');
         setConnected(false);
         setIsReconnecting(true);
@@ -110,6 +110,18 @@ export const StompProvider = ({ children }) => {
 
       // Souscriptions par défaut
       subscribeWithErrorHandling('/topic/updates', parsed => {
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
+      });
+      subscribeWithErrorHandling('/topic/ventes', parsed => {
+        console.log('[StompContext] Message de vente reçu:', parsed);
+        setVenteData(prevData => {
+          const newData = [...prevData, parsed];
+          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
+          return newData.slice(-5);
+        });
         setData(prevData => {
           const newData = [...prevData, parsed];
           return newData.slice(-5);
@@ -144,7 +156,6 @@ export const StompProvider = ({ children }) => {
         // S'assurer que le message est valide
         if (messageToStore) {
           setApprovisionnementData(prevData => {
-            // Garder seulement les 5 derniers messages pour éviter l'accumulation
             const newData = [...prevData, messageToStore];
             return newData.slice(-5);
           });
@@ -159,6 +170,12 @@ export const StompProvider = ({ children }) => {
           const newData = [...prevData, parsed];
           return newData.slice(-5);
         });
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
+      });
+      subscribeWithErrorHandling('/topic/settings', parsed => {
         setData(prevData => {
           const newData = [...prevData, parsed];
           return newData.slice(-5);
@@ -181,21 +198,6 @@ export const StompProvider = ({ children }) => {
         });
       });
       subscribeWithErrorHandling('/topic/retours', parsed => {
-        setData(prevData => {
-          const newData = [...prevData, parsed];
-          return newData.slice(-5);
-        });
-      });
-      subscribeWithErrorHandling('/topic/ventes', parsed => {
-        console.log('[StompContext] Message de vente reçu:', parsed);
-        console.log('[StompContext] Type de message:', typeof parsed);
-        console.log('[StompContext] Structure du message:', JSON.stringify(parsed, null, 2));
-        
-        setVenteData(prevData => {
-          const newData = [...prevData, parsed];
-          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
-          return newData.slice(-5);
-        });
         setData(prevData => {
           const newData = [...prevData, parsed];
           return newData.slice(-5);
@@ -240,35 +242,45 @@ export const StompProvider = ({ children }) => {
       }, 500); // Réessayer toutes les 500ms
     };
 
-    client.onConnect = () => {
+    client.onConnect = frame => {
       console.log('[StompContext] Connexion WebSocket établie');
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
 
-      // Ajouter un léger délai pour s'assurer que la connexion est stable
+      // Ajouter un délai pour s'assurer que la connexion est stable
       setTimeout(() => {
         if (stompClientRef.current && stompClientRef.current.connected) {
           console.log('[StompContext] Souscription aux topics...');
-          subscribeToTopics();
-          startRetrySubscriptions();
+          const success = subscribeToTopics();
+          if (success) {
+            startRetrySubscriptions();
+          }
+        } else {
+          console.warn(
+            '[StompContext] Connexion STOMP non stable après délai'
+          );
         }
-      }, 100); // Délai de 100ms
+      }, 200); // Délai de 200ms pour plus de stabilité
     };
 
     client.onDisconnect = () => {
+      console.log('[StompContext] Déconnexion détectée');
       setConnected(false);
-      setIsReconnecting(true);
+      setIsReconnecting(false);
       setIsSubscribed(false);
-      startRetrySubscriptions();
+      // Nettoyer les intervalles existants
+      if (retryIntervalRef.current) {
+        clearInterval(retryIntervalRef.current);
+        retryIntervalRef.current = null;
+      }
     };
 
     client.onStompError = error => {
-      console.error('Erreur STOMP:', error);
+      console.error('[StompContext] Erreur STOMP:', error);
       setConnected(false);
-      setIsReconnecting(true);
+      setIsReconnecting(false);
       setIsSubscribed(false);
-      startRetrySubscriptions();
     };
 
     client.activate();
@@ -304,22 +316,30 @@ export const StompProvider = ({ children }) => {
 
   const subscribeWithErrorHandling = (topic, callback, subscriptionId) => {
     if (!subscriptionId) {
-      subscriptionId = `${topic}-${Date.now()}`; // Générer un ID unique si non fourni
+      subscriptionId = `${topic}-${Date.now()}`;
     }
 
     if (!stompClientRef.current || !stompClientRef.current.connected) {
+      console.warn(
+        `[StompContext] Connexion non active pour ${topic}, ajout à la file d'attente`
+      );
       pendingSubscriptionsRef.current.push({ topic, callback });
       return false;
     }
     try {
       const subscription = stompClientRef.current.subscribe(topic, message => {
-        const parsed = parseMessageBody(message.body);
-        callback(parsed);
+        try {
+          const parsed = parseMessageBody(message.body);
+          callback(parsed);
+        } catch (parseError) {
+          console.warn(`[StompContext] Erreur parsing message pour ${topic}:`, parseError);
+        }
       });
       subscriptionsRef.current.push(subscription);
-      return subscription;
+      console.log(`[StompContext] Souscription réussie à ${topic}`);
+      return true;
     } catch (error) {
-      console.error(`Erreur lors de la souscription au topic ${topic}:`, error);
+      console.error(`[StompContext] Erreur lors de la souscription au topic ${topic}:`, error);
       setIsSubscribed(false);
       pendingSubscriptionsRef.current.push({ topic, callback });
       return false;
@@ -355,8 +375,8 @@ export const StompProvider = ({ children }) => {
         isReconnecting,
         data,
         approvisionnementData,
-        userData,
         venteData,
+        userData,
         subscribe: subscribeWithErrorHandling,
         unsubscribe,
         isConnected
