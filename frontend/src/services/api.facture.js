@@ -17,7 +17,10 @@ class FactureService {
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des factures du jour:', error);
+      console.error(
+        'Erreur lors de la récupération des factures du jour:',
+        error
+      );
       throw error;
     }
   }
@@ -43,13 +46,16 @@ class FactureService {
         default:
           endpoint = '/factures/today';
       }
-      
+
       const response = await apiClient.get(endpoint, {
         params: { page, size }
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des factures par période:', error);
+      console.error(
+        'Erreur lors de la récupération des factures par période:',
+        error
+      );
       throw error;
     }
   }
@@ -68,7 +74,10 @@ class FactureService {
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des factures par date:', error);
+      console.error(
+        'Erreur lors de la récupération des factures par date:',
+        error
+      );
       throw error;
     }
   }
@@ -83,7 +92,10 @@ class FactureService {
       const response = await apiClient.get(`/factures/${numeroFacture}`);
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération des détails de la facture:', error);
+      console.error(
+        'Erreur lors de la récupération des détails de la facture:',
+        error
+      );
       throw error;
     }
   }
@@ -101,7 +113,10 @@ class FactureService {
       });
       return response.data;
     } catch (error) {
-      console.error('Erreur lors de la récupération de toutes les factures:', error);
+      console.error(
+        'Erreur lors de la récupération de toutes les factures:',
+        error
+      );
       throw error;
     }
   }
@@ -130,49 +145,49 @@ class FactureService {
   getMockData() {
     return {
       success: true,
-      message: "Factures du jour récupérées avec succès",
+      message: 'Factures du jour récupérées avec succès',
       data: {
         factures: [
           {
-            numeroFacture: "FAC-18-09-25-0004",
-            dateVente: "2025-09-18T10:46:36.152069",
+            numeroFacture: 'FAC-18-09-25-0004',
+            dateVente: '2025-09-18T10:46:36.152069',
             nomClient: null,
             telephoneClient: null,
-            modePaiement: "espece",
+            modePaiement: 'espece',
             montantTotal: 20,
             montantPayer: 20,
             montantRestant: 0,
             estCredit: false,
             detailFacture: [
               {
-                libelle: "style black",
+                libelle: 'style black',
                 quantite: 1,
                 prix: 10,
                 montantTotal: 10
               },
               {
-                libelle: "dove orange",
+                libelle: 'dove orange',
                 quantite: 1,
                 prix: 10,
                 montantTotal: 10
               }
             ],
             utilisateurId: 1,
-            utilisateurNom: "Admin Gestionnaire"
+            utilisateurNom: 'Admin Gestionnaire'
           },
           {
-            numeroFacture: "FAC-18-09-25-0003",
-            dateVente: "2025-09-18T09:49:16.550608",
+            numeroFacture: 'FAC-18-09-25-0003',
+            dateVente: '2025-09-18T09:49:16.550608',
             nomClient: null,
             telephoneClient: null,
-            modePaiement: "espece",
+            modePaiement: 'espece',
             montantTotal: 10,
             montantPayer: 10,
             montantRestant: 0,
             estCredit: false,
             detailFacture: [
               {
-                libelle: "style silver",
+                libelle: 'style silver',
                 quantite: 1,
                 prix: 10,
                 montantTotal: 10
@@ -182,45 +197,45 @@ class FactureService {
             utilisateurNom: null
           },
           {
-            numeroFacture: "FAC-18-09-25-0002",
-            dateVente: "2025-09-18T09:48:22.933505",
-            nomClient: "Mouhamadou bobo sow",
-            telephoneClient: "777930609",
-            modePaiement: "mobile_money",
+            numeroFacture: 'FAC-18-09-25-0002',
+            dateVente: '2025-09-18T09:48:22.933505',
+            nomClient: 'Mouhamadou bobo sow',
+            telephoneClient: '777930609',
+            modePaiement: 'mobile_money',
             montantTotal: 20,
             montantPayer: 20,
             montantRestant: 0,
             estCredit: false,
             detailFacture: [
               {
-                libelle: "style sport",
+                libelle: 'style sport',
                 quantite: 1,
                 prix: 10,
                 montantTotal: 10
               },
               {
-                libelle: "dove orange",
+                libelle: 'dove orange',
                 quantite: 1,
                 prix: 10,
                 montantTotal: 10
               }
             ],
             utilisateurId: 2,
-            utilisateurNom: "Vendeur Principal"
+            utilisateurNom: 'Vendeur Principal'
           },
           {
-            numeroFacture: "FAC-18-09-25-0001",
-            dateVente: "2025-09-18T09:38:41.314358",
+            numeroFacture: 'FAC-18-09-25-0001',
+            dateVente: '2025-09-18T09:38:41.314358',
             nomClient: null,
             telephoneClient: null,
-            modePaiement: "espece",
+            modePaiement: 'espece',
             montantTotal: 1001,
             montantPayer: 1001,
             montantRestant: 0,
             estCredit: false,
             detailFacture: [
               {
-                libelle: "style black",
+                libelle: 'style black',
                 quantite: 1,
                 prix: 1001,
                 montantTotal: 1001
@@ -235,7 +250,7 @@ class FactureService {
         currentPage: 0,
         pageSize: 20
       },
-      timestamp: "2025-09-15T16:23:54.01889"
+      timestamp: '2025-09-15T16:23:54.01889'
     };
   }
 }

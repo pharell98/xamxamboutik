@@ -191,7 +191,7 @@ const venteServiceV1 = {
         "Erreur lors de l'échange ajustement de prix. Veuillez réessayer.";
       throw new Error(errorMessage);
     }
-  },
+  }
 
   // All annulation endpoints removed per v3 API contracts
 };
