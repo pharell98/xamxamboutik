@@ -36,6 +36,34 @@ export const StompProvider = ({ children }) => {
   const retryIntervalRef = useRef(null);
 
   useEffect(() => {
+    // Nettoyer périodiquement les anciens messages pour éviter l'accumulation
+    const cleanupInterval = setInterval(() => {
+      setApprovisionnementData(prevData => {
+        if (prevData.length > 20) {
+          return prevData.slice(-10);
+        }
+        return prevData;
+      });
+      setData(prevData => {
+        if (prevData.length > 20) {
+          return prevData.slice(-10);
+        }
+        return prevData;
+      });
+      setVenteData(prevData => {
+        if (prevData.length > 20) {
+          return prevData.slice(-10);
+        }
+        return prevData;
+      });
+    }, 60000); // Nettoyer toutes les minutes
+
+    return () => {
+      clearInterval(cleanupInterval);
+    };
+  }, []);
+
+  useEffect(() => {
     const brokerURL =
       window._env_?.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL;
     if (!brokerURL) {
@@ -49,12 +77,13 @@ export const StompProvider = ({ children }) => {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onWebSocketError: error => {
-        console.error('Erreur WebSocket:', error);
+        console.error('[StompContext] Erreur WebSocket:', error);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
       onWebSocketClose: event => {
+        console.warn('[StompContext] Connexion WebSocket fermée');
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
@@ -79,34 +108,98 @@ export const StompProvider = ({ children }) => {
 
       // Souscriptions par défaut
       subscribeWithErrorHandling('/topic/updates', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/ventes', parsed => {
-        setVenteData(prevData => [...prevData, parsed]);
-        setData(prevData => [...prevData, parsed]);
+        console.log('[StompContext] Message de vente reçu:', parsed);
+        setVenteData(prevData => {
+          const newData = [...prevData, parsed];
+          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
+          return newData.slice(-5);
+        });
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/barcode', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/stock-updates', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        console.log('[StompContext] Mise à jour de stock reçue:', parsed);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/approvisionnements', parsed => {
-        setApprovisionnementData(prevData => [...prevData, parsed]);
-        setData(prevData => [...prevData, parsed]);
+        // Accepter les messages sous forme d'objet ou de string
+        let messageToStore = parsed;
+
+        // Si c'est une string simple, la convertir en objet
+        if (typeof parsed === 'string') {
+          messageToStore = {
+            type: 'APPROVISIONNEMENT_CREATED',
+            message: parsed,
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        // S'assurer que le message est valide
+        if (messageToStore) {
+          setApprovisionnementData(prevData => {
+            const newData = [...prevData, messageToStore];
+            return newData.slice(-5);
+          });
+          setData(prevData => {
+            const newData = [...prevData, messageToStore];
+            return newData.slice(-5);
+          });
+        }
       });
       subscribeWithErrorHandling('/topic/users', parsed => {
-        setUserData(prevData => [...prevData, parsed]);
-        setData(prevData => [...prevData, parsed]);
+        setUserData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/settings', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/categories', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        // Accepter les messages sous forme d'objet ou de string
+        let messageToStore = parsed;
+        // Si c'est une string simple, la convertir en objet
+        if (typeof parsed === 'string') {
+          messageToStore = {
+            type: 'CATEGORY_UPDATED',
+            message: parsed,
+            timestamp: new Date().toISOString()
+          };
+        }
+        setData(prevData => {
+          const newData = [...prevData, messageToStore];
+          return newData.slice(-5);
+        });
       });
       subscribeWithErrorHandling('/topic/retours', parsed => {
-        setData(prevData => [...prevData, parsed]);
+        setData(prevData => {
+          const newData = [...prevData, parsed];
+          return newData.slice(-5);
+        });
       });
 
       // Réessayer les souscriptions en attente
@@ -133,7 +226,6 @@ export const StompProvider = ({ children }) => {
             const success = subscribeWithErrorHandling(topic, callback);
             if (!success) {
               pendingSubscriptionsRef.current.push({ topic, callback });
-            } else {
             }
           });
 
@@ -149,7 +241,7 @@ export const StompProvider = ({ children }) => {
     };
 
     client.onConnect = frame => {
-      console.log('[StompContext] Connexion établie:', frame);
+      console.log('[StompContext] Connexion WebSocket établie');
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
@@ -157,6 +249,7 @@ export const StompProvider = ({ children }) => {
       // Ajouter un délai pour s'assurer que la connexion est stable
       setTimeout(() => {
         if (stompClientRef.current && stompClientRef.current.connected) {
+          console.log('[StompContext] Souscription aux topics...');
           const success = subscribeToTopics();
           if (success) {
             startRetrySubscriptions();
@@ -172,7 +265,7 @@ export const StompProvider = ({ children }) => {
     client.onDisconnect = () => {
       console.log('[StompContext] Déconnexion détectée');
       setConnected(false);
-      setIsReconnecting(false); // Ne pas forcer la reconnexion immédiate
+      setIsReconnecting(false);
       setIsSubscribed(false);
       // Nettoyer les intervalles existants
       if (retryIntervalRef.current) {
@@ -184,9 +277,8 @@ export const StompProvider = ({ children }) => {
     client.onStompError = error => {
       console.error('[StompContext] Erreur STOMP:', error);
       setConnected(false);
-      setIsReconnecting(false); // Éviter les reconnexions en boucle
+      setIsReconnecting(false);
       setIsSubscribed(false);
-      // Ne pas démarrer immédiatement les tentatives de reconnexion
     };
 
     client.activate();
@@ -222,12 +314,12 @@ export const StompProvider = ({ children }) => {
 
   const subscribeWithErrorHandling = (topic, callback, subscriptionId) => {
     if (!subscriptionId) {
-      subscriptionId = `${topic}-${Date.now()}`; // Générer un ID unique si non fourni
+      subscriptionId = `${topic}-${Date.now()}`;
     }
 
     if (!stompClientRef.current || !stompClientRef.current.connected) {
       console.warn(
-        `Connexion STOMP non active pour ${topic}, ajout à la file d'attente`
+        `[StompContext] Connexion non active pour ${topic}, ajout à la file d'attente`
       );
       pendingSubscriptionsRef.current.push({ topic, callback });
       return false;
@@ -243,7 +335,7 @@ export const StompProvider = ({ children }) => {
       });
       subscriptionsRef.current.push(subscription);
       console.log(`[StompContext] Souscription réussie à ${topic}`);
-      return true; // Retourner true pour indiquer le succès
+      return true;
     } catch (error) {
       console.error(`[StompContext] Erreur lors de la souscription au topic ${topic}:`, error);
       setIsSubscribed(false);
