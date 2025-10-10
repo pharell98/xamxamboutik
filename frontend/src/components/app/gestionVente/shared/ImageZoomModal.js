@@ -6,29 +6,34 @@ import PropTypes from 'prop-types';
 /**
  * Modal pour afficher une image en grand avec zoom
  */
-const ImageZoomModal = ({ 
-  show, 
-  onHide, 
-  imageSrc, 
+const ImageZoomModal = ({
+  show,
+  onHide,
+  imageSrc,
   imageAlt = 'Image agrandie',
   title = 'Aperçu du produit'
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   return (
-    <Modal 
-      show={show} 
-      onHide={onHide} 
-      centered 
+    <Modal
+      show={show}
+      onHide={onHide}
+      centered
       size="lg"
       className="image-zoom-modal"
       contentClassName={isDark ? 'bg-dark text-light' : ''}
     >
-      <Modal.Header closeButton className={isDark ? 'bg-dark text-light border-secondary' : ''}>
+      <Modal.Header
+        closeButton
+        className={isDark ? 'bg-dark text-light border-secondary' : ''}
+      >
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
-      
+
       <Modal.Body className={`text-center p-0 ${isDark ? 'bg-dark' : ''}`}>
-        <div 
+        <div
           style={{
             maxHeight: '70vh',
             overflow: 'hidden',
@@ -48,7 +53,7 @@ const ImageZoomModal = ({
               objectFit: 'contain',
               cursor: 'zoom-in'
             }}
-            onClick={(e) => {
+            onClick={e => {
               // Toggle zoom on click
               const img = e.target;
               if (img.style.transform === 'scale(2)') {
@@ -62,8 +67,12 @@ const ImageZoomModal = ({
           />
         </div>
       </Modal.Body>
-      
-      <Modal.Footer className={`justify-content-center ${isDark ? 'bg-dark border-secondary' : ''}`}>
+
+      <Modal.Footer
+        className={`justify-content-center ${
+          isDark ? 'bg-dark border-secondary' : ''
+        }`}
+      >
         <small className={isDark ? 'text-secondary' : 'text-muted'}>
           Cliquez sur l'image pour zoomer/dézoomer
         </small>

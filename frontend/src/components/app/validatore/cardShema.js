@@ -7,14 +7,16 @@ import * as Yup from 'yup';
 /**
  * Valide qu'une quantité est un entier positif non vide
  */
-export const isValidQuantity = (quantity) => {
-  return quantity !== null && 
-         quantity !== undefined && 
-         quantity !== '' && 
-         quantity !== 0 &&
-         Number.isInteger(quantity) && 
-         !isNaN(quantity) && 
-         quantity > 0;
+export const isValidQuantity = quantity => {
+  return (
+    quantity !== null &&
+    quantity !== undefined &&
+    quantity !== '' &&
+    quantity !== 0 &&
+    Number.isInteger(quantity) &&
+    !isNaN(quantity) &&
+    quantity > 0
+  );
 };
 
 /**
@@ -30,7 +32,7 @@ export const normalizeQuantity = (quantity, max = Infinity) => {
 /**
  * Valide qu'un prix est un nombre positif
  */
-export const isValidPrice = (price) => {
+export const isValidPrice = price => {
   const num = Number(price);
   return !isNaN(num) && num >= 0;
 };
@@ -107,7 +109,7 @@ export const quantitySchema = Yup.number()
 /**
  * Valide un item du panier et retourne les erreurs
  */
-export const validateCartItem = async (item) => {
+export const validateCartItem = async item => {
   try {
     await cartItemSchema.validate(item, { abortEarly: false });
     return { isValid: true, errors: [] };
@@ -125,7 +127,7 @@ export const validateCartItem = async (item) => {
 /**
  * Valide le panier complet
  */
-export const validateCart = async (cartData) => {
+export const validateCart = async cartData => {
   try {
     await cartSchema.validate(cartData, { abortEarly: false });
     return { isValid: true, errors: [] };
@@ -143,10 +145,13 @@ export const validateCart = async (cartData) => {
 /**
  * Valide les informations client
  */
-export const validateCustomerInfo = async (customerInfo, isRequired = false) => {
+export const validateCustomerInfo = async (
+  customerInfo,
+  isRequired = false
+) => {
   try {
     await customerInfoSchema.validate(
-      { ...customerInfo, required: isRequired }, 
+      { ...customerInfo, required: isRequired },
       { abortEarly: false }
     );
     return { isValid: true, errors: [] };
@@ -168,11 +173,11 @@ export const validateCustomerInfo = async (customerInfo, isRequired = false) => 
 /**
  * Filtre les items invalides du panier avec diagnostic
  */
-export const getInvalidCartItems = (cartItems) => {
+export const getInvalidCartItems = cartItems => {
   return cartItems.filter(item => {
     const hasInvalidQuantity = !isValidQuantity(item.quantity);
     const exceedsStock = item.quantity > (item.quantiteDisponible || Infinity);
-    
+
     if (hasInvalidQuantity) {
       console.warn('[Validation] Item avec quantité invalide:', {
         libelle: item.libelle,
@@ -180,7 +185,7 @@ export const getInvalidCartItems = (cartItems) => {
         type: typeof item.quantity
       });
     }
-    
+
     return hasInvalidQuantity || exceedsStock;
   });
 };
@@ -188,19 +193,21 @@ export const getInvalidCartItems = (cartItems) => {
 /**
  * Génère un message d'erreur détaillé pour les items invalides
  */
-export const getValidationErrorMessage = (invalidItems) => {
+export const getValidationErrorMessage = invalidItems => {
   const itemDescriptions = invalidItems.map(item => {
     const issues = [];
-    
+
     if (!isValidQuantity(item.quantity)) {
       issues.push('quantité invalide');
     }
     if (item.quantity > (item.quantiteDisponible || Infinity)) {
       issues.push('stock insuffisant');
     }
-    
+
     return `${item.libelle} (${issues.join(', ')})`;
   });
-  
-  return `Problèmes détectés : ${itemDescriptions.join(', ')}. Veuillez corriger avant de continuer.`;
+
+  return `Problèmes détectés : ${itemDescriptions.join(
+    ', '
+  )}. Veuillez corriger avant de continuer.`;
 };

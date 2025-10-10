@@ -4,11 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import EcomStat from './EcomStat';
 import BeneficeCard from './benefices/BeneficeCard';
 import TotalSales from './totalsales/TotalSales';
-import {
-  marketShare,
-  notifications,
-  totalSale
-} from 'data/dashboard/ecom';
+import { marketShare, notifications, totalSale } from 'data/dashboard/ecom';
 import MarketShare from 'components/dashboards/default/MarketShare';
 import caisseService from 'services/api.caisse.service';
 import Loading from 'components/common/Loading';
@@ -23,70 +19,70 @@ const Ecommerce = () => {
   const [estOuverte, setEstOuverte] = useState(undefined);
 
   const loadEtat = async () => {
-      try {
-        const [etat, ouverture] = await Promise.all([
-          caisseService.getEtat(),
-          caisseService.isOuverte()
-        ]);
-        setEstOuverte(Boolean(ouverture?.estOuverte));
-        const pick = (obj, keys = []) => {
-          for (const key of keys) {
-            if (obj && obj[key] !== undefined && obj[key] !== null) {
-              return obj[key];
-            }
+    try {
+      const [etat, ouverture] = await Promise.all([
+        caisseService.getEtat(),
+        caisseService.isOuverte()
+      ]);
+      setEstOuverte(Boolean(ouverture?.estOuverte));
+      const pick = (obj, keys = []) => {
+        for (const key of keys) {
+          if (obj && obj[key] !== undefined && obj[key] !== null) {
+            return obj[key];
           }
-          return 0;
-        };
-        const formatAmount = value => {
-          if (value === null || value === undefined) return '-';
-          const num = Number(value);
-          if (Number.isNaN(num)) return String(value);
-          try {
-            return new Intl.NumberFormat('fr-FR').format(num);
-          } catch {
-            return String(num);
-          }
-        };
+        }
+        return 0;
+      };
+      const formatAmount = value => {
+        if (value === null || value === undefined) return '-';
+        const num = Number(value);
+        if (Number.isNaN(num)) return String(value);
+        try {
+          return new Intl.NumberFormat('fr-FR').format(num);
+        } catch {
+          return String(num);
+        }
+      };
 
-        // Map API fields to dashboard KPIs (ordered as requested)
-        const items = [
-          {
-            title: 'Montant initial',
-            amount: formatAmount(pick(etat, ['montantInitial'])),
-            className: 'border-200 border-bottom border-end pb-4'
-          },
-          {
-            title: 'Ventes du jour',
-            amount: formatAmount(pick(etat, ['ventesDuJour'])),
-            className:
-              'border-200 border-md-200 border-bottom border-md-end pb-4 ps-3'
-          },
-          {
-            title: 'Pertes du jour',
-            amount: formatAmount(pick(etat, ['pertesDuJour'])),
-            className:
-              'border-200 border-bottom border-end border-md-end-0 pb-4 pt-4 pt-md-0 ps-md-3'
-          },
-          {
-            title: 'Montant total caisse (réel)',
-            amount: formatAmount(pick(etat, ['montantTotalCaisseReel'])),
-            className:
-              'border-200 border-md-bottom-0 border-end pt-4 pb-md-0 ps-md-3'
-          },
-          {
-            title: 'Montant fermeture',
-            amount: formatAmount(pick(etat, ['montantFermeture'])),
-            subAmount: etat?.status || undefined,
-            className:
-              'border-200 border-md-200 border-bottom border-md-bottom-0 border-md-end pt-4 pb-md-0 ps-3 ps-md-0'
-          }
-        ];
-        setCaisseStats(items);
-      } catch (e) {
-        setCaisseStats([]);
-      } finally {
-        setLoading(false);
-      }
+      // Map API fields to dashboard KPIs (ordered as requested)
+      const items = [
+        {
+          title: 'Montant initial',
+          amount: formatAmount(pick(etat, ['montantInitial'])),
+          className: 'border-200 border-bottom border-end pb-4'
+        },
+        {
+          title: 'Ventes du jour',
+          amount: formatAmount(pick(etat, ['ventesDuJour'])),
+          className:
+            'border-200 border-md-200 border-bottom border-md-end pb-4 ps-3'
+        },
+        {
+          title: 'Pertes du jour',
+          amount: formatAmount(pick(etat, ['pertesDuJour'])),
+          className:
+            'border-200 border-bottom border-end border-md-end-0 pb-4 pt-4 pt-md-0 ps-md-3'
+        },
+        {
+          title: 'Montant total caisse (réel)',
+          amount: formatAmount(pick(etat, ['montantTotalCaisseReel'])),
+          className:
+            'border-200 border-md-bottom-0 border-end pt-4 pb-md-0 ps-md-3'
+        },
+        {
+          title: 'Montant fermeture',
+          amount: formatAmount(pick(etat, ['montantFermeture'])),
+          subAmount: etat?.status || undefined,
+          className:
+            'border-200 border-md-200 border-bottom border-md-bottom-0 border-md-end pt-4 pb-md-0 ps-3 ps-md-0'
+        }
+      ];
+      setCaisseStats(items);
+    } catch (e) {
+      setCaisseStats([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRefresh = async () => {

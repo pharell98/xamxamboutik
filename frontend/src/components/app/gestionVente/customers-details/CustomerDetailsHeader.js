@@ -17,7 +17,11 @@ const CustomerDetailsHeader = () => {
         <Row className="g-2 align-items-center">
           <Col>
             <h5 className="mb-2 fw-bold">
-              Tony Robbins (<a href="mailto:tony@gmail.com" className="text-primary">tony@gmail.com</a>)
+              Tony Robbins (
+              <a href="mailto:tony@gmail.com" className="text-primary">
+                tony@gmail.com
+              </a>
+              )
             </h5>
             <div className="d-flex flex-wrap gap-2">
               <IconButton
@@ -41,20 +45,36 @@ const CustomerDetailsHeader = () => {
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu align={isRTL ? 'end' : 'start'}>
-                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                  <Dropdown.Item
+                    as={Link}
+                    to="#!"
+                    className="d-flex align-items-center"
+                  >
                     <FontAwesomeIcon icon="edit" className="me-2" />
                     Edit
                   </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                  <Dropdown.Item
+                    as={Link}
+                    to="#!"
+                    className="d-flex align-items-center"
+                  >
                     <FontAwesomeIcon icon="file-alt" className="me-2" />
                     Report
                   </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="#!" className="d-flex align-items-center">
+                  <Dropdown.Item
+                    as={Link}
+                    to="#!"
+                    className="d-flex align-items-center"
+                  >
                     <FontAwesomeIcon icon="archive" className="me-2" />
                     Archive
                   </Dropdown.Item>
                   <Dropdown.Divider as="div" />
-                  <Dropdown.Item as={Link} to="#!" className="text-danger d-flex align-items-center">
+                  <Dropdown.Item
+                    as={Link}
+                    to="#!"
+                    className="text-danger d-flex align-items-center"
+                  >
                     <FontAwesomeIcon icon="trash" className="me-2" />
                     Delete user
                   </Dropdown.Item>
@@ -64,9 +84,7 @@ const CustomerDetailsHeader = () => {
           </Col>
           <Col xs="auto">
             <div className="d-flex align-items-center">
-              <h6 className="text-uppercase text-600 mb-0 me-2">
-                Customer
-              </h6>
+              <h6 className="text-uppercase text-600 mb-0 me-2">Customer</h6>
               <FontAwesomeIcon icon="user" className="text-primary" />
             </div>
           </Col>

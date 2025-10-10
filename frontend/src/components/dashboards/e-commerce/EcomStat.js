@@ -16,9 +16,7 @@ const EcomStatItem = ({ stat }) => {
           </SubtleBadge>
         )}
       </Flex>
-      {stat.subAmount && (
-        <p className="mb-0 text-500 fs-9">{stat.subAmount}</p>
-      )}
+      {stat.subAmount && <p className="mb-0 text-500 fs-9">{stat.subAmount}</p>}
     </Col>
   );
 };

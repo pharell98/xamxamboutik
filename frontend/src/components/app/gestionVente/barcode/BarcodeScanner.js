@@ -12,8 +12,16 @@ import apiServiceV1 from 'services/api.service.v1';
 const TOAST_DUPLICATE_TIMEOUT = 2000;
 const ERROR_MESSAGES = {
   404: { title: 'Produit introuvable', type: 'warning' },
-  500: { title: 'Erreur serveur', message: 'Problème temporaire', type: 'error' },
-  0: { title: 'Connexion perdue', message: 'Vérifiez votre connexion', type: 'error' },
+  500: {
+    title: 'Erreur serveur',
+    message: 'Problème temporaire',
+    type: 'error'
+  },
+  0: {
+    title: 'Connexion perdue',
+    message: 'Vérifiez votre connexion',
+    type: 'error'
+  },
   default: { title: 'Erreur', message: 'Erreur de récupération', type: 'error' }
 };
 
@@ -21,71 +29,110 @@ const BarcodeScanner = () => {
   const { productsDispatch } = useProductContext();
   const { addToast } = useToast();
   const [scannerMode, setScannerMode] = useState('usb');
-  
+
   // Toast deduplication
   const lastToastRef = useRef({ message: '', time: 0 });
 
   // Toast handler with deduplication
-  const showToast = useCallback((title, message, type, duration = 4000) => {
-    const now = Date.now();
-    const { message: lastMessage, time: lastTime } = lastToastRef.current;
-    
-    if (message === lastMessage && now - lastTime < TOAST_DUPLICATE_TIMEOUT) {
-      return;
-    }
+  const showToast = useCallback(
+    (title, message, type, duration = 4000) => {
+      const now = Date.now();
+      const { message: lastMessage, time: lastTime } = lastToastRef.current;
 
-    addToast({
-      id: `${uuidv4()}-${now}`,
-      title,
-      message,
-      type,
-      duration,
-      'data-toast-message': message
-    });
+      if (message === lastMessage && now - lastTime < TOAST_DUPLICATE_TIMEOUT) {
+        return;
+      }
 
-    lastToastRef.current = { message, time: now };
-  }, [addToast]);
+      addToast({
+        id: `${uuidv4()}-${now}`,
+        title,
+        message,
+        type,
+        duration,
+        'data-toast-message': message
+      });
+
+      lastToastRef.current = { message, time: now };
+    },
+    [addToast]
+  );
 
   // Add product to cart
-  const addProductToCart = useCallback((product) => {
-    productsDispatch({
-      type: 'ADD_TO_CART',
-      payload: {
-        product: {
-          ...product,
-          quantity: 1,
-          totalPrice: product.prixVente
+  const addProductToCart = useCallback(
+    product => {
+      productsDispatch({
+        type: 'ADD_TO_CART',
+        payload: {
+          product: {
+            ...product,
+            quantity: 1,
+            totalPrice: product.prixVente
+          }
         }
-      }
-    });
-  }, [productsDispatch]);
+      });
+    },
+    [productsDispatch]
+  );
 
   // Handle API errors
-  const handleScanError = useCallback((error, code) => {
-    const status = error.response?.status;
-    const errorConfig = ERROR_MESSAGES[status] || ERROR_MESSAGES.default;
-    
-    const message = status === 404 
-      ? `Code ${code} non enregistré`
-      : error.response?.data?.message || error.message || errorConfig.message;
+  const handleScanError = useCallback(
+    (error, code) => {
+      const status = error.response?.status;
+      const errorConfig = ERROR_MESSAGES[status] || ERROR_MESSAGES.default;
 
-    showToast(errorConfig.title, message, errorConfig.type);
-  }, [showToast]);
+      const message =
+        status === 404
+          ? `Code ${code} non enregistré`
+          : error.response?.data?.message ||
+            error.message ||
+            errorConfig.message;
+
+      showToast(errorConfig.title, message, errorConfig.type);
+    },
+    [showToast]
+  );
 
   // Generic scan handler
-  const handleScan = useCallback(async (code) => {
-    try {
-      const response = await apiServiceV1.getProductByBarcode(code);
+  const handleScan = useCallback(
+    async code => {
+      console.log('[BarcodeScanner] Code scanné:', code, 'Longueur:', code?.length);
       
-      if (response.success && response.data) {
-        addProductToCart(response.data);
-      } else {
-        showToast('Produit introuvable', `Code ${code} non enregistré`, 'warning');
+      // Validation du code
+      if (!code || typeof code !== 'string') {
+        showToast('Erreur', 'Code invalide', 'error');
+        return;
       }
-    } catch (error) {
-      handleScanError(error, code);
-    }
-  }, [addProductToCart, showToast, handleScanError]);
+      
+      const cleanCode = code.trim();
+      if (cleanCode.length < 6 || cleanCode.length > 32) {
+        showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} caractères)`, 'warning');
+        return;
+      }
+      
+      if (!/^[a-zA-Z0-9\-_\s]+$/.test(cleanCode)) {
+        showToast('Erreur', `Code invalide: ${cleanCode} (caractères non autorisés)`, 'warning');
+        return;
+      }
+      
+      try {
+        const response = await apiServiceV1.getProductByBarcode(cleanCode);
+
+        if (response.success && response.data) {
+          addProductToCart(response.data);
+          showToast('Succès', `Produit ajouté: ${response.data.libelle}`, 'success', 2000);
+        } else {
+          showToast(
+            'Produit introuvable',
+            `Code ${cleanCode} non enregistré`,
+            'warning'
+          );
+        }
+      } catch (error) {
+        handleScanError(error, cleanCode);
+      }
+    },
+    [addProductToCart, showToast, handleScanError]
+  );
 
   // USB Scanner setup
   const { containerRef, handleKeyDown } = useBarcodeScanner(
@@ -94,8 +141,8 @@ const BarcodeScanner = () => {
   );
 
   // Event handlers
-  const handleContainerClick = useCallback((e) => e.stopPropagation(), []);
-  const handleMouseEvent = useCallback((e) => e.stopPropagation(), []);
+  const handleContainerClick = useCallback(e => e.stopPropagation(), []);
+  const handleMouseEvent = useCallback(e => e.stopPropagation(), []);
 
   return (
     <div
@@ -111,9 +158,7 @@ const BarcodeScanner = () => {
         scannerMode={scannerMode}
         setScannerMode={setScannerMode}
       />
-      {scannerMode === 'camera' && (
-        <CameraScanner onScan={handleScan} />
-      )}
+      {scannerMode === 'camera' && <CameraScanner onScan={handleScan} />}
     </div>
   );
 };

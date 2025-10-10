@@ -92,10 +92,20 @@ const useAdvanceTable = ({
     initialPaginationState
   );
 
+  // Protection contre les requêtes multiples
+  const isFetchingRef = React.useRef(false);
+
   React.useEffect(() => {
     if (serverPagination && typeof fetchData === 'function') {
       const fetchAsyncData = async () => {
+        // Éviter les requêtes multiples simultanées
+        if (isFetchingRef.current) {
+          console.log('[useAdvanceTable] Requête déjà en cours, ignorée');
+          return;
+        }
+        
         try {
+          isFetchingRef.current = true;
           const { data: newData, pageCount } = await fetchData(
             paginationState.pageIndex,
             paginationState.pageSize
@@ -104,6 +114,9 @@ const useAdvanceTable = ({
           setServerPageCount(pageCount || 0);
         } catch (error) {
           console.error('Erreur lors du fetch de données : ', error);
+          // Ne pas réinitialiser les données en cas d'erreur
+        } finally {
+          isFetchingRef.current = false;
         }
       };
       fetchAsyncData();

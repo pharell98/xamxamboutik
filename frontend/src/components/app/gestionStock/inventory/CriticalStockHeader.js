@@ -23,7 +23,10 @@ const CriticalStockHeader = ({ refresh }) => {
     <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center w-100">
       <div className="border-bottom border-200 my-1 my-md-2 w-100"></div>
       <div className="d-flex align-items-center justify-content-between justify-content-md-end w-100">
-        <Col xs={12} className="d-flex justify-content-center justify-content-md-end px-0">
+        <Col
+          xs={12}
+          className="d-flex justify-content-center justify-content-md-end px-0"
+        >
           <div id="orders-actions" className="d-flex flex-wrap gap-1">
             {!hasSelectedProducts ? (
               <IconButton
@@ -34,7 +37,9 @@ const CriticalStockHeader = ({ refresh }) => {
                 iconAlign="middle"
                 className="px-1 py-1"
               >
-                <span className="ms-1 d-none d-sm-inline">Aucun produit sélectionné</span>
+                <span className="ms-1 d-none d-sm-inline">
+                  Aucun produit sélectionné
+                </span>
                 <span className="ms-1 d-inline d-sm-none">Aucun produit</span>
               </IconButton>
             ) : (

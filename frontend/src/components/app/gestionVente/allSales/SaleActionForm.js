@@ -27,7 +27,9 @@ const SaleActionForm = ({
   quantiteVendu,
   status
 }) => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const motifRef = useRef(null);
 
@@ -54,7 +56,11 @@ const SaleActionForm = ({
         // Récupère la page côté backend puis filtre côté client par libellé
         const data = await venteServiceV1.getEchangeProductList();
         if (!active) return;
-        const content = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        const content = Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+          ? data
+          : [];
         const options = !productQuery
           ? content
           : content.filter(p =>
@@ -386,8 +392,18 @@ const SaleActionForm = ({
         `}
       </style>
       <Col md={12}>
-        <Card className={`form-container ${isDark ? 'bg-dark text-light border-secondary' : ''}`}>
-          <Card.Header className={`d-flex align-items-center ${isDark ? 'bg-dark border-secondary text-light' : 'bg-primary text-white'}`}>
+        <Card
+          className={`form-container ${
+            isDark ? 'bg-dark text-light border-secondary' : ''
+          }`}
+        >
+          <Card.Header
+            className={`d-flex align-items-center ${
+              isDark
+                ? 'bg-dark border-secondary text-light'
+                : 'bg-primary text-white'
+            }`}
+          >
             <h5 className="mb-0">
               {actionConfigs[selectedAction].icon}
               {actionConfigs[selectedAction].title}
@@ -399,14 +415,19 @@ const SaleActionForm = ({
           <Card.Body className={isDark ? 'bg-dark text-light' : ''}>
             {isActionDisabled ? (
               <div className="disabled-message">
-                Action non disponible : le produit a déjà été retourné ou échangé.
+                Action non disponible : le produit a déjà été retourné ou
+                échangé.
                 <br />
                 Note : Pour permettre des retours partiels, le backend doit
                 fournir la quantité restante à retourner.
               </div>
             ) : (
               <>
-                <p className={`${isDark ? 'text-secondary' : 'text-muted'} mb-2 fs-10`}>
+                <p
+                  className={`${
+                    isDark ? 'text-secondary' : 'text-muted'
+                  } mb-2 fs-10`}
+                >
                   {actionConfigs[selectedAction].description}
                 </p>
                 <Form onSubmit={handleSubmit(onFormSubmit)} noValidate>
@@ -414,13 +435,19 @@ const SaleActionForm = ({
                     <Form.Group key={field.name} className="position-relative">
                       {field.name === 'produitRemplacementId' ? (
                         <>
-                          <Form.Label className={`fw-medium ${isDark ? 'text-light' : 'text-dark'}`}>
+                          <Form.Label
+                            className={`fw-medium ${
+                              isDark ? 'text-light' : 'text-dark'
+                            }`}
+                          >
                             {field.label}
                           </Form.Label>
                           <Controller
                             name="produitRemplacementId"
                             control={control}
-                            rules={{ required: `${field.label} est obligatoire` }}
+                            rules={{
+                              required: `${field.label} est obligatoire`
+                            }}
                             render={({ field: ctrlField }) => (
                               <Autocomplete
                                 options={productOptions}
@@ -431,7 +458,9 @@ const SaleActionForm = ({
                                 openOnFocus
                                 filterOptions={x => x}
                                 getOptionLabel={opt => opt?.libelle || ''}
-                                isOptionEqualToValue={(opt, val) => String(opt?.id) === String(val?.id)}
+                                isOptionEqualToValue={(opt, val) =>
+                                  String(opt?.id) === String(val?.id)
+                                }
                                 onInputChange={(_, val) => setProductQuery(val)}
                                 onChange={(_, val) => {
                                   const selectedId = val ? Number(val.id) : '';
@@ -440,9 +469,13 @@ const SaleActionForm = ({
                                 }}
                                 renderOption={(props, option) => (
                                   <li {...props} key={option.id}>
-                                    <span style={{ flex: 1 }}>{option.libelle}</span>
+                                    <span style={{ flex: 1 }}>
+                                      {option.libelle}
+                                    </span>
                                     <span style={{ color: '#6c757d' }}>
-                                      {option.prixVente != null ? `${option.prixVente} CFA` : ''}
+                                      {option.prixVente != null
+                                        ? `${option.prixVente} CFA`
+                                        : ''}
                                     </span>
                                   </li>
                                 )}
@@ -452,10 +485,20 @@ const SaleActionForm = ({
                                     placeholder={field.placeholder}
                                     size="small"
                                     error={!!errors.produitRemplacementId}
-                                    helperText={errors.produitRemplacementId?.message}
+                                    helperText={
+                                      errors.produitRemplacementId?.message
+                                    }
                                     InputProps={{
                                       ...params.InputProps,
-                                      sx: isDark ? { backgroundColor: '#1f2937', color: '#e5e7eb', '& .MuiSvgIcon-root': { color: '#e5e7eb' } } : {}
+                                      sx: isDark
+                                        ? {
+                                            backgroundColor: '#1f2937',
+                                            color: '#e5e7eb',
+                                            '& .MuiSvgIcon-root': {
+                                              color: '#e5e7eb'
+                                            }
+                                          }
+                                        : {}
                                     }}
                                   />
                                 )}
@@ -479,7 +522,8 @@ const SaleActionForm = ({
                                 ...(field.type === 'number' && {
                                   min: {
                                     value: 1,
-                                    message: 'La quantité doit être supérieure à 0'
+                                    message:
+                                      'La quantité doit être supérieure à 0'
                                   },
                                   max: {
                                     value: quantiteVendu,
@@ -501,12 +545,12 @@ const SaleActionForm = ({
                             </Tooltip>
                           </Overlay>
                           {errors[field.name] && (
-                          <Form.Text className="text-danger fs-10">
+                            <Form.Text className="text-danger fs-10">
                               {errors[field.name].message}
                             </Form.Text>
                           )}
                           {!errors[field.name] && watch(field.name) && (
-                          <Form.Text className="text-success fs-10">
+                            <Form.Text className="text-success fs-10">
                               Valide
                             </Form.Text>
                           )}

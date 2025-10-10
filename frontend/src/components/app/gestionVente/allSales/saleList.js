@@ -4,7 +4,9 @@ import { useAppContext } from 'providers/AppProvider';
 import Sales from './Sales';
 
 const SaleList = () => {
-  const { config: { isDark } } = useAppContext();
+  const {
+    config: { isDark }
+  } = useAppContext();
   return (
     <Card.Body className={`p-0 ${isDark ? 'bg-dark text-light' : ''}`}>
       <Sales />
