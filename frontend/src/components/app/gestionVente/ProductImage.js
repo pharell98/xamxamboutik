@@ -18,6 +18,7 @@ const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
 
 // Cache global pour le logo
 let logoCache = null;
+let logoFetchAttempted = false;
 
 /**
  * Vérifie si une URL est une image valide
@@ -78,9 +79,10 @@ const useLogoFallback = shouldUseFallback => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!shouldUseFallback || logoCache) return;
+    if (!shouldUseFallback || logoCache || logoFetchAttempted) return;
 
     const fetchLogo = async () => {
+      logoFetchAttempted = true;
       setIsLoading(true);
       try {
         const settings = await apiServiceSettings.getSettings();
@@ -93,6 +95,7 @@ const useLogoFallback = shouldUseFallback => {
         setLogoUrl(logo);
       } catch (error) {
         console.error('[ProductImage] Erreur récupération logo:', error);
+        logoCache = FALLBACK_IMAGE;
         setLogoUrl(FALLBACK_IMAGE);
       } finally {
         setIsLoading(false);
@@ -133,11 +136,16 @@ const ProductImage = ({
     }
   }, [image, logoUrl, imageFailed]);
 
-  const handleImageError = useCallback(() => {
-    console.warn('[ProductImage] Échec chargement:', currentImageSrc);
-    setImageFailed(true);
-    setCurrentImageSrc(FALLBACK_IMAGE);
-  }, [currentImageSrc]);
+  const handleImageError = useCallback((e) => {
+    if (e.currentTarget.dataset.errorLogged !== '1') {
+      console.warn('[ProductImage] Échec chargement:', currentImageSrc);
+      e.currentTarget.dataset.errorLogged = '1';
+    }
+    if (!imageFailed) {
+      setImageFailed(true);
+      setCurrentImageSrc(FALLBACK_IMAGE);
+    }
+  }, [currentImageSrc, imageFailed]);
 
   const handleImageLoad = useCallback(() => {
     setImageFailed(false);
