@@ -51,7 +51,9 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     <T> Page<T> findByLibelleContainingIgnoreCase(@Param("libelle") String libelle, Pageable pageable, Class<T> type);
 
-    @Query("SELECT p FROM Produit p WHERE p.deleted = false AND LOWER(p.libelle) LIKE LOWER(CONCAT(:libelle, '%'))")
+    @Query("SELECT p FROM Produit p WHERE p.deleted = false AND " +
+           "(LOWER(p.libelle) LIKE LOWER(CONCAT('%', :libelle, '%')) OR " +
+           "LOWER(p.codeProduit) LIKE LOWER(CONCAT('%', :libelle, '%')))")
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     <T> Page<T> findByLibelleStartingWithIgnoreCase(@Param("libelle") String libelle, Pageable pageable, Class<T> type);
 
@@ -73,7 +75,9 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
 
     @Query("SELECT new sn.boutique.xamxamboutik.Web.DTO.Response.web.AddApproProductLibelleSearchResponseDTO(p.id, p.libelle, p.prixAchat) " +
             "FROM Produit p " +
-            "WHERE p.deleted = false AND LOWER(p.libelle) LIKE LOWER(CONCAT(:prefix, '%'))")
+            "WHERE p.deleted = false AND " +
+            "(LOWER(p.libelle) LIKE LOWER(CONCAT('%', :prefix, '%')) OR " +
+            "LOWER(p.codeProduit) LIKE LOWER(CONCAT('%', :prefix, '%')))")
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<AddApproProductLibelleSearchResponseDTO> findApprovisionnementSuggestions(@Param("prefix") String prefix, Pageable pageable);
 

@@ -250,6 +250,10 @@ public class ProduitService extends AbstractBaseService<Produit> implements IPro
         p.setPrixAchat(Objects.requireNonNullElse(dto.getPrixAchat(), 0.0));
         p.setPrixVente(Objects.requireNonNullElse(dto.getPrixVente(), 0.0));
         p.setSeuilRuptureStock(Objects.requireNonNullElse(dto.getSeuilRuptureStock(), 0));
+        // Mettre à jour le stock disponible lors de l'édition
+        if (dto.getStockDisponible() != null) {
+            p.setStockDisponible(dto.getStockDisponible());
+        }
         p.setCategorie(categorieService.findById(dto.getCategorieId())
                 .orElseThrow(() -> new EntityNotFoundException("Catégorie avec l'ID " + dto.getCategorieId() + " non trouvée.", ErrorCodes.ENTITY_NOT_FOUND)));
     }

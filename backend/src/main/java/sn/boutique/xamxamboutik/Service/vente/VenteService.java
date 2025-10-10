@@ -200,13 +200,10 @@ public class VenteService implements IVenteService {
     @Override
     public Page<?> getAllProductsBySalesPage(String clientType, Pageable pageable) {
         Page<ProductVenteProjection> projectionPage = produitRepository.findAllProductsBySales(pageable);
-        if ("mobile".equalsIgnoreCase(clientType)) {
-            List<?> content = produitVenteMapper.toMobileDTOList(projectionPage.getContent());
-            return new PageImpl<>(content, pageable, projectionPage.getTotalElements());
-        } else {
+
             List<?> content = produitVenteMapper.toWebDTOList(projectionPage.getContent());
             return new PageImpl<>(content, pageable, projectionPage.getTotalElements());
-        }
+
     }
 
     @Override
