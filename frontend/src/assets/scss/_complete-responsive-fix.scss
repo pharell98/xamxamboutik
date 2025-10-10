@@ -222,6 +222,14 @@ body {
   }
 
   // === Modals ===
+  .modal {
+    z-index: 1055 !important;  // Au-dessus des dropdowns
+  }
+  
+  .modal-backdrop {
+    z-index: 1054 !important;  // Juste en dessous du modal
+  }
+  
   .modal-dialog {
     margin: 0.25rem !important;
     max-width: calc(100vw - 0.5rem) !important;
@@ -603,6 +611,21 @@ body {
     
     .nav-item.show,
     .dropdown.show {
+      z-index: 9999 !important;
+    }
+  }
+  
+  // Dropdowns dans les tables (bouton Actions dans allSales)
+  .table,
+  .advance-table {
+    .dropdown-menu {
+      position: fixed !important;
+      z-index: 9999 !important;
+      max-width: calc(100vw - 1rem) !important;
+    }
+    
+    .dropdown.show {
+      position: relative;
       z-index: 9999 !important;
     }
   }

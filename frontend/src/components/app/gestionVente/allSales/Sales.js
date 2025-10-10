@@ -202,6 +202,73 @@ const Sales = ({ onEdit }) => {
             transform: translateY(-2px);
             box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
           }
+          
+          /* CRITICAL: Fix dropdown Actions dans tableau */
+          .card-body {
+            overflow: visible !important;
+          }
+          
+          .table-responsive {
+            overflow: visible !important;
+          }
+          
+          .table {
+            overflow: visible !important;
+          }
+          
+          .table td,
+          .table th {
+            overflow: visible !important;
+            position: relative;
+          }
+          
+          .table tbody tr {
+            position: relative;
+          }
+          
+          /* Dropdown Actions spécifique au tableau */
+          .table .dropdown {
+            position: static !important;
+          }
+          
+          .table .dropdown-menu {
+            position: absolute !important;
+            z-index: 10000 !important;
+            margin-top: 0.25rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+          }
+          
+          .table .dropdown.show {
+            position: relative !important;
+            z-index: 10000 !important;
+          }
+          
+          /* Mobile: dropdown en position fixed */
+          @media (max-width: 767.98px) {
+            .table .dropdown-menu {
+              position: fixed !important;
+              right: 0.5rem !important;
+              left: auto !important;
+              top: auto !important;
+              max-width: calc(100vw - 1rem) !important;
+              width: auto !important;
+              min-width: 250px !important;
+            }
+          }
+          
+          /* Modal d'action responsive */
+          @media (max-width: 767.98px) {
+            .sale-action-modal .modal-dialog {
+              margin: 0 !important;
+              max-width: 100% !important;
+            }
+            
+            .sale-action-modal .modal-body {
+              padding: 1rem !important;
+              max-height: 80vh;
+              overflow-y: auto;
+            }
+          }
         `}
       </style>
       <Col md={12}>
@@ -213,7 +280,7 @@ const Sales = ({ onEdit }) => {
         <AdvanceTableProvider {...table}>
           <Row className="sales-container">
             {/* Colonne pour le tableau des ventes */}
-            <Col md={showActionForm && selectedSale ? 9 : 12}>
+            <Col md={showActionForm && selectedSale && !responsive.isMobile ? 9 : 12}>
               <Card
                 className={`mb-3 ${
                   isDark ? 'bg-dark text-light border-secondary' : ''
@@ -262,6 +329,7 @@ const Sales = ({ onEdit }) => {
                 </Card.Header>
                 <Card.Body
                   className={`p-1 ${isDark ? 'bg-dark text-light' : ''}`}
+                  style={{ overflow: 'visible' }}
                 >
                   {salesFilters.length === 0 ? (
                     <div className="text-center text-danger">
@@ -278,15 +346,17 @@ const Sales = ({ onEdit }) => {
                       maxDate={dateRange.lastSaleDate}
                     />
                   )}
-                  <AdvanceTable
-                    headerClassName="bg-200 text-nowrap align-middle"
-                    rowClassName="align-middle white-space-nowrap"
-                    tableProps={{
-                      size: 'sm',
-                      striped: true,
-                      className: 'fs-10 mb-0 overflow-hidden'
-                    }}
-                  />
+                  <div style={{ overflow: 'visible', position: 'relative' }}>
+                    <AdvanceTable
+                      headerClassName="bg-200 text-nowrap align-middle"
+                      rowClassName="align-middle white-space-nowrap"
+                      tableProps={{
+                        size: 'sm',
+                        striped: true,
+                        className: 'fs-10 mb-0'
+                      }}
+                    />
+                  </div>
                 </Card.Body>
                 <Card.Footer
                   className={`${
@@ -302,7 +372,7 @@ const Sales = ({ onEdit }) => {
             {/* Formulaire d'action en Modal sur mobile, en colonne sur desktop */}
             {showActionForm && selectedSale && (
               <>
-                {/* Mobile: Modal */}
+                {/* Mobile: Modal plein écran */}
                 {responsive.isMobile ? (
                   <Modal
                     show={showActionForm}
@@ -311,11 +381,22 @@ const Sales = ({ onEdit }) => {
                     fullscreen="sm-down"
                     centered
                     className="sale-action-modal"
+                    style={{ zIndex: 10000 }}
+                    backdrop="static"
                   >
-                    <Modal.Header closeButton className={isDark ? 'bg-dark text-light border-secondary' : ''}>
-                      <Modal.Title>Action sur la vente</Modal.Title>
+                    <Modal.Header 
+                      closeButton 
+                      className={isDark ? 'bg-dark text-light border-secondary' : 'bg-primary text-white border-0'}
+                    >
+                      <Modal.Title className="fs-6">
+                        {selectedAction === 'remboursementBonEtat' && 'Remboursement - Bon état'}
+                        {selectedAction === 'remboursementDefectueux' && 'Remboursement - Défectueux'}
+                        {selectedAction === 'echangeDefectueux' && 'Échange - Défectueux'}
+                        {selectedAction === 'echangeChangementPreference' && 'Échange - Préférence'}
+                        {selectedAction === 'echangeAjustementPrix' && 'Échange - Ajustement prix'}
+                      </Modal.Title>
                     </Modal.Header>
-                    <Modal.Body className={isDark ? 'bg-dark text-light' : ''}>
+                    <Modal.Body className={isDark ? 'bg-dark text-light' : 'p-3'}>
                       <SaleActionForm
                         detailVenteId={selectedSale.detailVenteId}
                         onSuccess={handleActionSuccess}
@@ -328,7 +409,7 @@ const Sales = ({ onEdit }) => {
                     </Modal.Body>
                   </Modal>
                 ) : (
-                  /* Desktop: Colonne à côté */
+                  /* Desktop: Colonne à côté du tableau */
                   <Col md={3}>
                     <SaleActionForm
                       detailVenteId={selectedSale.detailVenteId}
