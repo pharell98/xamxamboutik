@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Card, Col, Row } from 'react-bootstrap';
+import { Card, Col, Row, Modal } from 'react-bootstrap';
 import useAdvanceTable from 'hooks/useAdvanceTable';
 import AdvanceTableProvider from 'providers/AdvanceTableProvider';
 import AdvanceTable from 'components/common/advance-table/AdvanceTable';
@@ -21,7 +21,8 @@ const Sales = ({ onEdit }) => {
   
   // 1. Contexts en premier
   const {
-    config: { isDark }
+    config: { isDark },
+    responsive
   } = useAppContext();
   const { addToast } = useToast();
   
@@ -298,19 +299,49 @@ const Sales = ({ onEdit }) => {
                 </Card.Footer>
               </Card>
             </Col>
-            {/* Colonne pour le formulaire d'action */}
+            {/* Formulaire d'action en Modal sur mobile, en colonne sur desktop */}
             {showActionForm && selectedSale && (
-              <Col md={3}>
-                <SaleActionForm
-                  detailVenteId={selectedSale.detailVenteId}
-                  onSuccess={handleActionSuccess}
-                  onCancel={handleActionCancel}
-                  addToast={addToast}
-                  initialAction={selectedAction}
-                  quantiteVendu={selectedSale.quantiteVendu}
-                  status={selectedSale.status}
-                />
-              </Col>
+              <>
+                {/* Mobile: Modal */}
+                {responsive.isMobile ? (
+                  <Modal
+                    show={showActionForm}
+                    onHide={handleActionCancel}
+                    size="lg"
+                    fullscreen="sm-down"
+                    centered
+                    className="sale-action-modal"
+                  >
+                    <Modal.Header closeButton className={isDark ? 'bg-dark text-light border-secondary' : ''}>
+                      <Modal.Title>Action sur la vente</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className={isDark ? 'bg-dark text-light' : ''}>
+                      <SaleActionForm
+                        detailVenteId={selectedSale.detailVenteId}
+                        onSuccess={handleActionSuccess}
+                        onCancel={handleActionCancel}
+                        addToast={addToast}
+                        initialAction={selectedAction}
+                        quantiteVendu={selectedSale.quantiteVendu}
+                        status={selectedSale.status}
+                      />
+                    </Modal.Body>
+                  </Modal>
+                ) : (
+                  /* Desktop: Colonne à côté */
+                  <Col md={3}>
+                    <SaleActionForm
+                      detailVenteId={selectedSale.detailVenteId}
+                      onSuccess={handleActionSuccess}
+                      onCancel={handleActionCancel}
+                      addToast={addToast}
+                      initialAction={selectedAction}
+                      quantiteVendu={selectedSale.quantiteVendu}
+                      status={selectedSale.status}
+                    />
+                  </Col>
+                )}
+              </>
             )}
           </Row>
         </AdvanceTableProvider>
