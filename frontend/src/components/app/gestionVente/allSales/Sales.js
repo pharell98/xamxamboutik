@@ -16,9 +16,16 @@ import SaleActionForm from './SaleActionForm';
 import { useAppContext } from 'providers/AppProvider';
 
 const Sales = ({ onEdit }) => {
+  // IMPORTANT: Tous les hooks DOIVENT être appelés dans le même ordre à chaque render
+  // Ne JAMAIS appeler de hooks conditionnellement
+  
+  // 1. Contexts en premier
   const {
     config: { isDark }
   } = useAppContext();
+  const { addToast } = useToast();
+  
+  // 2. Tous les useState ensemble
   const [filters, setFilters] = useState({ period: 'daily', specificDate: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -30,7 +37,6 @@ const Sales = ({ onEdit }) => {
   const [showActionForm, setShowActionForm] = useState(false);
   const [selectedSale, setSelectedSale] = useState(null);
   const [selectedAction, setSelectedAction] = useState(null);
-  const { addToast } = useToast();
 
   useEffect(() => {
     const fetchDateRange = async () => {
@@ -134,31 +140,33 @@ const Sales = ({ onEdit }) => {
     setSearchTerm(term);
   }, []);
 
-  const handleActionSuccess = () => {
+  const handleActionSuccess = useCallback(() => {
     setShowActionForm(false);
     setSelectedSale(null);
     setSelectedAction(null);
     setRefresh(prev => prev + 1);
-  };
+  }, []);
 
-  const handleActionCancel = () => {
+  const handleActionCancel = useCallback(() => {
     setShowActionForm(false);
     setSelectedSale(null);
     setSelectedAction(null);
-  };
+  }, []);
 
+  // useMemo pour les colonnes - IMPORTANT: passer isDark en paramètre
   const columns = useMemo(
     () =>
       getSalesColumns(
         onEdit,
         setShowActionForm,
         setSelectedSale,
-        setSelectedAction
+        setSelectedAction,
+        isDark  // Passer isDark pour éviter d'appeler useAppContext dans getSalesColumns
       ),
-    [onEdit, setShowActionForm, setSelectedSale, setSelectedAction]
+    [onEdit, isDark]  // Les setters useState sont stables, seulement onEdit et isDark
   );
 
-  const salesFilters = getSalesFiltersConfig();
+  const salesFilters = useMemo(() => getSalesFiltersConfig(), []);
 
   const table = useAdvanceTable({
     data: [],

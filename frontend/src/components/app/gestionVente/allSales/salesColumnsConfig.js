@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAppContext } from 'providers/AppProvider';
 import { Dropdown } from 'react-bootstrap';
 import { FaExchangeAlt, FaUndo } from 'react-icons/fa';
 
@@ -7,15 +6,15 @@ function cellWrapperClass(/* sale */) {
   return 'py-2 d-flex align-items-center justify-content-center';
 }
 
+// IMPORTANT: NE PAS appeler de hooks ici car cette fonction est appelée dans un useMemo
+// Passer toutes les valeurs nécessaires en paramètres
 export const getSalesColumns = (
   onEdit,
   setShowActionForm,
   setSelectedSale,
-  setSelectedAction
+  setSelectedAction,
+  isDark  // Passer isDark en paramètre plutôt que d'appeler useAppContext()
 ) => {
-  const {
-    config: { isDark }
-  } = useAppContext();
   return [
     {
       accessorKey: 'image',

@@ -64,6 +64,14 @@ export const StompProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Vérifier si WebSocket est activé (permet de désactiver via .env)
+    const isWebSocketEnabled = process.env.REACT_APP_ENABLE_WEBSOCKET !== 'false';
+    
+    if (!isWebSocketEnabled) {
+      console.log('[StompContext] WebSocket désactivé via REACT_APP_ENABLE_WEBSOCKET');
+      return;
+    }
+
     // URL WebSocket depuis .env ou valeur par défaut
     const brokerURL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
 
@@ -72,22 +80,44 @@ export const StompProvider = ({ children }) => {
       ? brokerURL
       : brokerURL.replace(/\/?$/, '/websocket');
 
+    // Protection contre boucle infinie
+    let errorCount = 0;
+    const MAX_ERRORS = 3;  // Maximum 3 tentatives
+
     const client = new Client({
       brokerURL: finalBrokerURL,
-      reconnectDelay: 3000,
+      reconnectDelay: 5000,  // 5 secondes entre tentatives
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onWebSocketError: error => {
-        console.error('[StompContext] Erreur WebSocket:', error);
+        errorCount++;
+        
+        // Arrêter complètement après MAX_ERRORS
+        if (errorCount >= MAX_ERRORS) {
+          console.warn(`[StompContext] ⚠️ ${MAX_ERRORS} erreurs WebSocket - ARRÊT des tentatives de reconnexion`);
+          if (stompClientRef.current?.active) {
+            try {
+              stompClientRef.current.deactivate();
+            } catch (e) {
+              // Ignore
+            }
+          }
+          return;
+        }
+        
+        console.error(`[StompContext] Erreur WebSocket (${errorCount}/${MAX_ERRORS}):`, error.message || error);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
       onWebSocketClose: event => {
-        console.warn('[StompContext] Connexion WebSocket fermée');
-        setConnected(false);
-        setIsReconnecting(true);
-        setIsSubscribed(false);
+        // Ne log que si on n'a pas atteint MAX_ERRORS
+        if (errorCount < MAX_ERRORS) {
+          console.warn('[StompContext] Connexion WebSocket fermée');
+          setConnected(false);
+          setIsReconnecting(true);
+          setIsSubscribed(false);
+        }
       }
     });
 
