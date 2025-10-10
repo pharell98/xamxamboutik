@@ -48,8 +48,12 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
 
       <Modal.Body className={isDark ? 'bg-dark text-light' : ''}>
         <div className="mb-3">
-          <Form.Label className="fw-semibold">Total à payer</Form.Label>
+          <Form.Label htmlFor="total-to-pay" className="fw-semibold">
+            Total à payer
+          </Form.Label>
           <Form.Control
+            id="total-to-pay"
+            name="totalToPay"
             type="text"
             readOnly
             value={`${totalCost.toLocaleString()} XOF`}
@@ -60,8 +64,12 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
         </div>
 
         <Form.Group className="mb-3">
-          <Form.Label className="fw-semibold">Montant reçu</Form.Label>
+          <Form.Label htmlFor="amount-received" className="fw-semibold">
+            Montant reçu
+          </Form.Label>
           <Form.Control
+            id="amount-received"
+            name="amountReceived"
             type="number"
             min="0"
             step="0.01"
@@ -74,8 +82,12 @@ const CalculatorModal = ({ show, onClose, totalCost }) => {
         </Form.Group>
 
         <Form.Group>
-          <Form.Label className="fw-semibold">Montant à rendre</Form.Label>
+          <Form.Label htmlFor="amount-to-return" className="fw-semibold">
+            Montant à rendre
+          </Form.Label>
           <Form.Control
+            id="amount-to-return"
+            name="amountToReturn"
             type="text"
             readOnly
             value={`${montantRendu.toLocaleString()} XOF`}

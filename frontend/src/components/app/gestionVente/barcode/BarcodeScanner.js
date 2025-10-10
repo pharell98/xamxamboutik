@@ -95,31 +95,49 @@ const BarcodeScanner = () => {
   // Generic scan handler
   const handleScan = useCallback(
     async code => {
-      console.log('[BarcodeScanner] Code scanné:', code, 'Longueur:', code?.length);
-      
+      console.log(
+        '[BarcodeScanner] Code scanné:',
+        code,
+        'Longueur:',
+        code?.length
+      );
+
       // Validation du code
       if (!code || typeof code !== 'string') {
         showToast('Erreur', 'Code invalide', 'error');
         return;
       }
-      
+
       const cleanCode = code.trim();
       if (cleanCode.length < 6 || cleanCode.length > 32) {
-        showToast('Erreur', `Code trop court/long: ${cleanCode} (${cleanCode.length} caractères)`, 'warning');
+        showToast(
+          'Erreur',
+          `Code trop court/long: ${cleanCode} (${cleanCode.length} caractères)`,
+          'warning'
+        );
         return;
       }
-      
+
       if (!/^[a-zA-Z0-9\-_\s]+$/.test(cleanCode)) {
-        showToast('Erreur', `Code invalide: ${cleanCode} (caractères non autorisés)`, 'warning');
+        showToast(
+          'Erreur',
+          `Code invalide: ${cleanCode} (caractères non autorisés)`,
+          'warning'
+        );
         return;
       }
-      
+
       try {
         const response = await apiServiceV1.getProductByBarcode(cleanCode);
 
         if (response.success && response.data) {
           addProductToCart(response.data);
-          showToast('Succès', `Produit ajouté: ${response.data.libelle}`, 'success', 2000);
+          showToast(
+            'Succès',
+            `Produit ajouté: ${response.data.libelle}`,
+            'success',
+            2000
+          );
         } else {
           showToast(
             'Produit introuvable',

@@ -22,9 +22,11 @@ const CameraScanner = ({ onScan }) => {
   const isValidCode = useCallback(code => {
     if (typeof code !== 'string') return false;
     const cleanCode = code.trim();
-    return /^[a-zA-Z0-9\-_\s]+$/.test(cleanCode) && 
-           cleanCode.length >= 6 && 
-           cleanCode.length <= 32;
+    return (
+      /^[a-zA-Z0-9\-_\s]+$/.test(cleanCode) &&
+      cleanCode.length >= 6 &&
+      cleanCode.length <= 32
+    );
   }, []);
 
   // Reset scan state

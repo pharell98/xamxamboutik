@@ -103,7 +103,7 @@ const useAdvanceTable = ({
           console.log('[useAdvanceTable] Requête déjà en cours, ignorée');
           return;
         }
-        
+
         try {
           isFetchingRef.current = true;
           const { data: newData, pageCount } = await fetchData(

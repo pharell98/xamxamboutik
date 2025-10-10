@@ -127,7 +127,6 @@ const Sales = ({ onEdit }) => {
 
   const handleFiltersChange = useCallback((name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
-    table.setPageIndex(0);
     setRefresh(prev => prev + 1);
   }, []);
 

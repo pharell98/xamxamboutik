@@ -70,11 +70,14 @@ const InvoiceFilters = ({ filters, onFiltersChange, onRefresh, isDark }) => {
         <Col md={6}>
           <Form.Group className="mb-0">
             <Form.Label
+              htmlFor="invoice-specific-date"
               className={`small fw-semibold mb-1 ${isDark ? 'text-light' : ''}`}
             >
               Date Spécifique
             </Form.Label>
             <Form.Control
+              id="invoice-specific-date"
+              name="invoiceSpecificDate"
               size="sm"
               type="date"
               value={filters.specificDate}

@@ -307,12 +307,12 @@ const Products = () => {
   useEffect(() => {
     if (Array.isArray(venteData) && venteData.length > 0) {
       const latestMessage = venteData[venteData.length - 1];
-      
+
       // Éviter le traitement du même message plusieurs fois
       if (lastProcessedMessageRef.current === latestMessage) {
         return;
       }
-      
+
       console.log('[Products] Message de vente reçu:', latestMessage);
       if (
         latestMessage &&

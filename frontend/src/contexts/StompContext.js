@@ -65,8 +65,7 @@ export const StompProvider = ({ children }) => {
 
   useEffect(() => {
     // URL WebSocket depuis .env ou valeur par défaut
-    const brokerURL =
-      process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
+    const brokerURL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
 
     // S'assurer que l'URL se termine par /websocket pour SockJS
     const finalBrokerURL = brokerURL.endsWith('/websocket')
@@ -119,7 +118,10 @@ export const StompProvider = ({ children }) => {
         console.log('[StompContext] Message de vente reçu:', parsed);
         setVenteData(prevData => {
           const newData = [...prevData, parsed];
-          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
+          console.log(
+            '[StompContext] VenteData mis à jour, total:',
+            newData.length
+          );
           return newData.slice(-5);
         });
         setData(prevData => {
@@ -257,9 +259,7 @@ export const StompProvider = ({ children }) => {
             startRetrySubscriptions();
           }
         } else {
-          console.warn(
-            '[StompContext] Connexion STOMP non stable après délai'
-          );
+          console.warn('[StompContext] Connexion STOMP non stable après délai');
         }
       }, 200); // Délai de 200ms pour plus de stabilité
     };
@@ -332,14 +332,20 @@ export const StompProvider = ({ children }) => {
           const parsed = parseMessageBody(message.body);
           callback(parsed);
         } catch (parseError) {
-          console.warn(`[StompContext] Erreur parsing message pour ${topic}:`, parseError);
+          console.warn(
+            `[StompContext] Erreur parsing message pour ${topic}:`,
+            parseError
+          );
         }
       });
       subscriptionsRef.current.push(subscription);
       console.log(`[StompContext] Souscription réussie à ${topic}`);
       return true;
     } catch (error) {
-      console.error(`[StompContext] Erreur lors de la souscription au topic ${topic}:`, error);
+      console.error(
+        `[StompContext] Erreur lors de la souscription au topic ${topic}:`,
+        error
+      );
       setIsSubscribed(false);
       pendingSubscriptionsRef.current.push({ topic, callback });
       return false;

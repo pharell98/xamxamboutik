@@ -188,6 +188,8 @@ const CartItem = ({
 
           <div className="col-6 col-md-4 d-flex justify-content-end">
             <Form.Control
+              id={`unit-price-${item.id}`}
+              name={`unitPrice-${item.id}`}
               type="number"
               min="1"
               max="999999"
@@ -202,6 +204,7 @@ const CartItem = ({
                 appearance: 'none'
               }}
               value={unitPrice}
+              aria-label={`Prix unitaire ${item.libelle}`}
               onChange={e =>
                 onPriceChange(
                   item.id,
@@ -307,8 +310,12 @@ const CustomerInfoForm = ({
   return (
     <div className="mt-3">
       <Form.Group className="mb-3">
-        <Form.Label>Nom complet {isLoan ? '(Prêt)' : '(Facture)'}</Form.Label>
+        <Form.Label htmlFor="customer-fullname">
+          Nom complet {isLoan ? '(Prêt)' : '(Facture)'}
+        </Form.Label>
         <Form.Control
+          id="customer-fullname"
+          name="customerFullName"
           type="text"
           placeholder="Entrez le nom complet"
           value={customerInfo.fullName}
@@ -322,8 +329,10 @@ const CustomerInfoForm = ({
         />
       </Form.Group>
       <Form.Group>
-        <Form.Label>Numéro de téléphone</Form.Label>
+        <Form.Label htmlFor="customer-phone">Numéro de téléphone</Form.Label>
         <Form.Control
+          id="customer-phone"
+          name="customerPhone"
           type="tel"
           placeholder="Ex: 77 123 45 67"
           value={customerInfo.phoneNumber}
