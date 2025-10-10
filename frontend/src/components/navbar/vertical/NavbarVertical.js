@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react';
+import React, { Fragment, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { Col, Nav, Navbar, Row } from 'react-bootstrap';
@@ -66,11 +66,11 @@ const NavbarVertical = () => {
   );
 
   // Fermer la sidebar quand on clique sur le backdrop (mobile uniquement)
-  const handleBackdropClick = () => {
+  const handleBackdropClick = useCallback(() => {
     if (responsive.isMobile && showBurgerMenu) {
       setConfig('showBurgerMenu', false);
     }
-  };
+  }, [responsive.isMobile, showBurgerMenu, setConfig]);
 
   return (
     <>
@@ -87,7 +87,8 @@ const NavbarVertical = () => {
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 1019,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            transition: 'opacity 0.3s ease-out'
           }}
         />
       )}

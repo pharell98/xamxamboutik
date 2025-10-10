@@ -82,11 +82,15 @@ body {
       padding: 0 !important; // Au lieu de 0 0.75rem
     }
 
-    // Boutons et icônes visibles
-    .navbar-nav,
+    // Boutons et icônes TOUJOURS visibles et cliquables sur mobile
     .navbar-nav-icons {
       position: relative;
-      z-index: auto; // Normal, les dropdowns gèrent leur propre z-index
+      z-index: 2000 !important;  // Au-dessus de la sidebar mobile
+    }
+    
+    .navbar-nav {
+      position: relative;
+      z-index: auto;
     }
 
     // Nav links visibles
@@ -95,10 +99,10 @@ body {
       z-index: auto;
     }
 
-    // Toggle buttons visibles
+    // Toggle buttons TOUJOURS cliquables
     .navbar-toggler {
       position: relative;
-      z-index: 1016 !important;
+      z-index: 2001 !important;  // Maximum pour être toujours accessible
     }
   }
 
@@ -116,8 +120,17 @@ body {
       overflow-x: hidden !important;
       overflow-y: auto !important; // Scroll vertical si contenu long
       box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
-      transition: transform 0.3s ease-in-out !important;
       background-color: var(--falcon-card-bg, #fff) !important;
+      // Toujours en position fixed sur mobile pour l'animation
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      height: 100vh !important;
+      // Cachée par défaut (hors écran à gauche)
+      transform: translateX(-100%) !important;
+      // Transition smooth pour ouverture ET fermeture
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      will-change: transform;  // Optimisation GPU
 
       .navbar-vertical-content {
         padding-left: 0.5rem !important; // Au lieu de 1rem
@@ -128,15 +141,21 @@ body {
       }
     }
 
-    // SEULEMENT quand la sidebar est ouverte
-    .navbar-collapse.show,
+    // Quand la sidebar est ouverte - Slide in depuis gauche
+    .navbar-collapse.show {
+      z-index: 1021 !important;
+      transform: translateX(0) !important;  // Visible (position normale)
+    }
+    
+    // Pendant la fermeture - Override Bootstrap collapsing
     .navbar-collapse.collapsing {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      height: 100vh !important;
-      z-index: 1021 !important; // Au-dessus du backdrop et du contenu
-      transform: translateX(0) !important;
+      z-index: 1021 !important;
+      transform: translateX(-100%) !important;  // Retour vers gauche smooth
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      height: 100vh !important;  // Garde la hauteur pendant fermeture
+      width: 85vw !important;  // Garde la largeur
+      display: block !important;  // Override Bootstrap qui met display: none
+      visibility: visible !important;  // Reste visible pendant animation
     }
 
     // Logo et toggle button visibles
@@ -512,21 +531,24 @@ body {
 // Dropdowns globaux - TOUJOURS au-dessus de TOUT
 .dropdown-menu {
   position: absolute !important;
-  z-index: 1050 !important; // Au-dessus de sidebar, navbar, content - même niveau que modals
+  z-index: 9999 !important;  // MAXIMUM pour être au-dessus de TOUT
 
   @media (max-width: 767.98px) {
-    // Sur mobile, ajuster position
-    max-width: 90vw !important;
-
+    // Sur mobile, FIXED pour toujours être visible
+    position: fixed !important;
+    max-width: calc(100vw - 1rem) !important;
+    
     &.dropdown-menu-end {
-      right: 0 !important;
+      right: 0.5rem !important;
       left: auto !important;
     }
 
     // Dropdowns de notification et profil
     &.dropdown-menu-card {
-      max-width: 20rem !important;
-      width: 90vw !important;
+      max-width: calc(100vw - 1rem) !important;
+      width: auto !important;
+      right: 0.5rem !important;
+      left: auto !important;
     }
   }
 }
@@ -537,7 +559,7 @@ body {
   z-index: auto;
 
   &.show {
-    z-index: 1050 !important; // Quand dropdown ouvert - même niveau que dropdown
+    z-index: 9999 !important;  // Maximum quand ouvert
     position: relative !important;
   }
 }
@@ -546,7 +568,7 @@ body {
   position: relative;
 
   &.show {
-    z-index: 1050 !important;
+    z-index: 9999 !important;
     position: relative !important;
   }
 }
@@ -559,10 +581,30 @@ body {
 
 // Card dans dropdown (notifications, profil)
 .dropdown-menu-card {
+  z-index: 9999 !important;
+  
   .card {
     margin-bottom: 0 !important;
     border: none !important;
-    z-index: 1050 !important;
+    z-index: 9999 !important;
+  }
+}
+
+// Sur mobile, navbar-nav-icons au-dessus de tout
+@media (max-width: 767.98px) {
+  .navbar-nav-icons {
+    position: relative;
+    z-index: 2000 !important;  // Au-dessus même de la sidebar
+    
+    .dropdown-menu {
+      position: fixed !important;
+      z-index: 9999 !important;
+    }
+    
+    .nav-item.show,
+    .dropdown.show {
+      z-index: 9999 !important;
+    }
   }
 }
 

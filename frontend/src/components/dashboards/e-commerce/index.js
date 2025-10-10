@@ -10,6 +10,7 @@ import caisseService from 'services/api.caisse.service';
 import Loading from 'components/common/Loading';
 import Flex from 'components/common/Flex';
 import SubtleBadge from 'components/common/SubtleBadge';
+import ConfirmationModal from 'components/common/ConfirmationModal';
 
 const Ecommerce = () => {
   const [caisseStats, setCaisseStats] = useState([]);
@@ -17,6 +18,7 @@ const Ecommerce = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [fermetureLoading, setFermetureLoading] = useState(false);
   const [estOuverte, setEstOuverte] = useState(undefined);
+  const [showConfirmFermeture, setShowConfirmFermeture] = useState(false);
 
   const loadEtat = async () => {
     try {
@@ -95,7 +97,18 @@ const Ecommerce = () => {
     }
   };
 
-  const handleFermeture = async () => {
+  // Ouvrir le modal de confirmation
+  const handleOpenConfirmFermeture = () => {
+    setShowConfirmFermeture(true);
+  };
+
+  // Annuler la fermeture
+  const handleCancelFermeture = () => {
+    setShowConfirmFermeture(false);
+  };
+
+  // Confirmer et fermer la boutique
+  const handleConfirmFermeture = async () => {
     try {
       setFermetureLoading(true);
       const etat = await caisseService.fermerManuellement();
@@ -106,6 +119,7 @@ const Ecommerce = () => {
         const ouverture = await caisseService.isOuverte();
         setEstOuverte(Boolean(ouverture?.estOuverte));
       }
+      setShowConfirmFermeture(false);  // Fermer le modal après succès
     } finally {
       setFermetureLoading(false);
     }
@@ -148,7 +162,7 @@ const Ecommerce = () => {
                   <Button
                     size="sm"
                     variant="danger"
-                    onClick={handleFermeture}
+                    onClick={handleOpenConfirmFermeture}
                     disabled={fermetureLoading || estOuverte === false}
                     className="px-2"
                     title="Fermer la caisse maintenant"
@@ -193,6 +207,21 @@ const Ecommerce = () => {
           {/* <TotalSales data={totalSale} /> */}
         </Col>
       </Row>
+
+      {/* Modal de confirmation de fermeture */}
+      <ConfirmationModal
+        show={showConfirmFermeture}
+        onHide={handleCancelFermeture}
+        onConfirm={handleConfirmFermeture}
+        title="Confirmer la fermeture de la boutique"
+        message="Êtes-vous sûr de vouloir fermer la boutique maintenant ? Cette action clôturera la caisse du jour."
+        confirmText="Oui, fermer la boutique"
+        cancelText="Annuler"
+        confirmVariant="danger"
+        icon="exclamation-triangle"
+        iconColor="warning"
+        loading={fermetureLoading}
+      />
     </>
   );
 };

@@ -37,7 +37,8 @@ const AppProvider = ({ children }) => {
     ),
     navbarStyle: getItemFromStore('navbarStyle', settings.navbarStyle),
     currency: settings.currency,
-    showBurgerMenu: settings.showBurgerMenu,
+    // Sur mobile, toujours fermé au démarrage
+    showBurgerMenu: initialIsMobile ? false : settings.showBurgerMenu,
     showSettingPanel: false,
     navbarCollapsed: false,
     openAuthModal: false
