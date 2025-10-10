@@ -75,17 +75,13 @@ export const StompProvider = ({ children }) => {
     // URL WebSocket depuis .env ou valeur par défaut
     const brokerURL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
 
-    // S'assurer que l'URL se termine par /websocket pour SockJS
-    const finalBrokerURL = brokerURL.endsWith('/websocket')
-      ? brokerURL
-      : brokerURL.replace(/\/?$/, '/websocket');
-
+    // Ne PAS ajouter /websocket car le backend utilise WebSocket natif (pas SockJS)
     // Protection contre boucle infinie
     let errorCount = 0;
     const MAX_ERRORS = 3;  // Maximum 3 tentatives
 
     const client = new Client({
-      brokerURL: finalBrokerURL,
+      brokerURL,
       reconnectDelay: 5000,  // 5 secondes entre tentatives
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
