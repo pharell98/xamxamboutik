@@ -147,10 +147,11 @@ public class VenteService implements IVenteService {
 
     /**
      * Génère automatiquement un numéro de facture au format FAC-JJ-MM-AA-0001
+     * PROTECTION ANTI-DOUBLON : Utilise un verrou pessimiste (synchronized) pour éviter les race conditions
      *
      * @return Le numéro de facture généré
      */
-    private String generateNumeroFacture() {
+    private synchronized String generateNumeroFacture() {
         LocalDateTime now = LocalDateTime.now();
         String jour = String.format("%02d", now.getDayOfMonth());
         String mois = String.format("%02d", now.getMonthValue());
