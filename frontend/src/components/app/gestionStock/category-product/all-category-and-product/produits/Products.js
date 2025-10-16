@@ -227,7 +227,7 @@ const Products = ({ onEdit }) => {
   const fetchProducts = useCallback(
     async (pageIndex, pageSize) => {
       let endpoint = 'unknown'; // Initialiser endpoint au début
-      
+
       try {
         let response;
 

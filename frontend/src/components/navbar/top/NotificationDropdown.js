@@ -28,9 +28,17 @@ const NotificationDropdown = () => {
   };
 
   useEffect(() => {
-    window.addEventListener('scroll', () => {
-      window.innerWidth < 1200 && setIsOpen(false);
-    });
+    const handleScroll = () => {
+      if (window.innerWidth < 1200) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const markAsRead = e => {

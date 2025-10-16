@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react';
+import React, { Fragment, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { Col, Nav, Navbar, Row } from 'react-bootstrap';
@@ -20,7 +20,9 @@ const NavbarVertical = () => {
       navbarStyle,
       isNavbarVerticalCollapsed,
       showBurgerMenu
-    }
+    },
+    setConfig,
+    responsive
   } = useAppContext();
 
   const HTMLClassList = document.getElementsByTagName('html')[0].classList;
@@ -63,54 +65,82 @@ const NavbarVertical = () => {
     </Nav.Item>
   );
 
-  return (
-    <Navbar
-      expand={navbarBreakPoint}
-      className={classNames('navbar-vertical', {
-        [`navbar-${navbarStyle}`]: navbarStyle !== 'transparent'
-      })}
-      variant="light"
-    >
-      <Flex alignItems="center">
-        <ToggleButton />
-        <Logo at="navbar-vertical" textClass="text-primary" width={30} />
-      </Flex>
-      <Navbar.Collapse
-        in={showBurgerMenu}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          backgroundImage:
-            navbarStyle === 'vibrant'
-              ? `linear-gradient(-45deg, rgba(0, 160, 255, 0.86), #0048a2),url(${bgNavbar})`
-              : 'none'
-        }}
-      >
-        <div className="navbar-vertical-content scrollbar">
-          <Nav className="flex-column" as="ul">
-            {routes.map(route => (
-              <Fragment key={route.label}>
-                {!route.labelDisable && (
-                  <NavbarLabel
-                    label={capitalize(route.label)}
-                    labelIcon={route.labelIcon}
-                  />
-                )}
-                <NavbarVerticalMenu routes={route.children} />
-              </Fragment>
-            ))}
-          </Nav>
+  // Fermer la sidebar quand on clique sur le backdrop (mobile uniquement)
+  const handleBackdropClick = useCallback(() => {
+    if (responsive.isMobile && showBurgerMenu) {
+      setConfig('showBurgerMenu', false);
+    }
+  }, [responsive.isMobile, showBurgerMenu, setConfig]);
 
-          {navbarPosition === 'combo' && (
-            <div className={`d-${topNavbarBreakpoint}-none`}>
-              <div className="navbar-vertical-divider">
-                <hr className="navbar-vertical-hr my-2" />
+  return (
+    <>
+      {/* Backdrop pour mobile - clic pour fermer */}
+      {responsive.isMobile && showBurgerMenu && (
+        <div
+          className="navbar-vertical-backdrop"
+          onClick={handleBackdropClick}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1019,
+            cursor: 'pointer',
+            transition: 'opacity 0.3s ease-out'
+          }}
+        />
+      )}
+
+      <Navbar
+        expand={navbarBreakPoint}
+        className={classNames('navbar-vertical', {
+          [`navbar-${navbarStyle}`]: navbarStyle !== 'transparent'
+        })}
+        variant="light"
+      >
+        <Flex alignItems="center">
+          <ToggleButton />
+          <Logo at="navbar-vertical" textClass="text-primary" width={30} />
+        </Flex>
+        <Navbar.Collapse
+          in={showBurgerMenu}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            backgroundImage:
+              navbarStyle === 'vibrant'
+                ? `linear-gradient(-45deg, rgba(0, 160, 255, 0.86), #0048a2),url(${bgNavbar})`
+                : 'none'
+          }}
+        >
+          <div className="navbar-vertical-content scrollbar">
+            <Nav className="flex-column" as="ul">
+              {routes.map(route => (
+                <Fragment key={route.label}>
+                  {!route.labelDisable && (
+                    <NavbarLabel
+                      label={capitalize(route.label)}
+                      labelIcon={route.labelIcon}
+                    />
+                  )}
+                  <NavbarVerticalMenu routes={route.children} />
+                </Fragment>
+              ))}
+            </Nav>
+
+            {navbarPosition === 'combo' && (
+              <div className={`d-${topNavbarBreakpoint}-none`}>
+                <div className="navbar-vertical-divider">
+                  <hr className="navbar-vertical-hr my-2" />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </Navbar.Collapse>
-    </Navbar>
+            )}
+          </div>
+        </Navbar.Collapse>
+      </Navbar>
+    </>
   );
 };
 

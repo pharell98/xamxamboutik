@@ -1,16 +1,31 @@
-import React, { createContext, useContext, useEffect, useReducer } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useMemo,
+  useCallback
+} from 'react';
 import PropTypes from 'prop-types';
 import { settings } from 'config';
-import { getColor, getItemFromStore } from 'helpers/utils';
+import { getColor, getItemFromStore, breakpoints } from 'helpers/utils';
 import useToggleStyle from 'hooks/useToggleStyle';
+import useResponsive from 'hooks/useResponsive';
 import { configReducer } from 'reducers/configReducer';
 
 export const AppContext = createContext(settings);
 
 const AppProvider = ({ children }) => {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // Hook de responsivité centralisé
+  const responsive = useResponsive();
+
+  const initialIsMobile =
+    typeof window !== 'undefined' && window.innerWidth < breakpoints.md;
+
   const configState = {
-    isFluid: isMobile ? true : getItemFromStore('isFluid', settings.isFluid),
+    isFluid: initialIsMobile
+      ? true
+      : getItemFromStore('isFluid', settings.isFluid),
     isRTL: getItemFromStore('isRTL', settings.isRTL),
     isDark: getItemFromStore('isDark', settings.isDark),
     theme: getItemFromStore('theme', settings.theme),
@@ -22,7 +37,8 @@ const AppProvider = ({ children }) => {
     ),
     navbarStyle: getItemFromStore('navbarStyle', settings.navbarStyle),
     currency: settings.currency,
-    showBurgerMenu: settings.showBurgerMenu,
+    // Sur mobile, toujours fermé au démarrage
+    showBurgerMenu: initialIsMobile ? false : settings.showBurgerMenu,
     showSettingPanel: false,
     navbarCollapsed: false,
     openAuthModal: false
@@ -30,7 +46,8 @@ const AppProvider = ({ children }) => {
 
   const [config, configDispatch] = useReducer(configReducer, configState);
 
-  const setConfig = (key, value) => {
+  // Utiliser useCallback pour que setConfig ne change jamais
+  const setConfig = useCallback((key, value) => {
     configDispatch({
       type: 'SET_CONFIG',
       payload: {
@@ -47,7 +64,8 @@ const AppProvider = ({ children }) => {
         ].includes(key)
       }
     });
-  };
+  }, []);
+
   const { isLoaded } = useToggleStyle(config.isRTL, config.isDark);
 
   useEffect(() => {
@@ -57,24 +75,50 @@ const AppProvider = ({ children }) => {
         : config.theme === 'dark';
 
     setConfig('isDark', isDark);
-  }, [config.theme]);
+  }, [config.theme, setConfig]);
 
-  const changeTheme = theme => {
-    const isDark =
-      theme === 'auto'
-        ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        : theme === 'dark';
+  const changeTheme = useCallback(
+    theme => {
+      const isDark =
+        theme === 'auto'
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : theme === 'dark';
 
-    document.documentElement.setAttribute(
-      'data-bs-theme',
-      isDark ? 'dark' : 'light'
-    );
+      document.documentElement.setAttribute(
+        'data-bs-theme',
+        isDark ? 'dark' : 'light'
+      );
 
-    setConfig('theme', theme);
-    setConfig('isDark', isDark);
-  };
+      setConfig('theme', theme);
+      setConfig('isDark', isDark);
+    },
+    [setConfig]
+  );
 
-  const getThemeColor = name => getColor(name);
+  const getThemeColor = useCallback(name => getColor(name), []);
+
+  // Gestion automatique de isFluid selon la taille d'écran
+  useEffect(() => {
+    if (responsive.isMobile && !config.isFluid) {
+      setConfig('isFluid', true);
+    }
+  }, [responsive.isMobile, config.isFluid, setConfig]);
+
+  // Valeur contextuelle enrichie avec responsive
+  // IMPORTANT: Ne pas mettre config dans les dépendances du useMemo
+  // car il change à chaque setConfig, ce qui causerait des boucles infinies
+  const contextValue = useMemo(
+    () => ({
+      config,
+      setConfig,
+      configDispatch,
+      changeTheme,
+      getThemeColor,
+      // Ajout du responsive dans le contexte
+      responsive
+    }),
+    [config, setConfig, configDispatch, changeTheme, getThemeColor, responsive]
+  );
 
   if (!isLoaded) {
     return (
@@ -94,11 +138,7 @@ const AppProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider
-      value={{ config, setConfig, configDispatch, changeTheme, getThemeColor }}
-    >
-      {children}
-    </AppContext.Provider>
+    <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>
   );
 };
 

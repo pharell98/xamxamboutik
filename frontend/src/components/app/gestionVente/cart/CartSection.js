@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,6 +13,7 @@ import {
   faFileInvoice,
   faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
+import _ from 'lodash';
 
 import { useProductContext } from 'providers/ProductProvider';
 import { useToast } from '../../../common/Toast';
@@ -188,6 +189,8 @@ const CartItem = ({
 
           <div className="col-6 col-md-4 d-flex justify-content-end">
             <Form.Control
+              id={`unit-price-${item.id}`}
+              name={`unitPrice-${item.id}`}
               type="number"
               min="1"
               max="999999"
@@ -202,6 +205,7 @@ const CartItem = ({
                 appearance: 'none'
               }}
               value={unitPrice}
+              aria-label={`Prix unitaire ${item.libelle}`}
               onChange={e =>
                 onPriceChange(
                   item.id,
@@ -307,8 +311,12 @@ const CustomerInfoForm = ({
   return (
     <div className="mt-3">
       <Form.Group className="mb-3">
-        <Form.Label>Nom complet {isLoan ? '(Prêt)' : '(Facture)'}</Form.Label>
+        <Form.Label htmlFor="customer-fullname">
+          Nom complet {isLoan ? '(Prêt)' : '(Facture)'}
+        </Form.Label>
         <Form.Control
+          id="customer-fullname"
+          name="customerFullName"
           type="text"
           placeholder="Entrez le nom complet"
           value={customerInfo.fullName}
@@ -322,8 +330,10 @@ const CustomerInfoForm = ({
         />
       </Form.Group>
       <Form.Group>
-        <Form.Label>Numéro de téléphone</Form.Label>
+        <Form.Label htmlFor="customer-phone">Numéro de téléphone</Form.Label>
         <Form.Control
+          id="customer-phone"
+          name="customerPhone"
           type="tel"
           placeholder="Ex: 77 123 45 67"
           value={customerInfo.phoneNumber}
@@ -346,7 +356,8 @@ const CartActions = ({
   onValidate,
   onPreview,
   isLoan,
-  isValidCustomer
+  isValidCustomer,
+  isProcessing
 }) => (
   <div className="d-flex flex-wrap gap-2 justify-content-between mt-3">
     <div className="d-flex gap-2">
@@ -354,6 +365,7 @@ const CartActions = ({
         variant="outline-secondary"
         onClick={onCalculator}
         className="btn-sm"
+        disabled={isProcessing}
       >
         <FontAwesomeIcon icon={faCalculator} className="me-1" />
         <span className="d-none d-sm-inline">Calculatrice</span>
@@ -361,7 +373,12 @@ const CartActions = ({
       </Button>
 
       {onPreview && (
-        <Button variant="outline-info" onClick={onPreview} className="btn-sm">
+        <Button 
+          variant="outline-info" 
+          onClick={onPreview} 
+          className="btn-sm"
+          disabled={isProcessing}
+        >
           <FontAwesomeIcon icon={faPrint} className="me-1" />
           <span className="d-none d-sm-inline">Aperçu Facture</span>
           <span className="d-inline d-sm-none">Aperçu</span>
@@ -371,7 +388,12 @@ const CartActions = ({
 
     <div className="d-flex gap-2">
       {onClose && (
-        <Button variant="secondary" onClick={onClose} className="btn-sm">
+        <Button 
+          variant="secondary" 
+          onClick={onClose} 
+          className="btn-sm"
+          disabled={isProcessing}
+        >
           <FontAwesomeIcon icon={faTimes} className="me-1" />
           <span className="d-none d-sm-inline">Fermer</span>
           <span className="d-inline d-sm-none">X</span>
@@ -381,10 +403,17 @@ const CartActions = ({
       <Button
         variant="success"
         onClick={onValidate}
-        disabled={!isValidCustomer}
+        disabled={!isValidCustomer || isProcessing}
         className="btn-sm"
       >
-        {isLoan ? 'Valider Crédit' : 'Valider Vente'}
+        {isProcessing ? (
+          <>
+            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {isLoan ? 'Validation...' : 'Validation...'}
+          </>
+        ) : (
+          isLoan ? 'Valider Crédit' : 'Valider Vente'
+        )}
       </Button>
     </div>
   </div>
@@ -413,6 +442,9 @@ const CartSection = ({ onClose, show = true }) => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [showInvoices, setShowInvoices] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [isProcessingSale, setIsProcessingSale] = useState(false);
+  const lastClickTimeRef = useRef(0);
+  const MIN_CLICK_INTERVAL = 500; // 500ms minimum entre deux clics
 
   // Custom hooks
   const paymentModes = usePaymentModes();
@@ -508,7 +540,42 @@ const CartSection = ({ onClose, show = true }) => {
   }, [cartItems, isValidCustomer, addToast]);
 
   const handleValidateSale = useCallback(async () => {
+    // Protection niveau 0 : Debounce manuel (protection supplémentaire)
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < MIN_CLICK_INTERVAL) {
+      console.warn('[CartSection] ⚠️ Clic trop rapide détecté, ignoré');
+      addToast({
+        title: 'Clic trop rapide',
+        message: 'Veuillez patienter un instant avant de réessayer.',
+        type: 'warning',
+        duration: TOAST_DURATION.SHORT
+      });
+      return;
+    }
+    lastClickTimeRef.current = now;
+
+    // Protection niveau 1 : Vérifier le state React
+    if (isProcessingSale) {
+      console.warn('[CartSection] ⚠️ Vente déjà en cours de traitement (state), ignorée');
+      addToast({
+        title: 'Vente en cours',
+        message: 'Une vente est déjà en cours de traitement. Veuillez patienter.',
+        type: 'warning',
+        duration: TOAST_DURATION.SHORT
+      });
+      return;
+    }
+
     if (!validateCart()) return;
+
+    // Protection niveau 2 : Désactiver immédiatement le bouton
+    setIsProcessingSale(true);
+    
+    console.log('[CartSection] Début de la validation de vente...', {
+      produits: cartItems.length,
+      montantTotal: totalCost,
+      modePaiement: paymentMode
+    });
 
     const detailVenteList = cartItems.map(item => {
       const customPrice = modifiedPrices[item.id];
@@ -529,6 +596,7 @@ const CartSection = ({ onClose, show = true }) => {
 
     try {
       const response = await venteServiceV1.createVente(saleData);
+      console.log('[CartSection] ✅ Vente créée avec succès, ID:', response.data?.id);
 
       if (printInvoice) {
         try {
@@ -601,12 +669,21 @@ const CartSection = ({ onClose, show = true }) => {
         error.response?.data?.message ||
         error.message ||
         'Erreur lors de la création de la vente';
+      
+      console.error('[CartSection] ❌ Erreur lors de la validation de la vente:', errorMessage);
+      
       addToast({
         title: 'Erreur',
         message: errorMessage,
         type: 'error',
         duration: TOAST_DURATION.LONG
       });
+    } finally {
+      // Libérer le verrou après un court délai pour éviter les clics trop rapides
+      setTimeout(() => {
+        setIsProcessingSale(false);
+        console.log('[CartSection] 🔓 Verrou de vente libéré');
+      }, 300);
     }
   }, [
     validateCart,
@@ -618,7 +695,8 @@ const CartSection = ({ onClose, show = true }) => {
     customerInfo,
     addToast,
     productsDispatch,
-    onClose
+    onClose,
+    isProcessingSale
   ]);
 
   const handleToggleView = useCallback(() => {
@@ -717,6 +795,7 @@ const CartSection = ({ onClose, show = true }) => {
                 onPreview={handleShowPreview}
                 isLoan={isLoan}
                 isValidCustomer={isValidCustomer}
+                isProcessing={isProcessingSale}
               />
             )}
           </>

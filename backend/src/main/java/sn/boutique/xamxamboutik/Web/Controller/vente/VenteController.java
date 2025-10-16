@@ -38,8 +38,17 @@ public class VenteController {
     @PostMapping
     @Operation(summary = "Créer une vente")
     public ResponseEntity<ApiResponse<Void>> createVente(@Valid @RequestBody VenteRequestDTO dto) {
-        venteService.createVente(dto);
-        return ResponseEntity.ok(ApiResponse.success("Vente créée avec succès", null));
+        try {
+            venteService.createVente(dto);
+            return ResponseEntity.ok(ApiResponse.success("Vente créée avec succès", null));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Gestion des doublons de numéro de facture
+            return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Erreur : Une vente avec ce numéro de facture existe déjà. Veuillez réessayer."));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Erreur lors de la création de la vente : " + e.getMessage()));
+        }
     }
 
     @GetMapping("/produits")

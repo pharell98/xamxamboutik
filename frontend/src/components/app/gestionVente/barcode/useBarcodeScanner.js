@@ -70,9 +70,11 @@ const useBarcodeScanner = (onScan, isActive = true) => {
   // Utilitaires de validation
   const isValidBarcode = useCallback(code => {
     const cleanCode = code.trim();
-    return /^[a-zA-Z0-9\-_\s]+$/.test(cleanCode) && 
-           cleanCode.length >= MIN_BARCODE_LENGTH && 
-           cleanCode.length <= MAX_BARCODE_LENGTH;
+    return (
+      /^[a-zA-Z0-9\-_\s]+$/.test(cleanCode) &&
+      cleanCode.length >= MIN_BARCODE_LENGTH &&
+      cleanCode.length <= MAX_BARCODE_LENGTH
+    );
   }, []);
   const isValidCharacter = useCallback(key => {
     // Accepter chiffres, lettres, tirets, underscores et espaces

@@ -8,7 +8,7 @@ export const settings = {
   isDark: false,
   theme: 'light',
   navbarPosition: 'vertical',
-  showBurgerMenu: true, // controls showing vertical nav on mobile - activé pour mobile
+  showBurgerMenu: false, // Fermé par défaut (s'ouvre au clic du burger menu)
   currency: 'CFA',
   isNavbarVerticalCollapsed: false, // toggle vertical navbar collapse
   navbarStyle: 'transparent'

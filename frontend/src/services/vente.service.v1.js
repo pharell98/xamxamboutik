@@ -4,17 +4,58 @@ const VENTE_ENDPOINT = '/ventes';
 const RETOUR_ENDPOINT = '/retours';
 const ECHANGE_ENDPOINT = '/echange';
 
+// Protection contre les appels multiples simultanés
+let isCreatingVente = false;
+let lastVenteData = null;
+let lastVenteTimestamp = 0;
+const VENTE_COOLDOWN = 2000; // 2 secondes entre deux ventes
+
 const venteServiceV1 = {
   createVente: async venteData => {
+    // Protection niveau 1 : Vérifier si une vente est déjà en cours
+    if (isCreatingVente) {
+      console.warn('[venteServiceV1] ⚠️ Vente déjà en cours de création, requête ignorée');
+      throw new Error('Une vente est déjà en cours de traitement. Veuillez patienter.');
+    }
+
+    // Protection niveau 2 : Empêcher les ventes identiques en moins de 2 secondes
+    const now = Date.now();
+    const isDuplicate = 
+      lastVenteData && 
+      JSON.stringify(lastVenteData) === JSON.stringify(venteData) &&
+      (now - lastVenteTimestamp) < VENTE_COOLDOWN;
+
+    if (isDuplicate) {
+      console.warn('[venteServiceV1] ⚠️ Vente dupliquée détectée, requête ignorée');
+      throw new Error('Vente dupliquée détectée. Veuillez patienter avant de réessayer.');
+    }
+
     try {
+      isCreatingVente = true;
+      lastVenteData = venteData;
+      lastVenteTimestamp = now;
+
+      console.log('[venteServiceV1] Création de la vente...', {
+        produits: venteData.detailVenteList?.length || 0,
+        montantTotal: venteData.montantTotal,
+        modePaiement: venteData.modePaiement
+      });
+
       const response = await apiClient.post(VENTE_ENDPOINT, venteData);
+      
+      console.log('[venteServiceV1] ✅ Vente créée avec succès:', response.data);
       return response.data;
     } catch (error) {
       console.error(
-        '[venteServiceV1] Erreur lors de la création de la vente:',
+        '[venteServiceV1] ❌ Erreur lors de la création de la vente:',
         error
       );
       throw error;
+    } finally {
+      // Libérer le verrou après un court délai pour éviter les clics trop rapides
+      setTimeout(() => {
+        isCreatingVente = false;
+      }, 500);
     }
   },
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Image } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import apiServiceSettings from '../../../services/api.service.settings';
 import {
   IMAGE_DISPLAY_MODES,
   getImageStyle,
@@ -16,9 +15,9 @@ import './ProductImage.css';
 const FALLBACK_IMAGE = '/no-image.svg';
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
 
-// Cache global pour le logo
+// Cache global pour le logo avec Promise pour éviter les requêtes multiples
 let logoCache = null;
-let logoFetchAttempted = false;
+let logoFetchPromise = null;
 
 /**
  * Vérifie si une URL est une image valide
@@ -72,40 +71,12 @@ const LoadingPlaceholder = ({ layout, containerStyle }) => (
 );
 
 /**
- * Hook pour gérer le logo de fallback
+ * Hook pour gérer le logo de fallback - version simplifiée sans requêtes réseau
  */
 const useLogoFallback = shouldUseFallback => {
-  const [logoUrl, setLogoUrl] = useState(logoCache || FALLBACK_IMAGE);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!shouldUseFallback || logoCache || logoFetchAttempted) return;
-
-    const fetchLogo = async () => {
-      logoFetchAttempted = true;
-      setIsLoading(true);
-      try {
-        const settings = await apiServiceSettings.getSettings();
-        const logo =
-          settings?.logo && settings.logo !== 'blob'
-            ? settings.logo
-            : FALLBACK_IMAGE;
-
-        logoCache = logo;
-        setLogoUrl(logo);
-      } catch (error) {
-        console.error('[ProductImage] Erreur récupération logo:', error);
-        logoCache = FALLBACK_IMAGE;
-        setLogoUrl(FALLBACK_IMAGE);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLogo();
-  }, [shouldUseFallback]);
-
-  return { logoUrl, isLoading };
+  // Toujours retourner FALLBACK_IMAGE directement sans appel API
+  // Cela évite complètement les boucles infinies
+  return { logoUrl: FALLBACK_IMAGE, isLoading: false };
 };
 
 /**
@@ -136,16 +107,19 @@ const ProductImage = ({
     }
   }, [image, logoUrl, imageFailed]);
 
-  const handleImageError = useCallback((e) => {
-    if (e.currentTarget.dataset.errorLogged !== '1') {
-      console.warn('[ProductImage] Échec chargement:', currentImageSrc);
-      e.currentTarget.dataset.errorLogged = '1';
-    }
-    if (!imageFailed) {
-      setImageFailed(true);
-      setCurrentImageSrc(FALLBACK_IMAGE);
-    }
-  }, [currentImageSrc, imageFailed]);
+  const handleImageError = useCallback(
+    e => {
+      // Forcer directement le fallback sur l'élément pour éviter le re-render
+      if (e.currentTarget.src !== FALLBACK_IMAGE) {
+        e.currentTarget.src = FALLBACK_IMAGE;
+        if (e.currentTarget.dataset.errorLogged !== '1') {
+          console.warn('[ProductImage] Échec chargement, fallback appliqué');
+          e.currentTarget.dataset.errorLogged = '1';
+        }
+      }
+    },
+    []
+  );
 
   const handleImageLoad = useCallback(() => {
     setImageFailed(false);

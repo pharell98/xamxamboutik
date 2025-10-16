@@ -20,14 +20,16 @@ async function safeApiCall(fn, logPrefix) {
     return result;
   } catch (error) {
     console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
-    
+
     // Gérer les erreurs réseau spécifiques
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`);
+      console.warn(
+        `[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`
+      );
       // Ne pas lancer d'erreur immédiatement pour les erreurs réseau
       // Laisser le composant décider s'il faut retry
     }
-    
+
     throw error;
   }
 }
@@ -35,14 +37,16 @@ async function safeApiCall(fn, logPrefix) {
 // Fonction spéciale pour les requêtes qui peuvent être dupliquées
 async function safeApiCallWithDedup(fn, logPrefix) {
   const requestKey = `${logPrefix}_${Date.now()}`;
-  
+
   try {
     // Vérifier si une requête similaire est déjà en cours (seulement pour certaines requêtes)
     if (pendingRequests.has(logPrefix)) {
-      console.warn(`[apiServiceV1] Requête ${logPrefix} déjà en cours, ignorée`);
+      console.warn(
+        `[apiServiceV1] Requête ${logPrefix} déjà en cours, ignorée`
+      );
       throw new Error(`Requête ${logPrefix} déjà en cours`);
     }
-    
+
     pendingRequests.set(logPrefix, requestKey);
     const result = await fn();
     pendingRequests.delete(logPrefix);
@@ -50,12 +54,14 @@ async function safeApiCallWithDedup(fn, logPrefix) {
   } catch (error) {
     pendingRequests.delete(logPrefix);
     console.error(`[apiServiceV1] Erreur ${logPrefix}:`, error);
-    
+
     // Gérer les erreurs réseau spécifiques
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.warn(`[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`);
+      console.warn(
+        `[apiServiceV1] Erreur réseau détectée pour ${logPrefix}, pas de retry automatique`
+      );
     }
-    
+
     throw error;
   }
 }
