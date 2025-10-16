@@ -13,10 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry
                 .addEndpoint("/ws")
                 .setAllowedOrigins(
-                        "http://localhost:3000",
-                        "https://xamxamboutik.shop",
-                        "https://darou-salam.xamxamboutik.shop",
-                        "https://hadia.xamxamboutik.shop"
+                        "http://localhost:3000"
                 );
     }
     @Override

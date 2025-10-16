@@ -1,6 +1,8 @@
 package sn.boutique.xamxamboutik.Web.DTO.Response.mobile;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+
 @Data
 public class ProduitVenteResponseMobileDTO {
     @Schema(description = "ID du produit", example = "1")

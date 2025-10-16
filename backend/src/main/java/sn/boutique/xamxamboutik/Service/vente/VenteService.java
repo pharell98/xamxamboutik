@@ -75,45 +75,13 @@ public class VenteService implements IVenteService {
         // IMPORTANT: Ouverture automatique de la caisse avant toute vente
         caisseInternalService.ouvrirCaisseAutomatiquement();
         
-        // Tentative de création avec retry en cas de conflit de numéro de facture
-        int maxRetries = 3;
-        int attempt = 0;
-        
-        while (attempt < maxRetries) {
-            try {
-                return createVenteInternal(dto);
-            } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                attempt++;
-                if (attempt >= maxRetries) {
-                    throw new BaseCustomException(
-                            "Impossible de créer la vente après " + maxRetries + " tentatives. Conflit de numéro de facture.",
-                            ErrorCodes.INTERNAL_ERROR
-                    );
-                }
-                // Attendre un peu avant de réessayer
-                try {
-                    Thread.sleep(100 * attempt); // 100ms, 200ms, 300ms
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new BaseCustomException("Interruption lors de la création de la vente", ErrorCodes.INTERNAL_ERROR);
-                }
-            }
-        }
-        
-        throw new BaseCustomException("Erreur lors de la création de la vente", ErrorCodes.INTERNAL_ERROR);
-    }
-    
-    /**
-     * Méthode interne pour créer une vente avec gestion des erreurs
-     */
-    private Vente createVenteInternal(VenteRequestDTO dto) {
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
 
         // Assigner automatiquement l'utilisateur connecté
         vente.setUtilisateur(currentUserService.getCurrentUser());
 
-        // Génération automatique du numéro de facture avec protection anti-doublon
+        // Génération automatique du numéro de facture
         vente.setNumeroFacture(generateNumeroFacture());
 
         // Initialisation des valeurs par défaut
@@ -171,13 +139,7 @@ public class VenteService implements IVenteService {
         Vente savedVente = venteRepository.save(vente);
         
         // IMPORTANT: Mise à jour en temps réel des montants de caisse après chaque vente
-        // Cette opération est non-critique, donc on ne fait pas échouer la transaction si elle échoue
-        try {
-            caisseInternalService.updateVentesJournalieresRealtime();
-        } catch (Exception e) {
-            // Log l'erreur mais ne fait pas échouer la création de la vente
-            System.err.println("Erreur lors de la mise à jour de la caisse (non-critique): " + e.getMessage());
-        }
+        caisseInternalService.updateVentesJournalieresRealtime();
         
         notifyUpdate(savedVente);
         return savedVente;
@@ -185,14 +147,10 @@ public class VenteService implements IVenteService {
 
     /**
      * Génère automatiquement un numéro de facture au format FAC-JJ-MM-AA-0001
-     * PROTECTION ANTI-DOUBLON : Utilise un verrou pessimiste (synchronized) pour éviter les race conditions
-     * 
-     * IMPORTANT: Cette méthode est synchronisée pour empêcher plusieurs threads d'exécuter
-     * la génération de numéro de facture en même temps, évitant ainsi les doublons.
      *
      * @return Le numéro de facture généré
      */
-    private synchronized String generateNumeroFacture() {
+    private String generateNumeroFacture() {
         LocalDateTime now = LocalDateTime.now();
         String jour = String.format("%02d", now.getDayOfMonth());
         String mois = String.format("%02d", now.getMonthValue());
@@ -200,7 +158,7 @@ public class VenteService implements IVenteService {
 
         String prefix = "FAC-" + jour + "-" + mois + "-" + annee + "-";
 
-        // Récupérer le dernier numéro de facture du jour avec verrouillage
+        // Récupérer le dernier numéro de facture du jour
         Optional<String> lastNumero = venteRepository.findLastNumeroFactureByPrefix(prefix);
 
         int sequence = 1;

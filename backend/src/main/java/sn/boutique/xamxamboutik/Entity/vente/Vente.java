@@ -17,7 +17,7 @@ import java.util.Set;
         indexes = {
                 @Index(name = "idx_vente_date", columnList = "date"),
                 @Index(name = "idx_vente_client_id", columnList = "client_id"),
-                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture", unique = true),
+                @Index(name = "idx_vente_numero_facture", columnList = "numero_facture"),
                 @Index(name = "idx_vente_utilisateur_id", columnList = "utilisateur_id")
         }
 )
