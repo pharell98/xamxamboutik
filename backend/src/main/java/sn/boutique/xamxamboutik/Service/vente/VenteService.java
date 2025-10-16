@@ -75,13 +75,45 @@ public class VenteService implements IVenteService {
         // IMPORTANT: Ouverture automatique de la caisse avant toute vente
         caisseInternalService.ouvrirCaisseAutomatiquement();
         
+        // Tentative de création avec retry en cas de conflit de numéro de facture
+        int maxRetries = 3;
+        int attempt = 0;
+        
+        while (attempt < maxRetries) {
+            try {
+                return createVenteInternal(dto);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    throw new BaseCustomException(
+                            "Impossible de créer la vente après " + maxRetries + " tentatives. Conflit de numéro de facture.",
+                            ErrorCodes.INTERNAL_ERROR
+                    );
+                }
+                // Attendre un peu avant de réessayer
+                try {
+                    Thread.sleep(100 * attempt); // 100ms, 200ms, 300ms
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new BaseCustomException("Interruption lors de la création de la vente", ErrorCodes.INTERNAL_ERROR);
+                }
+            }
+        }
+        
+        throw new BaseCustomException("Erreur lors de la création de la vente", ErrorCodes.INTERNAL_ERROR);
+    }
+    
+    /**
+     * Méthode interne pour créer une vente avec gestion des erreurs
+     */
+    private Vente createVenteInternal(VenteRequestDTO dto) {
         Vente vente = venteMapper.toEntity(dto);
         vente.setDate(LocalDateTime.now());
 
         // Assigner automatiquement l'utilisateur connecté
         vente.setUtilisateur(currentUserService.getCurrentUser());
 
-        // Génération automatique du numéro de facture
+        // Génération automatique du numéro de facture avec protection anti-doublon
         vente.setNumeroFacture(generateNumeroFacture());
 
         // Initialisation des valeurs par défaut
@@ -139,7 +171,13 @@ public class VenteService implements IVenteService {
         Vente savedVente = venteRepository.save(vente);
         
         // IMPORTANT: Mise à jour en temps réel des montants de caisse après chaque vente
-        caisseInternalService.updateVentesJournalieresRealtime();
+        // Cette opération est non-critique, donc on ne fait pas échouer la transaction si elle échoue
+        try {
+            caisseInternalService.updateVentesJournalieresRealtime();
+        } catch (Exception e) {
+            // Log l'erreur mais ne fait pas échouer la création de la vente
+            System.err.println("Erreur lors de la mise à jour de la caisse (non-critique): " + e.getMessage());
+        }
         
         notifyUpdate(savedVente);
         return savedVente;
