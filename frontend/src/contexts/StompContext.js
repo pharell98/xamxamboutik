@@ -71,22 +71,44 @@ export const StompProvider = ({ children }) => {
       return;
     }
 
+    // Protection contre boucle infinie de reconnexion
+    let errorCount = 0;
+    const MAX_ERRORS = 3;  // Maximum 3 tentatives
+
     const client = new Client({
       brokerURL,
-      reconnectDelay: 3000,
+      reconnectDelay: 5000,  // 5 secondes entre tentatives
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onWebSocketError: error => {
-        console.error('[StompContext] Erreur WebSocket:', error);
+        errorCount++;
+        
+        // Arrêter complètement après MAX_ERRORS
+        if (errorCount >= MAX_ERRORS) {
+          console.warn(`[StompContext] ⚠️ ${MAX_ERRORS} erreurs WebSocket - ARRÊT des tentatives de reconnexion`);
+          if (stompClientRef.current?.active) {
+            try {
+              stompClientRef.current.deactivate();
+            } catch (e) {
+              // Ignore
+            }
+          }
+          return;
+        }
+        
+        console.error(`[StompContext] Erreur WebSocket (${errorCount}/${MAX_ERRORS}):`, error.message || error);
         setConnected(false);
         setIsReconnecting(true);
         setIsSubscribed(false);
       },
       onWebSocketClose: event => {
-        console.warn('[StompContext] Connexion WebSocket fermée');
-        setConnected(false);
-        setIsReconnecting(true);
-        setIsSubscribed(false);
+        // Ne log que si on n'a pas atteint MAX_ERRORS
+        if (errorCount < MAX_ERRORS) {
+          console.warn('[StompContext] Connexion WebSocket fermée');
+          setConnected(false);
+          setIsReconnecting(true);
+          setIsSubscribed(false);
+        }
       }
     });
 
