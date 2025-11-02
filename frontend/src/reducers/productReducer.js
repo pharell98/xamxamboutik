@@ -23,7 +23,8 @@ const updateExistingCartItem = (cartItems, productId, newProduct) => {
       ? {
           ...item,
           quantity: newProduct.quantity,
-          totalPrice: item.prixVente * newProduct.quantity
+          prixVente: newProduct.prixVente, // Utiliser le prix du nouveau produit (prix initial)
+          totalPrice: newProduct.prixVente * newProduct.quantity
         }
       : item
   );
@@ -69,6 +70,7 @@ const actions = {
   ADD_TO_CART: (state, { product }) => {
     const existingItem = state.cartItems.find(item => item.id === product.id);
 
+    // Toujours utiliser les données fraîches du produit (prix initial)
     const cartItems = existingItem
       ? updateExistingCartItem(state.cartItems, product.id, product)
       : addNewCartItem(state.cartItems, product);

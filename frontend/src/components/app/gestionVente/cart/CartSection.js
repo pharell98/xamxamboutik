@@ -663,6 +663,8 @@ const CartSection = ({ onClose, show = true }) => {
       });
 
       productsDispatch({ type: 'CHECKOUT' });
+      // Réinitialiser les prix modifiés après le checkout
+      setModifiedPrices({});
       onClose?.();
     } catch (error) {
       const errorMessage =
@@ -716,90 +718,118 @@ const CartSection = ({ onClose, show = true }) => {
   return (
     <>
       <Card
-        className={`p-3 border-0 cart-section ${
+        className={`p-0 border-0 cart-section ${
           isDark ? 'bg-dark text-white' : 'bg-white'
         }`}
-        style={{ maxHeight: '75vh', overflowY: 'auto' }}
+        style={{ 
+          maxHeight: '75vh', 
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
       >
-        <CartHeader
-          showInvoices={showInvoices}
-          onToggleView={handleToggleView}
-        />
+        {/* Header fixe */}
+        <div 
+          className={`p-3 border-bottom ${
+            isDark ? 'bg-dark border-secondary' : 'bg-white border-200'
+          }`}
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            flexShrink: 0
+          }}
+        >
+          <CartHeader
+            showInvoices={showInvoices}
+            onToggleView={handleToggleView}
+          />
 
-        {/* Alerte de validation si des quantités sont invalides */}
-        {!showInvoices && cartItems.length > 0 && !hasValidQuantities && (
-          <div
-            className="alert alert-warning d-flex align-items-center mb-3"
-            role="alert"
-          >
-            <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
-            <div>
-              <strong>Attention :</strong> Certaines quantités sont invalides ou
-              vides. Tous les champs quantité doivent contenir un nombre entier
-              positif.
+          {/* Alerte de validation si des quantités sont invalides */}
+          {!showInvoices && cartItems.length > 0 && !hasValidQuantities && (
+            <div
+              className="alert alert-warning d-flex align-items-center mb-0 mt-3"
+              role="alert"
+            >
+              <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+              <div>
+                <strong>Attention :</strong> Certaines quantités sont invalides ou
+                vides. Tous les champs quantité doivent contenir un nombre entier
+                positif.
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {showInvoices ? (
-          <InvoiceAccordion />
-        ) : (
-          <>
-            {cartItems.length === 0 ? (
-              <p>Votre panier est vide.</p>
-            ) : (
-              <>
-                <CartTableHeader isDark={isDark} />
+        {/* Contenu scrollable */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '0 1rem'
+          }}
+        >
+          {showInvoices ? (
+            <div style={{ padding: '0', height: '100%' }}>
+              <InvoiceAccordion />
+            </div>
+          ) : (
+            <div className="py-3">
+              {cartItems.length === 0 ? (
+                <p className="text-center py-5">Votre panier est vide.</p>
+              ) : (
+                <>
+                  <CartTableHeader isDark={isDark} />
 
-                {cartItems.map((item, index) => (
-                  <CartItem
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    isDark={isDark}
-                    modifiedPrices={modifiedPrices}
-                    onPriceChange={handlePriceChange}
-                    onQuantityChange={handleQuantityChange}
-                    onRemove={handleRemoveItem}
+                  {cartItems.map((item, index) => (
+                    <CartItem
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      isDark={isDark}
+                      modifiedPrices={modifiedPrices}
+                      onPriceChange={handlePriceChange}
+                      onQuantityChange={handleQuantityChange}
+                      onRemove={handleRemoveItem}
+                    />
+                  ))}
+
+                  <PaymentModeSelector
+                    paymentModes={paymentModes}
+                    paymentMode={paymentMode}
+                    setPaymentMode={setPaymentMode}
                   />
-                ))}
 
-                <PaymentModeSelector
-                  paymentModes={paymentModes}
-                  paymentMode={paymentMode}
-                  setPaymentMode={setPaymentMode}
-                />
+                  <CartTotal
+                    totalCost={totalCost}
+                    isLoan={isLoan}
+                    printInvoice={printInvoice}
+                    setIsLoan={setIsLoan}
+                    setPrintInvoice={setPrintInvoice}
+                  />
 
-                <CartTotal
-                  totalCost={totalCost}
-                  isLoan={isLoan}
-                  printInvoice={printInvoice}
-                  setIsLoan={setIsLoan}
-                  setPrintInvoice={setPrintInvoice}
-                />
+                  <CustomerInfoForm
+                    isLoan={isLoan}
+                    printInvoice={printInvoice}
+                    customerInfo={customerInfo}
+                    setCustomerInfo={setCustomerInfo}
+                  />
 
-                <CustomerInfoForm
-                  isLoan={isLoan}
-                  printInvoice={printInvoice}
-                  customerInfo={customerInfo}
-                  setCustomerInfo={setCustomerInfo}
-                />
-              </>
-            )}
-
-            {cartItems.length > 0 && (
-              <CartActions
-                onCalculator={() => setShowCalculator(true)}
-                onClose={onClose}
-                onValidate={handleValidateSale}
-                onPreview={handleShowPreview}
-                isLoan={isLoan}
-                isValidCustomer={isValidCustomer}
-                isProcessing={isProcessingSale}
-              />
-            )}
-          </>
-        )}
+                  <CartActions
+                    onCalculator={() => setShowCalculator(true)}
+                    onClose={onClose}
+                    onValidate={handleValidateSale}
+                    onPreview={handleShowPreview}
+                    isLoan={isLoan}
+                    isValidCustomer={isValidCustomer}
+                    isProcessing={isProcessingSale}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </Card>
 
       <CalculatorModal
