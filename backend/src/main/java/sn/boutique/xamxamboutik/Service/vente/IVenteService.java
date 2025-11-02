@@ -13,6 +13,8 @@ public interface IVenteService {
 
     Page<?> getAllProductsBySalesPage(String clientType, Pageable pageable);
 
+    Page<?> searchProductsByLibelle(String libelle, Pageable pageable);
+
     Page<VenteJourResponseDTO> getTodaySales(Pageable pageable, Double minAmount, Double maxAmount);
 
     Page<VenteJourResponseDTO> getLast7DaysSales(Pageable pageable, Double minAmount, Double maxAmount);

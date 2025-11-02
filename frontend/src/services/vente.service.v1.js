@@ -75,6 +75,28 @@ const venteServiceV1 = {
     }
   },
 
+  /**
+   * Recherche des produits par libellé (côté serveur)
+   * @param {string} libelle - Terme de recherche
+   * @param {number} page - Numéro de page (commence à 1)
+   * @param {number} size - Taille de page
+   * @returns {Promise<Object>} Réponse avec les produits recherchés
+   */
+  searchProductsByLibelle: async (libelle, page = 1, size = 24) => {
+    try {
+      const response = await apiClient.get(`${VENTE_ENDPOINT}/produits/search`, {
+        params: { libelle, page, size }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(
+        '[venteServiceV1] Erreur lors de la recherche de produits par libellé :',
+        error
+      );
+      throw error;
+    }
+  },
+
   getPaymentModes: async () => {
     try {
       const response = await apiClient.get(`${VENTE_ENDPOINT}/paiementModes`);

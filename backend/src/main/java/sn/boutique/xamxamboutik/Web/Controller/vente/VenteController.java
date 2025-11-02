@@ -70,6 +70,23 @@ public class VenteController {
         );
     }
 
+    @GetMapping("/produits/search")
+    @Operation(summary = "Recherche en temps réel de produits par libellé (contient)")
+    public ResponseEntity<ApiResponse<Page<?>>> searchProductsByLibelle(
+            @RequestParam("libelle") String libelle,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "24") int size,
+            @RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType
+    ) {
+        Page<?> resultPage = venteService.searchProductsByLibelle(libelle, PageRequest.of(page - 1, size));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Produits trouvés pour le libellé: " + libelle,
+                        resultPage
+                )
+        );
+    }
+
     @GetMapping("/today")
     @Operation(summary = "Récupérer la liste paginée des ventes du jour en cours")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTodaySales(
