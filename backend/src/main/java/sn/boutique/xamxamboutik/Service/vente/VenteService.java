@@ -207,6 +207,13 @@ public class VenteService implements IVenteService {
     }
 
     @Override
+    public Page<?> searchProductsByLibelle(String libelle, Pageable pageable) {
+        Page<ProductVenteProjection> projectionPage = produitRepository.searchProductsByLibelle(libelle, pageable);
+        List<?> content = produitVenteMapper.toWebDTOList(projectionPage.getContent());
+        return new PageImpl<>(content, pageable, projectionPage.getTotalElements());
+    }
+
+    @Override
     public Page<VenteJourResponseDTO> getTodaySales(Pageable pageable, Double minAmount, Double maxAmount) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);

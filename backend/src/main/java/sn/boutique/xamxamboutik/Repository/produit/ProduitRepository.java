@@ -102,6 +102,24 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<ProductVenteProjection> findAllProductsBySales(Pageable pageable);
 
+    @Query("""
+            SELECT p.id as id,
+                   p.image as image,
+                   p.libelle as libelle,
+                   p.prixVente as prixVente,
+                   p.prixAchat as prixAchat,
+                   p.stockDisponible as stockDisponible,
+                   c as categorie
+            FROM Produit p
+                 LEFT JOIN p.categorie c
+            WHERE p.deleted = false
+              AND p.stockDisponible <> 0
+              AND LOWER(p.libelle) LIKE LOWER(CONCAT('%', :libelle, '%'))
+            ORDER BY p.libelle ASC
+            """)
+    @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
+    Page<ProductVenteProjection> searchProductsByLibelle(@Param("libelle") String libelle, Pageable pageable);
+
     @Modifying
     @Transactional
     @Query("UPDATE Produit p SET p.deleted = false, p.deletedAt = null, p.deletedBy = null WHERE p.id = :id")
