@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Card, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -6,6 +6,7 @@ import {
   faSyncAlt,
   faFileInvoice
 } from '@fortawesome/free-solid-svg-icons';
+import _ from 'lodash';
 import { useAppContext } from 'providers/AppProvider';
 import { useToast } from 'components/common/Toast';
 import useInvoices from 'hooks/useInvoices';
@@ -137,16 +138,58 @@ const InvoiceAccordion = () => {
   const { addToast } = useToast();
   const [openFacture, setOpenFacture] = useState(null);
   const [printingFacture, setPrintingFacture] = useState(null);
+  const sentinelRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   const {
     factures,
     loading,
     error,
+    hasMore,
     pagination,
     filters,
     updateFilters,
-    refresh
+    refresh,
+    loadMore
   } = useInvoices();
+
+  // Debounce pour le chargement de plus de factures
+  const debouncedLoadMore = useMemo(
+    () => _.debounce(() => {
+      if (hasMore && !loading) {
+        loadMore();
+      }
+    }, 300),
+    [hasMore, loading, loadMore]
+  );
+
+  // IntersectionObserver pour détecter le scroll en bas
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const container = scrollContainerRef.current;
+    
+    if (!sentinel || !container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !loading) {
+          debouncedLoadMore();
+        }
+      },
+      {
+        root: container,
+        rootMargin: '100px',
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.unobserve(sentinel);
+      debouncedLoadMore.cancel();
+    };
+  }, [hasMore, loading, debouncedLoadMore, factures.length]);
 
   const handleToggleFacture = useCallback(
     numeroFacture => {
@@ -281,8 +324,12 @@ const InvoiceAccordion = () => {
             color: #f8f9fa;
           }
           .invoice-scrollable-content {
-            max-height: 60vh;
+            max-height: 50vh;
             overflow-y: auto;
+            overflow-x: hidden;
+          }
+          .invoice-list {
+            min-height: 100%;
           }
           .invoice-item {
             transition: all 0.3s ease;
@@ -344,11 +391,23 @@ const InvoiceAccordion = () => {
       </div>
 
       {/* Contenu principal */}
-      <Card className={`${isDark ? 'bg-dark text-white' : ''}`}>
+      <Card 
+        className={`${isDark ? 'bg-dark text-white' : ''} border-0 shadow-sm`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '60vh',
+          overflow: 'hidden'
+        }}
+      >
         <Card.Header
           className={`d-flex justify-content-between align-items-center ${
-            isDark ? 'bg-dark border-dark' : 'bg-body-tertiary'
+            isDark ? 'bg-dark border-secondary' : 'bg-body-tertiary border-200'
           }`}
+          style={{
+            flexShrink: 0,
+            zIndex: 5
+          }}
         >
           <h6 className="mb-0 fw-semibold">
             <FontAwesomeIcon icon={faFileInvoice} className="me-2" />
@@ -363,6 +422,13 @@ const InvoiceAccordion = () => {
 
         <Card.Body
           className={`invoice-scrollable-content ${isDark ? 'bg-dark' : ''}`}
+          style={{ 
+            padding: '1rem',
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          }}
+          ref={scrollContainerRef}
         >
           {loading ? (
             <LoadingState />
@@ -371,20 +437,47 @@ const InvoiceAccordion = () => {
           ) : factures.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="invoice-list">
-              {factures.map(facture => (
-                <div key={facture.numeroFacture} className="invoice-item">
-                  <InvoiceItem
-                    facture={facture}
-                    isOpen={openFacture === facture.numeroFacture}
-                    onToggle={() => handleToggleFacture(facture.numeroFacture)}
-                    onPrint={() => handlePrintFacture(facture)}
-                    isDark={isDark}
-                    isPrinting={printingFacture === facture.numeroFacture}
-                  />
+            <>
+              <div className="invoice-list">
+                {factures.map(facture => (
+                  <div key={facture.numeroFacture} className="invoice-item">
+                    <InvoiceItem
+                      facture={facture}
+                      isOpen={openFacture === facture.numeroFacture}
+                      onToggle={() => handleToggleFacture(facture.numeroFacture)}
+                      onPrint={() => handlePrintFacture(facture)}
+                      isDark={isDark}
+                      isPrinting={printingFacture === facture.numeroFacture}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Sentinel pour détecter le scroll */}
+              {hasMore && (
+                <div
+                  ref={sentinelRef}
+                  style={{ height: '50px', background: 'transparent' }}
+                  className="d-flex align-items-center justify-content-center"
+                >
+                  {loading && (
+                    <Spinner
+                      animation="border"
+                      size="sm"
+                      variant="primary"
+                      className="me-2"
+                    />
+                  )}
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Indicateur de fin de liste */}
+              {!hasMore && factures.length > 0 && (
+                <div className="text-center py-3 text-muted">
+                  <small>Toutes les factures ont été chargées</small>
+                </div>
+              )}
+            </>
           )}
         </Card.Body>
       </Card>

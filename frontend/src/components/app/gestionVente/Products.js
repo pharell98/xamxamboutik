@@ -35,100 +35,169 @@ import { useToast } from '../../common/Toast';
 // Constantes pour améliorer la maintenabilité
 const PRODUCTS_PER_PAGE = 24;
 const DEBOUNCE_DELAY = 300;
+const SEARCH_DEBOUNCE_DELAY = 150; // Debounce très court pour recherche temps réel
 
 const SENTINEL_MARGIN = '100px';
 
+// Fonction utilitaire pour transformer les produits
+const transformProducts = content => {
+  return content
+    .filter(product => product && (product.id || product.produitId))
+    .map(product => ({
+      id: product.id || product.produitId,
+      libelle: product.libelle || product.nom || 'Produit sans nom',
+      image: product.image || product.imageUrl || null,
+      prixVente: Number(product.prixVente || product.prix || 0),
+      prixAchat: Number(product.prixAchat || 0),
+      stockDisponible: Number(
+        product.stockDisponible || product.stock || 0
+      ),
+      categorieLibelle:
+        product.categorieLibelle || product.categorie || 'Sans catégorie',
+      quantiteDisponible: Number(
+        product.stockDisponible || product.stock || 0
+      ),
+      totalPrice: Number(product.prixVente || product.prix || 0) * 1
+    }));
+};
+
 // Hook personnalisé pour la gestion des produits
-const useProducts = () => {
+const useProducts = (searchTerm = '') => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [lastSoldItems, setLastSoldItems] = useState([]);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
-  const fetchProducts = useCallback(async pageToLoad => {
-    // Éviter les requêtes multiples
-    if (loading) {
-      console.log('[Products] Requête en cours, ignorée');
-      return;
-    }
+  // Ref pour éviter les requêtes multiples
+  const isLoadingRef = useRef(false);
 
-    try {
-      setLoading(true);
-      const response = await venteServiceV1.getMostSoldProducts(
-        pageToLoad,
-        PRODUCTS_PER_PAGE,
-        'web'
-      );
-
-      if (!response.success) {
+  const fetchProducts = useCallback(
+    async (pageToLoad, append = false, searchLibelle = '') => {
+      // Éviter les requêtes multiples
+      if (isLoadingRef.current) {
+        console.log('[Products] Requête en cours, ignorée');
         return;
       }
 
-      const { number, totalPages, content } = response.data || {};
-      const currentPage = number !== undefined ? number + 1 : pageToLoad;
+      try {
+        isLoadingRef.current = true;
+        setLoading(true);
+        
+        let response;
+        const isSearching = searchLibelle && searchLibelle.trim().length > 0;
 
-      if (!content || !totalPages) {
-        console.error('[Products] Données API incomplètes:', {
-          number,
-          totalPages,
-          content
-        });
+        if (isSearching) {
+          // Recherche côté serveur
+          console.log('[Products] Recherche serveur:', searchLibelle);
+          response = await venteServiceV1.searchProductsByLibelle(
+            searchLibelle,
+            pageToLoad,
+            PRODUCTS_PER_PAGE
+          );
+          setIsSearchMode(true);
+        } else {
+          // Liste normale des produits les plus vendus
+          response = await venteServiceV1.getMostSoldProducts(
+            pageToLoad,
+            PRODUCTS_PER_PAGE,
+            'web'
+          );
+          setIsSearchMode(false);
+        }
+
+        if (!response.success) {
+          console.warn('[Products] Réponse non réussie:', response);
+          return;
+        }
+
+        // Extraire les données paginées
+        // Le backend retourne ApiResponse<Page<?>> donc response.data contient l'objet Page
+        const pageData = response.data || {};
+        const { number, totalPages, content } = pageData;
+        const currentPage = number !== undefined ? number + 1 : pageToLoad;
+
+        // Vérifier que les données sont valides
+        // totalPages peut être 0 (aucun résultat), c'est valide
+        if (content === undefined || totalPages === undefined) {
+          console.error('[Products] Données API incomplètes:', {
+            number,
+            totalPages,
+            content,
+            response: response
+          });
+          setHasMore(false);
+          if (!append) {
+            setProducts([]);
+          }
+          return;
+        }
+
+        // Si aucun résultat trouvé, traiter comme une liste vide valide
+        if (totalPages === 0 || !Array.isArray(content)) {
+          console.log('[Products] Aucun résultat trouvé pour:', searchLibelle);
+          if (append) {
+            // Si on ajoute des pages, ne rien faire
+            setHasMore(false);
+          } else {
+            // Si nouvelle recherche, vider la liste
+            setProducts([]);
+            setPage(1);
+            setTotalPages(0);
+            setHasMore(false);
+          }
+          return;
+        }
+
+        // Valider et transformer les données des produits
+        const validatedContent = transformProducts(content);
+
+        if (append) {
+          // Ajouter les nouvelles pages
+          setProducts(prev => {
+            const merged = [...prev, ...validatedContent];
+            const unique = merged.filter(
+              (item, idx, arr) => arr.findIndex(x => x.id === item.id) === idx
+            );
+            return unique;
+          });
+        } else {
+          // Remplacer les produits (nouvelle recherche ou première page)
+          setProducts(validatedContent);
+        }
+
+        setPage(currentPage);
+        setTotalPages(totalPages);
+        setHasMore(currentPage < totalPages);
+      } catch (err) {
+        console.error('[Products] Erreur de fetch page:', err);
         setHasMore(false);
-        return;
+        if (!append) {
+          setProducts([]);
+        }
+      } finally {
+        isLoadingRef.current = false;
+        setLoading(false);
       }
-
-      // Valider et transformer les données des produits
-      const validatedContent = content
-        .filter(product => product && (product.id || product.produitId))
-        .map(product => ({
-          id: product.id || product.produitId,
-          libelle: product.libelle || product.nom || 'Produit sans nom',
-          image: product.image || product.imageUrl || null,
-          prixVente: Number(product.prixVente || product.prix || 0),
-          prixAchat: Number(product.prixAchat || 0),
-          stockDisponible: Number(
-            product.stockDisponible || product.stock || 0
-          ),
-          categorieLibelle:
-            product.categorieLibelle || product.categorie || 'Sans catégorie',
-          quantiteDisponible: Number(
-            product.stockDisponible || product.stock || 0
-          ),
-          totalPrice: Number(product.prixVente || product.prix || 0) * 1
-        }));
-
-      setProducts(prev => {
-        const merged = [...prev, ...validatedContent];
-        const unique = merged.filter(
-          (item, idx, arr) => arr.findIndex(x => x.id === item.id) === idx
-        );
-        return unique;
-      });
-
-      setPage(currentPage);
-      setTotalPages(totalPages);
-      setHasMore(currentPage < totalPages);
-    } catch (err) {
-      console.error('[Products] Erreur de fetch page:', err);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Supprimé les dépendances instables
+    },
+    [] // Pas de dépendances instables
+  );
 
   const reloadProductsAfterSale = useCallback(
     _.debounce(async () => {
       console.log('[Products] Rechargement fluide des produits après vente...');
       // Éviter les rechargements multiples
-      if (loading) {
+      if (isLoadingRef.current) {
         console.log('[Products] Rechargement ignoré - requête en cours');
         return;
       }
       try {
         // Démarrer le loading avec un délai minimal pour la fluidité
+        isLoadingRef.current = true;
         setLoading(true);
+        setIsSearchMode(false); // Revenir à la liste normale après vente
 
         const response = await venteServiceV1.getMostSoldProducts(
           1,
@@ -138,26 +207,7 @@ const useProducts = () => {
         if (response.success && response.data) {
           const { content, totalPages } = response.data;
           if (content && Array.isArray(content)) {
-            const validatedProducts = content
-              .filter(product => product && (product.id || product.produitId))
-              .map(product => ({
-                id: product.id || product.produitId,
-                libelle: product.libelle || product.nom || 'Produit sans nom',
-                image: product.image || product.imageUrl || null,
-                prixVente: Number(product.prixVente || product.prix || 0),
-                prixAchat: Number(product.prixAchat || 0),
-                stockDisponible: Number(
-                  product.stockDisponible || product.stock || 0
-                ),
-                categorieLibelle:
-                  product.categorieLibelle ||
-                  product.categorie ||
-                  'Sans catégorie',
-                quantiteDisponible: Number(
-                  product.stockDisponible || product.stock || 0
-                ),
-                totalPrice: Number(product.prixVente || product.prix || 0) * 1
-              }));
+            const validatedProducts = transformProducts(content);
 
             console.log(
               '[Products] Nouveaux produits chargés:',
@@ -179,11 +229,44 @@ const useProducts = () => {
       } finally {
         // Délai minimal pour éviter le flash
         setTimeout(() => {
+          isLoadingRef.current = false;
           setLoading(false);
         }, 200);
       }
     }, 500), // Réduit le délai de debounce pour plus de réactivité
-    [] // Supprimé les dépendances instables
+    [] // Pas de dépendances instables
+  );
+
+  // Ref pour stocker les fonctions stables
+  const fetchProductsRef = useRef(fetchProducts);
+  const setPageRef = useRef(setPage);
+  const setProductsRef = useRef(setProducts);
+  
+  // Mettre à jour les refs quand les fonctions changent
+  useEffect(() => {
+    fetchProductsRef.current = fetchProducts;
+    setPageRef.current = setPage;
+    setProductsRef.current = setProducts;
+  }, [fetchProducts, setPage, setProducts]);
+
+  // Recherche en temps réel avec debounce minimal
+  const searchProducts = useMemo(
+    () =>
+      _.debounce((searchLibelle, pageNum = 1) => {
+        if (!searchLibelle || !searchLibelle.trim()) {
+          // Si recherche vide, revenir à la liste normale
+          setProductsRef.current([]);
+          setPageRef.current(1);
+          if (fetchProductsRef.current) {
+            fetchProductsRef.current(1, false, '');
+          }
+        } else {
+          if (fetchProductsRef.current) {
+            fetchProductsRef.current(pageNum, false, searchLibelle);
+          }
+        }
+      }, SEARCH_DEBOUNCE_DELAY), // Debounce minimal pour recherche temps réel
+    [] // Pas de dépendances instables
   );
 
   return {
@@ -192,10 +275,13 @@ const useProducts = () => {
     loading,
     hasMore,
     page,
+    setPage,
     fetchProducts,
     reloadProductsAfterSale,
     lastSoldItems,
-    setLastSoldItems
+    setLastSoldItems,
+    searchProducts,
+    isSearchMode
   };
 };
 
@@ -225,11 +311,14 @@ const Products = () => {
     loading,
     hasMore,
     page,
+    setPage,
     fetchProducts,
     reloadProductsAfterSale,
     lastSoldItems,
-    setLastSoldItems
-  } = useProducts();
+    setLastSoldItems,
+    searchProducts,
+    isSearchMode
+  } = useProducts(searchTerm);
 
   // Plus besoin du hook de gestion des stocks
 
@@ -260,26 +349,84 @@ const Products = () => {
   }, [isList, isGrid, navigate]);
 
   useEffect(() => {
-    if (!isInitializedRef.current) {
+    if (!isInitializedRef.current && fetchProducts) {
       isInitializedRef.current = true;
-      fetchProducts(1);
+      fetchProducts(1, false, '');
     }
-  }, []); // Supprimé fetchProducts de la dépendance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Charger uniquement au montage
+
+  // Ref pour suivre le dernier terme de recherche
+  const lastSearchTermRef = useRef('');
+  const isSearchModeRef = useRef(false);
+
+  // Mettre à jour la ref isSearchMode
+  useEffect(() => {
+    isSearchModeRef.current = isSearchMode;
+  }, [isSearchMode]);
+
+  // Effet pour la recherche avec debounce
+  useEffect(() => {
+    // Ignorer le premier rendu si pas encore initialisé
+    if (!isInitializedRef.current) {
+      return;
+    }
+
+    const trimmedSearch = searchTerm ? searchTerm.trim() : '';
+    
+    // Éviter de relancer la recherche si le terme n'a pas changé
+    if (trimmedSearch === lastSearchTermRef.current) {
+      return;
+    }
+    
+    lastSearchTermRef.current = trimmedSearch;
+
+    if (trimmedSearch) {
+      // Recherche avec debounce
+      searchProducts(trimmedSearch, 1);
+    } else {
+      // Si recherche vide, revenir à la liste normale seulement si on était en mode recherche
+      if (isSearchModeRef.current) {
+        searchProducts.cancel();
+        // Utiliser les setters directs car on est dans le composant
+        setProducts([]);
+        setPage(1);
+        if (fetchProducts) {
+          fetchProducts(1, false, '');
+        }
+      }
+    }
+
+    return () => {
+      searchProducts.cancel();
+    };
+  }, [searchTerm, searchProducts]); // Seulement searchTerm et searchProducts (stable maintenant)
 
   // Gestion de l'intersection observer pour le scroll infini
   const sentinelRef = useRef(null);
+  const searchTermRef = useRef(searchTerm);
+  
+  // Mettre à jour la ref quand searchTerm change
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
   const debouncedFetchProducts = useMemo(
     () =>
       _.debounce(pageToLoad => {
-        fetchProducts(pageToLoad);
+        const currentSearch = searchTermRef.current ? searchTermRef.current.trim() : '';
+        if (fetchProductsRef.current) {
+          fetchProductsRef.current(pageToLoad, true, currentSearch);
+        }
       }, DEBOUNCE_DELAY),
-    [] // Supprimé fetchProducts de la dépendance
+    [] // Pas de dépendances instables
   );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !loading && hasMore) {
+          // Charger plus (fonctionne aussi en mode recherche)
           debouncedFetchProducts(page + 1);
         }
       },
@@ -299,8 +446,9 @@ const Products = () => {
       if (el) {
         observer.unobserve(el);
       }
+      debouncedFetchProducts.cancel();
     };
-  }, [page, loading, hasMore]); // Supprimé debouncedFetchProducts de la dépendance
+  }, [page, loading, hasMore, debouncedFetchProducts]);
 
   // Gestion des messages WebSocket - Effet unique après vente
   const lastProcessedMessageRef = useRef(null);
@@ -354,18 +502,8 @@ const Products = () => {
     };
   }, [cartItems]);
 
-  // Filtrage des produits
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const lower = searchTerm.toLowerCase();
-      return (
-        p.libelle?.toLowerCase().includes(lower) ||
-        p.categorieLibelle?.toLowerCase().includes(lower)
-      );
-    });
-  }, [products, searchTerm]);
-
-  const finalProducts = filteredProducts;
+  // Pas besoin de filtrage côté client si on utilise la recherche serveur
+  const finalProducts = products;
 
   return (
     <div className="vente-mobile">

@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import factureService from 'services/api.facture';
 
 /**
- * Hook personnalisé pour gérer les factures
+ * Hook personnalisé pour gérer les factures avec chargement infini
  */
 const useInvoices = (initialFilters = {}) => {
   const [factures, setFactures] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
   const [pagination, setPagination] = useState({
     currentPage: 0,
     totalPages: 0,
@@ -20,11 +21,31 @@ const useInvoices = (initialFilters = {}) => {
     ...initialFilters
   });
 
+  // Ref pour éviter les requêtes multiples
+  const isLoadingRef = useRef(false);
+  const filtersChangedRef = useRef(false);
+
   /**
    * Charge les factures selon les filtres actuels
+   * @param {number} page - Page à charger (0-indexed)
+   * @param {number} pageSize - Taille de la page
+   * @param {boolean} append - Si true, ajoute les résultats aux factures existantes
    */
   const fetchFactures = useCallback(
-    async (page = 0, pageSize = 20) => {
+    async (page = 0, pageSize = 20, append = false) => {
+      // Éviter les requêtes multiples
+      if (isLoadingRef.current) {
+        console.log('[useInvoices] Requête en cours, ignorée');
+        return;
+      }
+
+      // Si les filtres ont changé, réinitialiser et ne pas append
+      if (filtersChangedRef.current) {
+        append = false;
+        filtersChangedRef.current = false;
+      }
+
+      isLoadingRef.current = true;
       setLoading(true);
       setError(null);
 
@@ -34,7 +55,8 @@ const useInvoices = (initialFilters = {}) => {
         console.log('🔍 Récupération des factures:', {
           filters,
           page,
-          pageSize
+          pageSize,
+          append
         });
 
         // Appel API réel
@@ -63,13 +85,34 @@ const useInvoices = (initialFilters = {}) => {
         console.log('✅ Réponse API reçue:', response);
 
         if (response?.success && response?.data) {
-          setFactures(response.data.factures || []);
+          const newFactures = response.data.factures || [];
+          const currentPage = response.data.currentPage || page;
+          const totalPages = response.data.totalPages || 1;
+          const totalElements = response.data.totalElements || 0;
+
+          if (append) {
+            // Ajouter les nouvelles factures aux existantes (éviter les doublons)
+            setFactures(prev => {
+              const existingIds = new Set(prev.map(f => f.numeroFacture));
+              const uniqueNewFactures = newFactures.filter(
+                f => !existingIds.has(f.numeroFacture)
+              );
+              return [...prev, ...uniqueNewFactures];
+            });
+          } else {
+            // Remplacer les factures (nouveau chargement)
+            setFactures(newFactures);
+          }
+
           setPagination({
-            currentPage: response.data.currentPage || page,
-            totalPages: response.data.totalPages || 1,
-            totalElements: response.data.totalElements || 0,
+            currentPage,
+            totalPages,
+            totalElements,
             pageSize: response.data.pageSize || pageSize
           });
+
+          // Vérifier s'il y a plus de pages à charger
+          setHasMore(currentPage + 1 < totalPages);
         } else {
           throw new Error(
             response?.message || 'Erreur lors de la récupération des factures'
@@ -78,19 +121,37 @@ const useInvoices = (initialFilters = {}) => {
       } catch (err) {
         console.error('Erreur useInvoices:', err);
         setError(err.message || 'Erreur lors du chargement des factures');
-        setFactures([]);
+        if (!append) {
+          setFactures([]);
+        }
       } finally {
         setLoading(false);
+        isLoadingRef.current = false;
       }
     },
     [filters]
   );
 
   /**
+   * Charge la page suivante
+   */
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore && pagination.currentPage + 1 < pagination.totalPages) {
+      const nextPage = pagination.currentPage + 1;
+      fetchFactures(nextPage, pagination.pageSize, true);
+    }
+  }, [loading, hasMore, pagination, fetchFactures]);
+
+  /**
    * Met à jour les filtres et recharge les données
    */
   const updateFilters = useCallback(newFilters => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters(prev => {
+      const newFiltersState = { ...prev, ...newFilters };
+      // Marquer que les filtres ont changé pour réinitialiser lors du prochain fetch
+      filtersChangedRef.current = true;
+      return newFiltersState;
+    });
   }, []);
 
   /**
@@ -98,7 +159,7 @@ const useInvoices = (initialFilters = {}) => {
    */
   const changePage = useCallback(
     newPage => {
-      fetchFactures(newPage, pagination.pageSize);
+      fetchFactures(newPage, pagination.pageSize, false);
     },
     [fetchFactures, pagination.pageSize]
   );
@@ -108,33 +169,34 @@ const useInvoices = (initialFilters = {}) => {
    */
   const changePageSize = useCallback(
     newPageSize => {
-      fetchFactures(0, newPageSize);
+      fetchFactures(0, newPageSize, false);
     },
     [fetchFactures]
   );
 
   /**
-   * Recharge les données
+   * Recharge les données depuis le début
    */
   const refresh = useCallback(() => {
-    fetchFactures(pagination.currentPage, pagination.pageSize);
-  }, [fetchFactures, pagination.currentPage, pagination.pageSize]);
+    setFactures([]);
+    setHasMore(true);
+    fetchFactures(0, pagination.pageSize || 20, false);
+  }, [fetchFactures, pagination.pageSize]);
 
   // Charger les données au montage et lors du changement de filtres
   useEffect(() => {
-    fetchFactures();
-  }, [fetchFactures]);
-
-  // Recharger quand les filtres changent
-  useEffect(() => {
-    fetchFactures(0, pagination.pageSize);
-  }, [filters]);
+    // Réinitialiser lors du changement de filtres
+    setFactures([]);
+    setHasMore(true);
+    fetchFactures(0, 20, false);
+  }, [filters, fetchFactures]);
 
   return {
     // Données
     factures,
     loading,
     error,
+    hasMore,
     pagination,
     filters,
 
@@ -143,7 +205,8 @@ const useInvoices = (initialFilters = {}) => {
     changePage,
     changePageSize,
     refresh,
-    fetchFactures
+    fetchFactures,
+    loadMore
   };
 };
 
