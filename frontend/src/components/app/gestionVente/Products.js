@@ -353,7 +353,6 @@ const Products = () => {
       isInitializedRef.current = true;
       fetchProducts(1, false, '');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Charger uniquement au montage
 
   // Ref pour suivre le dernier terme de recherche
