@@ -5,17 +5,21 @@
 ### **1. Services (`/src/services/`)**
 
 #### ✅ `dashboardService.js` - COMPLET
+
 **Méthodes existantes** :
+
 - ✅ `getCumulativeBenefit()` - Utilisé par BeneficeCard
 - ✅ `getBenefitBetweenDates(start, end)` - Utilisé par BeneficeCard
 - ✅ `getSalesDateRange()` - Utilisé par BeneficeCard (dates min/max)
 
 **Nouvelles méthodes ajoutées** :
+
 - ✅ `getKpisComplementaires(period)` - Ligne 70-85
 - ✅ `getPaymentModeBreakdown(period)` - Ligne 93-108
 - ✅ `getSalesEvolution(days)` - Ligne 116-128
 
 **Mapping backend** :
+
 ```
 Frontend                              Backend
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -29,7 +33,9 @@ getSalesEvolution()            →  GET /statistiques/ventes/evolution-ca
 ### **2. Composants Dashboard (`/src/components/dashboards/e-commerce/`)**
 
 #### ✅ `index.js` - ORCHESTRATION COMPLÈTE
+
 **États gérés** :
+
 - ✅ `caisseStats` - KPIs principaux (6 items)
 - ✅ `paymentBreakdown` - Données camembert
 - ✅ `salesEvolution` - Données courbe
@@ -37,6 +43,7 @@ getSalesEvolution()            →  GET /statistiques/ventes/evolution-ca
 - ✅ `loading, refreshing, fermetureLoading` - États UI
 
 **Fonction `loadEtat()`** :
+
 ```javascript
 Ligne 38-141 : ✅ IMPLÉMENTÉ
 ├─ 5 appels Promise.all() (ligne 41-48)
@@ -61,6 +68,7 @@ Ligne 38-141 : ✅ IMPLÉMENTÉ
 ```
 
 **Layout JSX** :
+
 ```javascript
 Ligne 185-262 : ✅ COMPLET
 ├─ Row 1: Contrôles caisse (existant)
@@ -72,6 +80,7 @@ Ligne 185-262 : ✅ COMPLET
 ---
 
 #### ✅ `EcomStat.js` - RÉUTILISÉ TEL QUEL
+
 **Statut** : Pas de modification nécessaire ✅
 **Raison** : Composant générique qui affiche n'importe quel tableau de KPIs
 **Usage** : Reçoit `caisseStats` (6 KPIs) depuis `index.js`
@@ -93,9 +102,11 @@ Où caisseStats = [
 ---
 
 #### ✅ `PaymentModeChart.js` - NOUVEAU COMPOSANT
+
 **Statut** : ✅ COMPLET (233 lignes)
 
 **Fonctionnalités implémentées** :
+
 - ✅ Import ECharts (ligne 1-25)
 - ✅ Mapping couleurs `colorMap` (ligne 28-33)
 - ✅ Mapping libellés `labelMap` (ligne 36-41)
@@ -114,6 +125,7 @@ Où caisseStats = [
 - ✅ PropTypes validation (ligne 203-229)
 
 **Endpoints utilisés** :
+
 ```javascript
 Props: data={paymentBreakdown}
 Source: dashboardService.getPaymentModeBreakdown('today')
@@ -123,9 +135,11 @@ Backend: GET /statistiques/ventes/by-payment-mode?period=today
 ---
 
 #### ✅ `SalesEvolutionChart.js` - NOUVEAU COMPOSANT
+
 **Statut** : ✅ COMPLET (292 lignes)
 
 **Fonctionnalités implémentées** :
+
 - ✅ Import ECharts (ligne 1-25)
 - ✅ Tooltip formatter personnalisé (ligne 27-45)
   - Affiche date + CA + bénéfice + nb ventes
@@ -144,6 +158,7 @@ Backend: GET /statistiques/ventes/by-payment-mode?period=today
 - ✅ PropTypes validation (ligne 274-289)
 
 **Endpoints utilisés** :
+
 ```javascript
 Props: data={salesEvolution}
 Source: dashboardService.getSalesEvolution(7)
@@ -153,9 +168,11 @@ Backend: GET /statistiques/ventes/evolution-ca?days=7
 ---
 
 #### ✅ `StockAlertsWidget.js` - NOUVEAU COMPOSANT
+
 **Statut** : ✅ COMPLET (214 lignes)
 
 **Fonctionnalités implémentées** :
+
 - ✅ Imports (ligne 1-7)
 - ✅ Composant principal (ligne 9-194)
 - ✅ Calcul total alertes (ligne 14-16)
@@ -174,6 +191,7 @@ Backend: GET /statistiques/ventes/evolution-ca?days=7
 - ✅ PropTypes validation (ligne 196-210)
 
 **Endpoints utilisés** :
+
 ```javascript
 Props: alerts={stockAlerts}
 Source: kpisComplementaires.data (produitsEnRupture + produitsAlerteCritique)
@@ -183,8 +201,10 @@ Backend: GET /statistiques/ventes/kpis-complementaires?period=today
 ---
 
 #### ⚠️ `BeneficeCard.js` - EXISTANT (non modifié)
+
 **Statut** : ✅ Fonctionne tel quel
 **Endpoints utilisés** :
+
 - `dashboardService.getCumulativeBenefit()` - Ligne 93
 - `dashboardService.getBenefitBetweenDates()` - Ligne 146
 - `dashboardService.getSalesDateRange()` - Ligne 105
@@ -194,10 +214,12 @@ Backend: GET /statistiques/ventes/kpis-complementaires?period=today
 ---
 
 #### ⚠️ `BestSellingProducts.js` - NON UTILISÉ
+
 **Statut** : ⚠️ Composant existant mais pas intégré dans le dashboard
 **Raison** : Utilise données mock, pas connecté aux vrais endpoints
 
 **Si vous voulez l'intégrer** :
+
 1. Appeler `/ventes/produits?page=1&size=5` dans `loadEtat()`
 2. Transformer données vers format attendu
 3. Ajouter dans layout (Row 5)
@@ -207,10 +229,12 @@ Backend: GET /statistiques/ventes/kpis-complementaires?period=today
 ---
 
 #### ⚠️ `TotalSales.js` + `TotalSalesChart.js` - NON UTILISÉS
+
 **Statut** : ⚠️ Composants existants mais remplacés par `SalesEvolutionChart`
 **Raison** : `SalesEvolutionChart` est plus adapté (données réelles backend)
 
 **Différence** :
+
 - `TotalSalesChart` : Données mock (lastMonth vs previousYear)
 - `SalesEvolutionChart` : Données réelles (7 derniers jours avec CA + bénéfice)
 
@@ -222,21 +246,22 @@ Backend: GET /statistiques/ventes/kpis-complementaires?period=today
 
 ### **Composants utilisés dans le dashboard**
 
-| Composant | Statut | Endpoints | Ligne dans index.js |
-|-----------|--------|-----------|-------------------|
-| **BeneficeCard** | ✅ Existant | `/benefice/cumulatif`, `/benefice`, `/sales-dates` | 236 |
-| **EcomStat** | ✅ Enrichi | `/caisse/etat` + `/kpis-complementaires` | 242 |
-| **PaymentModeChart** | ✅ Nouveau | `/by-payment-mode` | 250 |
-| **StockAlertsWidget** | ✅ Nouveau | `/kpis-complementaires` | 253 |
-| **SalesEvolutionChart** | ✅ Nouveau | `/evolution-ca` | 260 |
-| BestSellingProducts | ⚠️ Non utilisé | - | - |
-| TotalSales | ⚠️ Non utilisé | - | - |
+| Composant               | Statut         | Endpoints                                          | Ligne dans index.js |
+| ----------------------- | -------------- | -------------------------------------------------- | ------------------- |
+| **BeneficeCard**        | ✅ Existant    | `/benefice/cumulatif`, `/benefice`, `/sales-dates` | 236                 |
+| **EcomStat**            | ✅ Enrichi     | `/caisse/etat` + `/kpis-complementaires`           | 242                 |
+| **PaymentModeChart**    | ✅ Nouveau     | `/by-payment-mode`                                 | 250                 |
+| **StockAlertsWidget**   | ✅ Nouveau     | `/kpis-complementaires`                            | 253                 |
+| **SalesEvolutionChart** | ✅ Nouveau     | `/evolution-ca`                                    | 260                 |
+| BestSellingProducts     | ⚠️ Non utilisé | -                                                  | -                   |
+| TotalSales              | ⚠️ Non utilisé | -                                                  | -                   |
 
 ---
 
 ## 🔗 **Mapping complet Backend ↔️ Frontend**
 
 ### **Endpoint 1 : KPIs complémentaires**
+
 ```
 Backend:
 GET /statistiques/ventes/kpis-complementaires?period=today
@@ -257,6 +282,7 @@ dashboardService.getKpisComplementaires('today')
 ```
 
 ### **Endpoint 2 : Répartition paiements**
+
 ```
 Backend:
 GET /statistiques/ventes/by-payment-mode?period=today
@@ -274,6 +300,7 @@ dashboardService.getPaymentModeBreakdown('today')
 ```
 
 ### **Endpoint 3 : Évolution CA**
+
 ```
 Backend:
 GET /statistiques/ventes/evolution-ca?days=7
@@ -291,6 +318,7 @@ dashboardService.getSalesEvolution(7)
 ```
 
 ### **Endpoint 4 : État caisse (existant)**
+
 ```
 Backend:
 GET /caisse/etat
@@ -314,10 +342,11 @@ caisseService.getEtat()
 ## 🎨 **Composants graphiques - Détails techniques**
 
 ### **PaymentModeChart (Camembert ECharts)**
+
 ```javascript
 Librairie: echarts/core + echarts/charts (PieChart)
 Type: Donut (radius 50%-70%)
-Couleurs: 
+Couleurs:
   - espece → primary (bleu)
   - orange_money → success (vert)
   - wave → warning (jaune)
@@ -332,6 +361,7 @@ Features:
 ```
 
 ### **SalesEvolutionChart (Courbe ECharts)**
+
 ```javascript
 Librairie: echarts/core + echarts/charts (LineChart)
 Type: Double line (CA + Bénéfice)
@@ -351,6 +381,7 @@ Features:
 ```
 
 ### **StockAlertsWidget (Card Bootstrap)**
+
 ```javascript
 Librairie: react-bootstrap + FontAwesome
 Type: Widget custom avec animations CSS
@@ -371,6 +402,7 @@ Features:
 ## 🔄 **Flux de données complet**
 
 ### **Au chargement du dashboard**
+
 ```
 1. Utilisateur accède à /dashboard/e-commerce
    ↓
@@ -402,6 +434,7 @@ Features:
 ```
 
 ### **Lors d'un refresh manuel**
+
 ```
 1. Utilisateur clique "Actualiser" (ligne 204)
    ↓
@@ -419,6 +452,7 @@ Features:
 ## ✅ **Validation finale**
 
 ### **Tous les endpoints backend sont consommés** ✅
+
 ```
 ✅ /caisse/etat
 ✅ /caisse/is-ouverte
@@ -431,6 +465,7 @@ Features:
 ```
 
 ### **Tous les composants sont implémentés** ✅
+
 ```
 ✅ index.js (orchestration)
 ✅ EcomStat (6 KPIs)
@@ -441,6 +476,7 @@ Features:
 ```
 
 ### **Toutes les données sont mappées** ✅
+
 ```
 ✅ KPIs caisse → EcomStat
 ✅ KPIs complémentaires → EcomStat + StockAlertsWidget
@@ -449,6 +485,7 @@ Features:
 ```
 
 ### **Gestion des états** ✅
+
 ```
 ✅ Loading states (spinners)
 ✅ Empty states (messages + icônes)
@@ -462,6 +499,7 @@ Features:
 ## 🚀 **Dashboard complet et fonctionnel**
 
 ### **Layout final (4 rows)**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ Row 1: Contrôles Caisse                             │
@@ -498,21 +536,25 @@ Features:
 ## 📈 **Métriques d'implémentation**
 
 ### **Code ajouté**
+
 - **Backend** : ~400 lignes (DTOs + Services + Controller)
 - **Frontend** : ~800 lignes (3 composants + service)
 - **Documentation** : ~800 lignes (2 fichiers MD)
 - **Total** : ~2000 lignes
 
 ### **Endpoints créés**
+
 - **Backend** : 3 nouveaux endpoints REST
 - **Frontend** : 3 nouvelles méthodes service
 
 ### **Composants créés**
+
 - **PaymentModeChart** : 233 lignes
 - **SalesEvolutionChart** : 292 lignes
 - **StockAlertsWidget** : 214 lignes
 
 ### **Composants modifiés**
+
 - **index.js** : +100 lignes (orchestration)
 - **dashboardService.js** : +66 lignes (3 méthodes)
 
@@ -523,6 +565,7 @@ Features:
 ### **Implémentation : 100% complète** ✅
 
 Tous les endpoints backend sont correctement consommés par le frontend :
+
 - ✅ Services créés et fonctionnels
 - ✅ Composants graphiques magnifiques
 - ✅ Données correctement mappées
@@ -535,6 +578,7 @@ Tous les endpoints backend sont correctement consommés par le frontend :
 ### **Prêt pour la production** 🚀
 
 Le dashboard est maintenant :
+
 - 📊 **Complet** : Tous les KPIs importants affichés
 - 🎨 **Magnifique** : Graphiques modernes et animations
 - ⚡ **Performant** : Appels optimisés en parallèle
@@ -557,4 +601,3 @@ Le dashboard est maintenant :
 9. ✅ Tester sur mobile/tablet
 
 Tout est prêt ! 🎉
-

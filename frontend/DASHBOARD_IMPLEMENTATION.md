@@ -11,17 +11,19 @@ Le dashboard a été enrichi avec de nouveaux KPIs et graphiques pour mesurer le
 ### **Services (`/src/services/`)**
 
 #### `dashboardService.js` - Service principal des statistiques
+
 **Méthodes disponibles** :
+
 ```javascript
 // Existantes
-getCumulativeBenefit()                    // Bénéfice total
-getBenefitBetweenDates(start, end)       // Bénéfice sur période
-getSalesDateRange()                       // Première/dernière vente
+getCumulativeBenefit(); // Bénéfice total
+getBenefitBetweenDates(start, end); // Bénéfice sur période
+getSalesDateRange(); // Première/dernière vente
 
 // Nouvelles (optimisées)
-getKpisComplementaires(period)            // Panier moyen + tickets + alertes
-getPaymentModeBreakdown(period)           // Répartition paiements
-getSalesEvolution(days)                   // Évolution CA sur N jours
+getKpisComplementaires(period); // Panier moyen + tickets + alertes
+getPaymentModeBreakdown(period); // Répartition paiements
+getSalesEvolution(days); // Évolution CA sur N jours
 ```
 
 **Paramètres `period`** : `"today"`, `"7days"`, `"month"`, `"year"`
@@ -31,9 +33,11 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ### **Composants (`/src/components/dashboards/e-commerce/`)**
 
 #### ✅ **PaymentModeChart.js** (Nouveau)
+
 **Type** : Camembert/Donut interactif (ECharts)
 
 **Props** :
+
 ```javascript
 {
   data: [{
@@ -47,6 +51,7 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ```
 
 **Fonctionnalités** :
+
 - Donut chart avec couleurs par mode de paiement
 - Hover : Affiche montant + pourcentage + nombre de ventes
 - Légende détaillée à gauche avec montants formatés
@@ -54,6 +59,7 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 - État vide si aucune donnée
 
 **Couleurs** :
+
 - Espèce → Bleu primaire
 - Orange Money → Vert success
 - Wave → Jaune warning
@@ -62,9 +68,11 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ---
 
 #### ✅ **SalesEvolutionChart.js** (Nouveau)
+
 **Type** : Graphique ligne double (CA + Bénéfice)
 
 **Props** :
+
 ```javascript
 {
   data: [{
@@ -78,6 +86,7 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ```
 
 **Fonctionnalités** :
+
 - Courbe bleue (CA) avec aire remplie dégradée
 - Courbe verte (Bénéfice) en ligne simple
 - Tooltip riche : Date + CA + Bénéfice + nombre de ventes
@@ -89,9 +98,11 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ---
 
 #### ✅ **StockAlertsWidget.js** (Nouveau)
+
 **Type** : Widget d'alertes avec compteurs
 
 **Props** :
+
 ```javascript
 {
   alerts: {
@@ -103,6 +114,7 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ```
 
 **Fonctionnalités** :
+
 - 2 cartes d'alerte avec icônes animées (pulse si > 0)
 - Badge compteur dans le header
 - Descriptions explicites par niveau
@@ -112,13 +124,16 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 - Design moderne avec ombres et transitions
 
 **Niveaux** :
+
 - 🔴 Rupture totale (stock = 0)
 - 🟠 Alerte critique (stock ≤ seuil/2)
 
 ---
 
 #### ✅ **EcomStat.js** (Enrichi)
+
 **KPIs affichés** (6 au lieu de 5) :
+
 1. Montant initial (caisse)
 2. Ventes du jour (CA)
 3. Tickets (nombre de ventes) ✨
@@ -129,12 +144,15 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ---
 
 #### ✅ **index.js** (Dashboard principal - Modifié)
+
 **Orchestration** :
+
 - Charge 5 endpoints en parallèle au montage
 - Gère états de chargement
 - Distribue données aux composants
 
 **Layout final** :
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ Row 1: Contrôles Caisse (Ouverture/Fermeture)  │
@@ -157,6 +175,7 @@ getSalesEvolution(days)                   // Évolution CA sur N jours
 ## 🎨 Design & UX
 
 ### **Palette de couleurs**
+
 ```javascript
 Primary:   #007bff  (Bleu - CA, Espèce)
 Success:   #28a745  (Vert - Bénéfice, Orange Money)
@@ -166,18 +185,21 @@ Info:      #17a2b8  (Cyan - Carte bancaire)
 ```
 
 ### **Animations**
+
 - Pulse sur icônes alertes si compteur > 0
 - Scale + shadow au hover sur graphiques
 - Smooth transitions sur courbes
 - Fade in au chargement
 
 ### **États gérés**
+
 - ✅ Loading : Spinners Bootstrap
 - ✅ Vide : Messages + icônes illustratives
 - ✅ Erreur : Console.error (pas de crash UI)
 - ✅ Dark mode : Compatible via `useAppContext`
 
 ### **Responsive**
+
 - Desktop (≥992px) : Layout 2 colonnes
 - Tablet (768-991px) : Layout adaptatif
 - Mobile (<768px) : 1 colonne, graphiques empilés
@@ -187,24 +209,27 @@ Info:      #17a2b8  (Cyan - Carte bancaire)
 ## 📊 Données affichées
 
 ### **KPIs principaux (EcomStat)**
-| KPI | Source API | Format |
-|-----|-----------|--------|
-| Montant initial | `/caisse/etat` | 50 000 CFA |
-| Ventes du jour | `/caisse/etat` | 85 000 CFA |
-| Tickets | `/kpis-complementaires` | 45 |
-| Panier moyen | `/kpis-complementaires` | 1 889 CFA |
-| Produits vendus | `/kpis-complementaires` | 120 |
-| Montant caisse | `/caisse/etat` | 132 500 CFA |
+
+| KPI             | Source API              | Format      |
+| --------------- | ----------------------- | ----------- |
+| Montant initial | `/caisse/etat`          | 50 000 CFA  |
+| Ventes du jour  | `/caisse/etat`          | 85 000 CFA  |
+| Tickets         | `/kpis-complementaires` | 45          |
+| Panier moyen    | `/kpis-complementaires` | 1 889 CFA   |
+| Produits vendus | `/kpis-complementaires` | 120         |
+| Montant caisse  | `/caisse/etat`          | 132 500 CFA |
 
 ### **Répartition paiements (Camembert)**
-| Mode | Exemple | Affichage |
-|------|---------|-----------|
-| Espèce | 50 000 CFA (45%) | Bleu primaire |
-| Orange Money | 30 000 CFA (27%) | Vert success |
-| Wave | 15 000 CFA (14%) | Jaune warning |
-| Carte bancaire | 15 000 CFA (14%) | Cyan info |
+
+| Mode           | Exemple          | Affichage     |
+| -------------- | ---------------- | ------------- |
+| Espèce         | 50 000 CFA (45%) | Bleu primaire |
+| Orange Money   | 30 000 CFA (27%) | Vert success  |
+| Wave           | 15 000 CFA (14%) | Jaune warning |
+| Carte bancaire | 15 000 CFA (14%) | Cyan info     |
 
 ### **Évolution 7 jours (Courbe)**
+
 ```
 Date       CA          Bénéfice   Ventes
 11/08    75 000 CFA   10 000     10
@@ -215,6 +240,7 @@ Date       CA          Bénéfice   Ventes
 ```
 
 ### **Alertes stock (Widget)**
+
 - 🔴 Rupture totale : 5 produits
 - 🟠 Alerte critique : 8 produits
 - **Total** : 13 produits à surveiller
@@ -224,6 +250,7 @@ Date       CA          Bénéfice   Ventes
 ## 🔄 Flux de chargement
 
 ### **Au montage du composant**
+
 ```javascript
 useEffect(() => {
   loadEtat(); // Charge tout en 1 fois
@@ -231,24 +258,26 @@ useEffect(() => {
 ```
 
 ### **Lors d'un refresh manuel**
+
 ```javascript
 handleRefresh() {
   // 1. Actualise ventes backend
   await caisseService.refreshVentesRealtime();
-  
+
   // 2. Recharge toutes les données
   await loadEtat();
 }
 ```
 
 ### **Appels API (5 en parallèle)**
+
 ```javascript
 Promise.all([
-  caisseService.getEtat(),                         // 1. État caisse
-  caisseService.isOuverte(),                       // 2. Status ouverture
-  dashboardService.getKpisComplementaires('today'),// 3. KPIs
-  dashboardService.getPaymentModeBreakdown('today'),//4. Répartition
-  dashboardService.getSalesEvolution(7)            // 5. Évolution
+  caisseService.getEtat(), // 1. État caisse
+  caisseService.isOuverte(), // 2. Status ouverture
+  dashboardService.getKpisComplementaires('today'), // 3. KPIs
+  dashboardService.getPaymentModeBreakdown('today'), //4. Répartition
+  dashboardService.getSalesEvolution(7) // 5. Évolution
 ]);
 ```
 
@@ -259,6 +288,7 @@ Promise.all([
 ## 🧪 Tests à effectuer
 
 ### **Scénarios fonctionnels**
+
 1. ✅ Dashboard charge avec données réelles
 2. ✅ Graphiques s'affichent correctement
 3. ✅ Hover sur camembert affiche détails
@@ -267,17 +297,20 @@ Promise.all([
 6. ✅ Bouton refresh met à jour toutes les données
 
 ### **Scénarios edge cases**
+
 1. ✅ Aucune vente → Affiche "Aucune donnée"
 2. ✅ 1 seul mode de paiement → Camembert 100%
 3. ✅ 0 alerte stock → Message "Tout va bien" vert
 4. ✅ Erreur API → Ne crash pas, logs dans console
 
 ### **Responsive**
+
 1. ✅ Mobile : Graphiques empilés verticalement
 2. ✅ Tablet : Layout 2 colonnes adaptatif
 3. ✅ Desktop : Layout optimal 2x2 + ligne
 
 ### **Dark mode**
+
 1. ✅ Couleurs inversées (bg sombre)
 2. ✅ Textes lisibles (contraste suffisant)
 3. ✅ Graphiques adaptés (axes, tooltips)
@@ -287,18 +320,21 @@ Promise.all([
 ## 🚀 Utilisation
 
 ### **Lancer le backend**
+
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
 ### **Lancer le frontend**
+
 ```bash
 cd frontend
 npm start
 ```
 
 ### **Accéder au dashboard**
+
 ```
 http://localhost:3000/dashboard/e-commerce
 ```
@@ -308,11 +344,13 @@ http://localhost:3000/dashboard/e-commerce
 ## 📈 Métriques de performance
 
 ### **Charge réseau**
+
 - **5 endpoints** appelés en parallèle
 - **Taille moyenne** : ~5KB total (réponses compressées)
 - **Temps réponse** : ~300-500ms (dépend du volume de données)
 
 ### **Rendu UI**
+
 - **First Contentful Paint** : <1s
 - **Time to Interactive** : <2s
 - **Re-renders optimisés** : useState + useEffect
@@ -323,6 +361,7 @@ http://localhost:3000/dashboard/e-commerce
 ## 🛠️ Maintenance
 
 ### **Ajouter un nouveau graphique**
+
 1. Créer composant dans `/dashboards/e-commerce/`
 2. Ajouter méthode dans `dashboardService.js`
 3. Ajouter état dans `index.js`
@@ -330,10 +369,12 @@ http://localhost:3000/dashboard/e-commerce
 5. Ajouter dans layout
 
 ### **Modifier les couleurs**
+
 - Fichier : Chaque composant graphique a son `colorMap`
 - Utiliser helpers : `getThemeColor()` pour cohérence
 
 ### **Optimiser performance**
+
 - Implémenter cache dans `dashboardService` (localStorage)
 - Réduire fréquence de refresh (actuellement temps réel)
 - Lazy load des graphiques (React.lazy)
@@ -342,19 +383,20 @@ http://localhost:3000/dashboard/e-commerce
 
 ## 📚 Librairies utilisées
 
-| Librairie | Version | Usage |
-|-----------|---------|-------|
-| `echarts` | 5.5.1 | Graphiques (camembert, ligne) |
-| `echarts-for-react` | 3.0.2 | Wrapper React pour ECharts |
-| `react-bootstrap` | 2.10.4 | Layout + composants UI |
-| `react-countup` | 6.5.3 | Animation chiffres (optionnel) |
-| `@fortawesome/react-fontawesome` | 0.2.2 | Icônes |
+| Librairie                        | Version | Usage                          |
+| -------------------------------- | ------- | ------------------------------ |
+| `echarts`                        | 5.5.1   | Graphiques (camembert, ligne)  |
+| `echarts-for-react`              | 3.0.2   | Wrapper React pour ECharts     |
+| `react-bootstrap`                | 2.10.4  | Layout + composants UI         |
+| `react-countup`                  | 6.5.3   | Animation chiffres (optionnel) |
+| `@fortawesome/react-fontawesome` | 0.2.2   | Icônes                         |
 
 ---
 
 ## 🎨 Exemples visuels
 
 ### **PaymentModeChart (Camembert)**
+
 ```
 ┌─────────────────────────────────────┐
 │  Répartition des paiements          │
@@ -374,6 +416,7 @@ http://localhost:3000/dashboard/e-commerce
 ```
 
 ### **SalesEvolutionChart (Courbe)**
+
 ```
 ┌─────────────────────────────────────────┐
 │  Évolution des ventes sur 7 jours       │
@@ -393,6 +436,7 @@ http://localhost:3000/dashboard/e-commerce
 ```
 
 ### **StockAlertsWidget**
+
 ```
 ┌─────────────────────────────────────┐
 │  Alertes Stock              [13]    │
@@ -415,19 +459,25 @@ http://localhost:3000/dashboard/e-commerce
 ## 🔧 Configuration
 
 ### **Période par défaut**
+
 Modifiable dans `index.js` :
+
 ```javascript
-dashboardService.getKpisComplementaires('today')  // Changer 'today' ici
+dashboardService.getKpisComplementaires('today'); // Changer 'today' ici
 ```
 
 ### **Nombre de jours évolution**
+
 Modifiable dans `index.js` :
+
 ```javascript
-dashboardService.getSalesEvolution(7)  // Changer 7 → 15, 30, etc.
+dashboardService.getSalesEvolution(7); // Changer 7 → 15, 30, etc.
 ```
 
 ### **Seuils d'alerte stock**
+
 Configuré côté backend dans les produits :
+
 - `seuilRuptureStock` : Seuil configuré par produit
 - Critique = stock ≤ seuil / 2
 - Rupture = stock = 0 OU stock ≤ seuil
@@ -437,6 +487,7 @@ Configuré côté backend dans les produits :
 ## ⚡ Optimisations appliquées
 
 ### **1. Chargement parallèle**
+
 ```javascript
 // ✅ OPTIMISÉ (5 appels simultanés)
 Promise.all([api1(), api2(), api3(), api4(), api5()])
@@ -446,22 +497,25 @@ await api1(); await api2(); await api3(); ...
 ```
 
 ### **2. Pas de duplication**
+
 - ✅ CA du jour : Depuis `/caisse/etat` uniquement
 - ✅ Alertes stock : Compteurs depuis `/kpis-complementaires`
 - ✅ Pas de recalcul inutile
 
 ### **3. Formatage localisé**
+
 ```javascript
 // Montants français avec espaces
-new Intl.NumberFormat('fr-FR').format(85000)
+new Intl.NumberFormat('fr-FR').format(85000);
 // → "85 000"
 
 // Dates françaises
-date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short'})
+date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 // → "14 nov."
 ```
 
 ### **4. Gestion mémoire**
+
 - Pas de listeners non nettoyés
 - États réinitialisés proprement
 - Graphiques destroy automatique
@@ -471,7 +525,9 @@ date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short'})
 ## 🐛 Débogage
 
 ### **Vérifier appels API**
+
 Ouvrir Console DevTools → Network :
+
 ```
 GET /caisse/etat                          → 200 OK
 GET /statistiques/ventes/kpis-complementaires?period=today → 200 OK
@@ -481,6 +537,7 @@ GET /caisse/is-ouverte                    → 200 OK
 ```
 
 ### **Logs console utiles**
+
 ```javascript
 [dashboardService] Récupération des KPIs complémentaires...
 [Dashboard] KPIs chargés: {panierMoyen: 15000, nombreVentes: 45}
@@ -489,28 +546,32 @@ GET /caisse/is-ouverte                    → 200 OK
 ```
 
 ### **Erreurs courantes**
-| Erreur | Cause | Solution |
-|--------|-------|----------|
-| "Cannot read data" | API retourne null | Vérifier `data?.field` partout |
-| Graphique vide | Transformation incorrecte | Logger `transformedData` |
-| Tooltip ne s'affiche pas | Config ECharts | Vérifier `formatter` |
-| Dark mode cassé | Classes manquantes | Ajouter `isDark` conditions |
+
+| Erreur                   | Cause                     | Solution                       |
+| ------------------------ | ------------------------- | ------------------------------ |
+| "Cannot read data"       | API retourne null         | Vérifier `data?.field` partout |
+| Graphique vide           | Transformation incorrecte | Logger `transformedData`       |
+| Tooltip ne s'affiche pas | Config ECharts            | Vérifier `formatter`           |
+| Dark mode cassé          | Classes manquantes        | Ajouter `isDark` conditions    |
 
 ---
 
 ## 📖 Références
 
 ### **Composants**
+
 - `/frontend/src/components/dashboards/e-commerce/index.js`
 - `/frontend/src/components/dashboards/e-commerce/PaymentModeChart.js`
 - `/frontend/src/components/dashboards/e-commerce/SalesEvolutionChart.js`
 - `/frontend/src/components/dashboards/e-commerce/StockAlertsWidget.js`
 
 ### **Services**
+
 - `/frontend/src/services/dashboardService.js`
 - `/frontend/src/services/api.caisse.service.js`
 
 ### **Documentation backend**
+
 - `/backend/ARCHITECTURE_STATISTIQUES_DASHBOARD.md`
 
 ---
@@ -531,6 +592,7 @@ GET /caisse/is-ouverte                    → 200 OK
 ## 🔮 Évolutions futures possibles
 
 ### **Phase 2 (Nice to have)**
+
 1. 📈 Graphique comparaison mois en cours vs mois précédent
 2. 🏆 Top 5 meilleurs vendeurs (utilisateurs)
 3. 📊 Top catégories les plus vendues
@@ -541,6 +603,7 @@ GET /caisse/is-ouverte                    → 200 OK
 8. 📊 Export PDF/Excel des statistiques
 
 ### **Optimisations phase 2**
+
 1. Cache localStorage (5 min) pour réduire appels
 2. WebSocket pour mise à jour temps réel
 3. Skeleton loaders au lieu de spinners
@@ -550,4 +613,3 @@ GET /caisse/is-ouverte                    → 200 OK
 ---
 
 Félicitations ! Le dashboard est maintenant complet et professionnel ! 🎉
-
