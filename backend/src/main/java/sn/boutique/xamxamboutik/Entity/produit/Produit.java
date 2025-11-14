@@ -9,11 +9,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import sn.boutique.xamxamboutik.Entity.base.BaseEntity;
 
+import java.util.Locale;
+
 @Entity
 @Table(
         name = "produits",
         indexes = {
                 @Index(name = "idx_produit_libelle", columnList = "libelle"),
+                @Index(name = "idx_produit_libelle_normalized", columnList = "libelle_normalized"),
                 @Index(name = "idx_produit_codeProduit", columnList = "codeProduit"),
                 @Index(name = "idx_produit_categorie_id", columnList = "categorie_id"),
                 @Index(name = "idx_produit_stockDisponible", columnList = "stockDisponible"),
@@ -37,6 +40,9 @@ public class Produit extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String libelle;
 
+    @Column(name = "libelle_normalized")
+    private String libelleNormalized;
+
     @Column(nullable = false)
     private Double prixVente;
 
@@ -55,4 +61,14 @@ public class Produit extends BaseEntity {
     @JoinColumn(name = "categorie_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "produits"})
     private Categorie categorie;
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeLibelle() {
+        if (libelle != null) {
+            this.libelleNormalized = libelle.toLowerCase(Locale.ROOT);
+        } else {
+            this.libelleNormalized = null;
+        }
+    }
 }

@@ -259,23 +259,26 @@ const CartTotal = ({
   isLoan,
   printInvoice,
   setIsLoan,
-  setPrintInvoice
+  setPrintInvoice,
+  showLoanToggle = true
 }) => (
   <div className="cart-total d-flex align-items-center justify-content-between mb-2 p-3 rounded">
     <div className="d-flex flex-wrap gap-3">
-      <Form.Check
-        type="checkbox"
-        id="loan-checkbox"
-        label={
-          <span>
-            <FontAwesomeIcon icon={faHandHoldingUsd} className="me-1" />
-            Prêt
-          </span>
-        }
-        checked={isLoan}
-        onChange={e => setIsLoan(e.target.checked)}
-        className="fs-8"
-      />
+      {showLoanToggle && (
+        <Form.Check
+          type="checkbox"
+          id="loan-checkbox"
+          label={
+            <span>
+              <FontAwesomeIcon icon={faHandHoldingUsd} className="me-1" />
+              Prêt
+            </span>
+          }
+          checked={isLoan}
+          onChange={e => setIsLoan(e.target.checked)}
+          className="fs-8"
+        />
+      )}
       <Form.Check
         type="checkbox"
         id="print-invoice"
@@ -433,10 +436,14 @@ const CartSection = ({ onClose, show = true }) => {
   // State
   const [modifiedPrices, setModifiedPrices] = useState({});
   const [isLoan, setIsLoan] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({
-    fullName: '',
-    phoneNumber: ''
-  });
+  const defaultCustomerInfo = useMemo(
+    () => ({
+      fullName: '',
+      phoneNumber: ''
+    }),
+    []
+  );
+  const [customerInfo, setCustomerInfo] = useState(defaultCustomerInfo);
   const [paymentMode, setPaymentMode] = useState('espece');
   const [printInvoice, setPrintInvoice] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
@@ -538,6 +545,16 @@ const CartSection = ({ onClose, show = true }) => {
 
     return true;
   }, [cartItems, isValidCustomer, addToast]);
+
+  const resetCartState = useCallback(() => {
+    productsDispatch({ type: 'CHECKOUT' });
+    setModifiedPrices({});
+    setCustomerInfo(defaultCustomerInfo);
+    setIsLoan(false);
+    setPrintInvoice(false);
+    setPaymentMode('espece');
+    setShowInvoices(false);
+  }, [productsDispatch, defaultCustomerInfo]);
 
   const handleValidateSale = useCallback(async () => {
     // Protection niveau 0 : Debounce manuel (protection supplémentaire)
@@ -647,7 +664,7 @@ const CartSection = ({ onClose, show = true }) => {
         }
       }
 
-      // Notify other components
+      // Snapshot des articles vendus avant reset
       const soldItems = cartItems.map(item => ({
         productId: item.id,
         quantity: item.quantity,
@@ -662,9 +679,7 @@ const CartSection = ({ onClose, show = true }) => {
         duration: TOAST_DURATION.MEDIUM
       });
 
-      productsDispatch({ type: 'CHECKOUT' });
-      // Réinitialiser les prix modifiés après le checkout
-      setModifiedPrices({});
+      resetCartState();
       onClose?.();
     } catch (error) {
       const errorMessage =
@@ -696,9 +711,9 @@ const CartSection = ({ onClose, show = true }) => {
     printInvoice,
     customerInfo,
     addToast,
-    productsDispatch,
     onClose,
-    isProcessingSale
+    isProcessingSale,
+    resetCartState
   ]);
 
   const handleToggleView = useCallback(() => {
@@ -807,6 +822,7 @@ const CartSection = ({ onClose, show = true }) => {
                     printInvoice={printInvoice}
                     setIsLoan={setIsLoan}
                     setPrintInvoice={setPrintInvoice}
+                    showLoanToggle={false}
                   />
 
                   <CustomerInfoForm

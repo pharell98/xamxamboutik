@@ -7,6 +7,7 @@ import React, {
   useTransition
 } from 'react';
 import {
+  Badge,
   Button,
   Card,
   Col,
@@ -14,6 +15,7 @@ import {
   InputGroup,
   OverlayTrigger,
   Row,
+  Spinner,
   Tooltip
 } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -36,6 +38,7 @@ import { useToast } from '../../common/Toast';
 const PRODUCTS_PER_PAGE = 24;
 const DEBOUNCE_DELAY = 300;
 const SEARCH_DEBOUNCE_DELAY = 150; // Debounce très court pour recherche temps réel
+const MIN_SEARCH_LENGTH = 2;
 
 const SENTINEL_MARGIN = '100px';
 
@@ -297,6 +300,7 @@ const Products = () => {
   const { addToast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchTooShort, setIsSearchTooShort] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -319,6 +323,13 @@ const Products = () => {
     searchProducts,
     isSearchMode
   } = useProducts(searchTerm);
+
+  const trimmedSearchValue = searchTerm.trim();
+  const showSearchHelper =
+    isSearchTooShort && trimmedSearchValue.length > 0;
+  const showSearchSummary =
+    isSearchMode && !showSearchHelper && trimmedSearchValue.length > 0;
+  const searchResultCount = showSearchSummary ? products.length : 0;
 
   // Plus besoin du hook de gestion des stocks
 
@@ -358,8 +369,16 @@ const Products = () => {
   // Ref pour suivre le dernier terme de recherche
   const lastSearchTermRef = useRef('');
   const isSearchModeRef = useRef(false);
+  const fetchProductsRef = useRef(fetchProducts);
+  const setPageRef = useRef(setPage);
+  const setProductsRef = useRef(setProducts);
 
-  // Mettre à jour la ref isSearchMode
+  useEffect(() => {
+    fetchProductsRef.current = fetchProducts;
+    setPageRef.current = setPage;
+    setProductsRef.current = setProducts;
+  }, [fetchProducts, setPage, setProducts]);
+
   useEffect(() => {
     isSearchModeRef.current = isSearchMode;
   }, [isSearchMode]);
@@ -368,38 +387,45 @@ const Products = () => {
   useEffect(() => {
     // Ignorer le premier rendu si pas encore initialisé
     if (!isInitializedRef.current) {
-      return;
+      return undefined;
     }
 
     const trimmedSearch = searchTerm ? searchTerm.trim() : '';
-    
+
     // Éviter de relancer la recherche si le terme n'a pas changé
     if (trimmedSearch === lastSearchTermRef.current) {
-      return;
+      return undefined;
     }
-    
+
     lastSearchTermRef.current = trimmedSearch;
 
-    if (trimmedSearch) {
-      // Recherche avec debounce
-      searchProducts(trimmedSearch, 1);
-    } else {
-      // Si recherche vide, revenir à la liste normale seulement si on était en mode recherche
-      if (isSearchModeRef.current) {
+    if (!trimmedSearch) {
+      setIsSearchTooShort(false);
+      if (isSearchModeRef.current && fetchProductsRef.current) {
         searchProducts.cancel();
-        // Utiliser les setters directs car on est dans le composant
-        setProducts([]);
-        setPage(1);
-        if (fetchProducts) {
-          fetchProducts(1, false, '');
-        }
+        setProductsRef.current([]);
+        setPageRef.current(1);
+        fetchProductsRef.current(1, false, '');
       }
+      return () => {
+        searchProducts.cancel();
+      };
     }
+
+    if (trimmedSearch.length < MIN_SEARCH_LENGTH) {
+      setIsSearchTooShort(true);
+      searchProducts.cancel();
+      return undefined;
+    }
+
+    setIsSearchTooShort(false);
+    // Recherche avec debounce
+    searchProducts(trimmedSearch, 1);
 
     return () => {
       searchProducts.cancel();
     };
-  }, [searchTerm, searchProducts]); // Seulement searchTerm et searchProducts (stable maintenant)
+  }, [searchTerm, searchProducts]);
 
   // Gestion de l'intersection observer pour le scroll infini
   const sentinelRef = useRef(null);
@@ -413,12 +439,12 @@ const Products = () => {
   const debouncedFetchProducts = useMemo(
     () =>
       _.debounce(pageToLoad => {
-        const currentSearch = searchTermRef.current ? searchTermRef.current.trim() : '';
-        if (fetchProductsRef.current) {
-          fetchProductsRef.current(pageToLoad, true, currentSearch);
-        }
+        const currentSearch = searchTermRef.current
+          ? searchTermRef.current.trim()
+          : '';
+        fetchProducts(pageToLoad, true, currentSearch);
       }, DEBOUNCE_DELAY),
-    [] // Pas de dépendances instables
+    [fetchProducts]
   );
 
   useEffect(() => {
@@ -569,7 +595,15 @@ const Products = () => {
                     placeholder="Rechercher un produit..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
+                    aria-label="Recherche produit"
                   />
+                  {loading && trimmedSearchValue && (
+                    <InputGroup.Text className="bg-transparent border-start-0">
+                      <Spinner animation="border" size="sm" role="status">
+                        <span className="visually-hidden">Recherche en cours</span>
+                      </Spinner>
+                    </InputGroup.Text>
+                  )}
                   {searchTerm && (
                     <Button
                       variant="outline-secondary"
@@ -579,6 +613,25 @@ const Products = () => {
                     </Button>
                   )}
                 </InputGroup>
+                <div className="d-flex flex-column flex-sm-row gap-2 ms-1">
+                  {showSearchHelper && (
+                    <small className="text-warning">
+                      Tapez au moins {MIN_SEARCH_LENGTH} caractères pour lancer la recherche.
+                    </small>
+                  )}
+                  {showSearchSummary && (
+                    <div className="d-flex align-items-center gap-2">
+                      <Badge bg="info" pill>
+                        {searchResultCount} résultat{searchResultCount > 1 ? 's' : ''}
+                      </Badge>
+                      <small className="text-muted">
+                        {loading
+                          ? 'Recherche en cours...'
+                          : `Recherche pour « ${trimmedSearchValue} »`}
+                      </small>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="d-flex align-items-center">
