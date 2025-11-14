@@ -42,6 +42,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
               AND v.date < :endOfDay
               AND (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             ORDER BY v.date DESC
             """)
     Page<VenteProjection> findTodaySales(
@@ -49,6 +50,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             @Param("endOfDay") LocalDateTime endOfDay,
             @Param("minAmount") Double minAmount,
             @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement,
             Pageable pageable
     );
 
@@ -56,17 +58,20 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             SELECT COALESCE(SUM(dv.montantTotal), 0.0) AS totalAmount
             FROM Vente v
             JOIN v.detailVentes dv
+            JOIN v.paiements pm
             WHERE v.date >= :startOfDay
               AND v.date < :endOfDay
               AND dv.status = 'VENDU'
               AND (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             """)
     Double sumTodaySales(
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay,
             @Param("minAmount") Double minAmount,
-            @Param("maxAmount") Double maxAmount
+            @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement
     );
 
     @Query("""
@@ -93,6 +98,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
               AND v.date < :endDate
               AND (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             ORDER BY v.date DESC
             """)
     Page<VenteProjection> findSalesBetween(
@@ -100,6 +106,7 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             @Param("endDate") LocalDateTime endDate,
             @Param("minAmount") Double minAmount,
             @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement,
             Pageable pageable
     );
 
@@ -107,17 +114,20 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             SELECT COALESCE(SUM(dv.montantTotal), 0.0) AS totalAmount
             FROM Vente v
             JOIN v.detailVentes dv
+            JOIN v.paiements pm
             WHERE v.date >= :startDate
               AND v.date < :endDate
               AND dv.status = 'VENDU'
               AND (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             """)
     Double sumSalesBetween(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("minAmount") Double minAmount,
-            @Param("maxAmount") Double maxAmount
+            @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement
     );
 
     @Query("""
@@ -142,11 +152,13 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             JOIN v.utilisateur u
             WHERE (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             ORDER BY v.date DESC
             """)
     Page<VenteProjection> findAllSales(
             @Param("minAmount") Double minAmount,
             @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement,
             Pageable pageable
     );
 
@@ -154,12 +166,15 @@ public interface VenteRepository extends SoftDeleteRepository<Vente, Long> {
             SELECT COALESCE(SUM(dv.montantTotal), 0.0) AS totalAmount
             FROM Vente v
             JOIN v.detailVentes dv
+            JOIN v.paiements pm
             WHERE dv.status = 'VENDU'
               AND (:minAmount IS NULL OR dv.montantTotal >= :minAmount)
               AND (:maxAmount IS NULL OR dv.montantTotal <= :maxAmount)
+              AND (:modePaiement IS NULL OR pm.modePaiement = :modePaiement)
             """)
     Double sumAllSales(
             @Param("minAmount") Double minAmount,
-            @Param("maxAmount") Double maxAmount
+            @Param("maxAmount") Double maxAmount,
+            @Param("modePaiement") sn.boutique.xamxamboutik.Enums.ModePaiement modePaiement
     );
 }

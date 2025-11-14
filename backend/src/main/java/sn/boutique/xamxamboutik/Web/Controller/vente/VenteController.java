@@ -84,10 +84,12 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
-        Page<VenteJourResponseDTO> ventesDuJour = concreteVenteService.getTodaySales(PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getTodaySalesTotalAmount(minAmount, maxAmount);
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
+        Page<VenteJourResponseDTO> ventesDuJour = concreteVenteService.getTodaySales(PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getTodaySalesTotalAmount(minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Liste paginée des ventes d'aujourd'hui récupérée avec succès",
@@ -102,10 +104,12 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
-        Page<VenteJourResponseDTO> ventes7Jours = concreteVenteService.getLast7DaysSales(PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getLast7DaysSalesTotalAmount(minAmount, maxAmount);
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
+        Page<VenteJourResponseDTO> ventes7Jours = concreteVenteService.getLast7DaysSales(PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getLast7DaysSalesTotalAmount(minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Liste paginée des ventes sur les 7 derniers jours récupérée avec succès",
@@ -120,10 +124,12 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
-        Page<VenteJourResponseDTO> ventesMois = concreteVenteService.getMonthSales(PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getMonthSalesTotalAmount(minAmount, maxAmount);
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
+        Page<VenteJourResponseDTO> ventesMois = concreteVenteService.getMonthSales(PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getMonthSalesTotalAmount(minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Liste paginée des ventes du mois en cours récupérée avec succès",
@@ -138,10 +144,12 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
-        Page<VenteJourResponseDTO> ventesAnnee = concreteVenteService.getYearSales(PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getYearSalesTotalAmount(minAmount, maxAmount);
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
+        Page<VenteJourResponseDTO> ventesAnnee = concreteVenteService.getYearSales(PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getYearSalesTotalAmount(minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Liste paginée des ventes de l'année en cours récupérée avec succès",
@@ -157,11 +165,13 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
         LocalDate localDate = LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
-        Page<VenteJourResponseDTO> result = concreteVenteService.getSalesByExactDate(localDate, PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getSalesByExactDateTotalAmount(localDate, minAmount, maxAmount);
+        Page<VenteJourResponseDTO> result = concreteVenteService.getSalesByExactDate(localDate, PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getSalesByExactDateTotalAmount(localDate, minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Ventes pour la date " + dateStr,
@@ -176,10 +186,12 @@ public class VenteController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "24") int size,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String modePaiement
     ) {
-        Page<VenteJourResponseDTO> result = concreteVenteService.getAllSales(PageRequest.of(page - 1, size), minAmount, maxAmount);
-        double totalPeriodAmount = concreteVenteService.getAllSalesTotalAmount(minAmount, maxAmount);
+        ModePaiement mode = modePaiement != null ? ModePaiement.fromValue(modePaiement) : null;
+        Page<VenteJourResponseDTO> result = concreteVenteService.getAllSales(PageRequest.of(page - 1, size), minAmount, maxAmount, mode);
+        double totalPeriodAmount = concreteVenteService.getAllSalesTotalAmount(minAmount, maxAmount, mode);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Liste paginée de toutes les ventes récupérée avec succès",

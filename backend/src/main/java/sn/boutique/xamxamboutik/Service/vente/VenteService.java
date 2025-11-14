@@ -214,87 +214,87 @@ public class VenteService implements IVenteService {
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getTodaySales(Pageable pageable, Double minAmount, Double maxAmount) {
+    public Page<VenteJourResponseDTO> getTodaySales(Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-        Page<VenteProjection> projections = venteRepository.findTodaySales(startOfDay, endOfDay, minAmount, maxAmount, pageable);
+        Page<VenteProjection> projections = venteRepository.findTodaySales(startOfDay, endOfDay, minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getTodaySalesTotalAmount(Double minAmount, Double maxAmount) {
+    public double getTodaySalesTotalAmount(Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-        return venteRepository.sumTodaySales(startOfDay, endOfDay, minAmount, maxAmount);
+        return venteRepository.sumTodaySales(startOfDay, endOfDay, minAmount, maxAmount, modePaiement);
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getLast7DaysSales(Pageable pageable, Double minAmount, Double maxAmount) {
+    public Page<VenteJourResponseDTO> getLast7DaysSales(Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime sevenDaysAgo = now.minusDays(7);
-        Page<VenteProjection> projections = venteRepository.findSalesBetween(sevenDaysAgo, now, minAmount, maxAmount, pageable);
+        Page<VenteProjection> projections = venteRepository.findSalesBetween(sevenDaysAgo, now, minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getLast7DaysSalesTotalAmount(Double minAmount, Double maxAmount) {
+    public double getLast7DaysSalesTotalAmount(Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime sevenDaysAgo = now.minusDays(7);
-        return venteRepository.sumSalesBetween(sevenDaysAgo, now, minAmount, maxAmount);
+        return venteRepository.sumSalesBetween(sevenDaysAgo, now, minAmount, maxAmount, modePaiement);
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getMonthSales(Pageable pageable, Double minAmount, Double maxAmount) {
+    public Page<VenteJourResponseDTO> getMonthSales(Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
-        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfMonth, startOfNextMonth, minAmount, maxAmount, pageable);
+        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfMonth, startOfNextMonth, minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getMonthSalesTotalAmount(Double minAmount, Double maxAmount) {
+    public double getMonthSalesTotalAmount(Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
         LocalDateTime startOfNextMonth = startOfMonth.plusMonths(1);
-        return venteRepository.sumSalesBetween(startOfMonth, startOfNextMonth, minAmount, maxAmount);
+        return venteRepository.sumSalesBetween(startOfMonth, startOfNextMonth, minAmount, maxAmount, modePaiement);
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getYearSales(Pageable pageable, Double minAmount, Double maxAmount) {
+    public Page<VenteJourResponseDTO> getYearSales(Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfYear = today.withDayOfYear(1).atStartOfDay();
         LocalDateTime startOfNextYear = startOfYear.plusYears(1);
-        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfYear, startOfNextYear, minAmount, maxAmount, pageable);
+        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfYear, startOfNextYear, minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getYearSalesTotalAmount(Double minAmount, Double maxAmount) {
+    public double getYearSalesTotalAmount(Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfYear = today.withDayOfYear(1).atStartOfDay();
         LocalDateTime startOfNextYear = startOfYear.plusYears(1);
-        return venteRepository.sumSalesBetween(startOfYear, startOfNextYear, minAmount, maxAmount);
+        return venteRepository.sumSalesBetween(startOfYear, startOfNextYear, minAmount, maxAmount, modePaiement);
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getSalesByExactDate(LocalDate date, Pageable pageable, Double minAmount, Double maxAmount) {
+    public Page<VenteJourResponseDTO> getSalesByExactDate(LocalDate date, Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfDay, endOfDay, minAmount, maxAmount, pageable);
+        Page<VenteProjection> projections = venteRepository.findSalesBetween(startOfDay, endOfDay, minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getSalesByExactDateTotalAmount(LocalDate date, Double minAmount, Double maxAmount) {
+    public double getSalesByExactDateTotalAmount(LocalDate date, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-        return venteRepository.sumSalesBetween(startOfDay, endOfDay, minAmount, maxAmount);
+        return venteRepository.sumSalesBetween(startOfDay, endOfDay, minAmount, maxAmount, modePaiement);
     }
 
     @Override
-    public Page<VenteJourResponseDTO> getAllSales(Pageable pageable, Double minAmount, Double maxAmount) {
-        Page<VenteProjection> projections = venteRepository.findAllSales(minAmount, maxAmount, pageable);
+    public Page<VenteJourResponseDTO> getAllSales(Pageable pageable, Double minAmount, Double maxAmount, ModePaiement modePaiement) {
+        Page<VenteProjection> projections = venteRepository.findAllSales(minAmount, maxAmount, modePaiement, pageable);
         return buildVenteJourPageResponse(projections);
     }
 
-    public double getAllSalesTotalAmount(Double minAmount, Double maxAmount) {
-        return venteRepository.sumAllSales(minAmount, maxAmount);
+    public double getAllSalesTotalAmount(Double minAmount, Double maxAmount, ModePaiement modePaiement) {
+        return venteRepository.sumAllSales(minAmount, maxAmount, modePaiement);
     }
 
     private Page<VenteJourResponseDTO> buildVenteJourPageResponse(Page<VenteProjection> projections) {
