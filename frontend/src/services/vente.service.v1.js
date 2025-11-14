@@ -14,20 +14,28 @@ const venteServiceV1 = {
   createVente: async venteData => {
     // Protection niveau 1 : Vérifier si une vente est déjà en cours
     if (isCreatingVente) {
-      console.warn('[venteServiceV1] ⚠️ Vente déjà en cours de création, requête ignorée');
-      throw new Error('Une vente est déjà en cours de traitement. Veuillez patienter.');
+      console.warn(
+        '[venteServiceV1] ⚠️ Vente déjà en cours de création, requête ignorée'
+      );
+      throw new Error(
+        'Une vente est déjà en cours de traitement. Veuillez patienter.'
+      );
     }
 
     // Protection niveau 2 : Empêcher les ventes identiques en moins de 2 secondes
     const now = Date.now();
-    const isDuplicate = 
-      lastVenteData && 
+    const isDuplicate =
+      lastVenteData &&
       JSON.stringify(lastVenteData) === JSON.stringify(venteData) &&
-      (now - lastVenteTimestamp) < VENTE_COOLDOWN;
+      now - lastVenteTimestamp < VENTE_COOLDOWN;
 
     if (isDuplicate) {
-      console.warn('[venteServiceV1] ⚠️ Vente dupliquée détectée, requête ignorée');
-      throw new Error('Vente dupliquée détectée. Veuillez patienter avant de réessayer.');
+      console.warn(
+        '[venteServiceV1] ⚠️ Vente dupliquée détectée, requête ignorée'
+      );
+      throw new Error(
+        'Vente dupliquée détectée. Veuillez patienter avant de réessayer.'
+      );
     }
 
     try {
@@ -35,8 +43,18 @@ const venteServiceV1 = {
       lastVenteData = venteData;
       lastVenteTimestamp = now;
 
+      console.log('[venteServiceV1] Création de la vente...', {
+        produits: venteData.detailVenteList?.length || 0,
+        montantTotal: venteData.montantTotal,
+        modePaiement: venteData.modePaiement
+      });
+
       const response = await apiClient.post(VENTE_ENDPOINT, venteData);
-      
+
+      console.log(
+        '[venteServiceV1] ✅ Vente créée avec succès:',
+        response.data
+      );
       return response.data;
     } catch (error) {
       console.error(
@@ -77,9 +95,12 @@ const venteServiceV1 = {
    */
   searchProductsByLibelle: async (libelle, page = 1, size = 24) => {
     try {
-      const response = await apiClient.get(`${VENTE_ENDPOINT}/produits/search`, {
-        params: { libelle, page, size }
-      });
+      const response = await apiClient.get(
+        `${VENTE_ENDPOINT}/produits/search`,
+        {
+          params: { libelle, page, size }
+        }
+      );
       return response.data;
     } catch (error) {
       console.error(
@@ -103,12 +124,21 @@ const venteServiceV1 = {
     }
   },
 
-  getSalesByPeriod: async (periodEndpoint, page = 1, size = 24) => {
+  getSalesByPeriod: async (
+    periodEndpoint,
+    page = 1,
+    size = 24,
+    modePaiement = null
+  ) => {
     try {
+      const params = { page, size };
+      if (modePaiement) {
+        params.modePaiement = modePaiement;
+      }
       const response = await apiClient.get(
         `${VENTE_ENDPOINT}/${periodEndpoint}`,
         {
-          params: { page, size }
+          params
         }
       );
       return response.data;
@@ -121,10 +151,19 @@ const venteServiceV1 = {
     }
   },
 
-  getSalesByDate: async (dateYYYYMMDD, page = 1, size = 24) => {
+  getSalesByDate: async (
+    dateYYYYMMDD,
+    page = 1,
+    size = 24,
+    modePaiement = null
+  ) => {
     try {
+      const params = { date: dateYYYYMMDD, page, size };
+      if (modePaiement) {
+        params.modePaiement = modePaiement;
+      }
       const response = await apiClient.get(`${VENTE_ENDPOINT}/by-date`, {
-        params: { date: dateYYYYMMDD, page, size }
+        params
       });
       return response.data;
     } catch (error) {

@@ -13,7 +13,7 @@ export const getSalesColumns = (
   setShowActionForm,
   setSelectedSale,
   setSelectedAction,
-  isDark  // Passer isDark en paramètre plutôt que d'appeler useAppContext()
+  isDark // Passer isDark en paramètre plutôt que d'appeler useAppContext()
 ) => {
   return [
     {

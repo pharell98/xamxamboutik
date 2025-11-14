@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo
+} from 'react';
 import { Card, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -155,11 +161,12 @@ const InvoiceAccordion = () => {
 
   // Debounce pour le chargement de plus de factures
   const debouncedLoadMore = useMemo(
-    () => _.debounce(() => {
-      if (hasMore && !loading) {
-        loadMore();
-      }
-    }, 300),
+    () =>
+      _.debounce(() => {
+        if (hasMore && !loading) {
+          loadMore();
+        }
+      }, 300),
     [hasMore, loading, loadMore]
   );
 
@@ -167,7 +174,7 @@ const InvoiceAccordion = () => {
   useEffect(() => {
     const sentinel = sentinelRef.current;
     const container = scrollContainerRef.current;
-    
+
     if (!sentinel || !container) return;
 
     const observer = new IntersectionObserver(
@@ -391,7 +398,7 @@ const InvoiceAccordion = () => {
       </div>
 
       {/* Contenu principal */}
-      <Card 
+      <Card
         className={`${isDark ? 'bg-dark text-white' : ''} border-0 shadow-sm`}
         style={{
           display: 'flex',
@@ -422,7 +429,7 @@ const InvoiceAccordion = () => {
 
         <Card.Body
           className={`invoice-scrollable-content ${isDark ? 'bg-dark' : ''}`}
-          style={{ 
+          style={{
             padding: '1rem',
             flex: 1,
             overflowY: 'auto',
@@ -444,7 +451,9 @@ const InvoiceAccordion = () => {
                     <InvoiceItem
                       facture={facture}
                       isOpen={openFacture === facture.numeroFacture}
-                      onToggle={() => handleToggleFacture(facture.numeroFacture)}
+                      onToggle={() =>
+                        handleToggleFacture(facture.numeroFacture)
+                      }
                       onPrint={() => handlePrintFacture(facture)}
                       isDark={isDark}
                       isPrinting={printingFacture === facture.numeroFacture}

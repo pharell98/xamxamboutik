@@ -107,19 +107,16 @@ const ProductImage = ({
     }
   }, [image, logoUrl, imageFailed]);
 
-  const handleImageError = useCallback(
-    e => {
-      // Forcer directement le fallback sur l'élément pour éviter le re-render
-      if (e.currentTarget.src !== FALLBACK_IMAGE) {
-        e.currentTarget.src = FALLBACK_IMAGE;
-        if (e.currentTarget.dataset.errorLogged !== '1') {
-          console.warn('[ProductImage] Échec chargement, fallback appliqué');
-          e.currentTarget.dataset.errorLogged = '1';
-        }
+  const handleImageError = useCallback(e => {
+    // Forcer directement le fallback sur l'élément pour éviter le re-render
+    if (e.currentTarget.src !== FALLBACK_IMAGE) {
+      e.currentTarget.src = FALLBACK_IMAGE;
+      if (e.currentTarget.dataset.errorLogged !== '1') {
+        console.warn('[ProductImage] Échec chargement, fallback appliqué');
+        e.currentTarget.dataset.errorLogged = '1';
       }
-    },
-    []
-  );
+    }
+  }, []);
 
   const handleImageLoad = useCallback(() => {
     setImageFailed(false);

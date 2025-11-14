@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef
+} from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -376,9 +382,9 @@ const CartActions = ({
       </Button>
 
       {onPreview && (
-        <Button 
-          variant="outline-info" 
-          onClick={onPreview} 
+        <Button
+          variant="outline-info"
+          onClick={onPreview}
           className="btn-sm"
           disabled={isProcessing}
         >
@@ -391,9 +397,9 @@ const CartActions = ({
 
     <div className="d-flex gap-2">
       {onClose && (
-        <Button 
-          variant="secondary" 
-          onClick={onClose} 
+        <Button
+          variant="secondary"
+          onClick={onClose}
           className="btn-sm"
           disabled={isProcessing}
         >
@@ -411,11 +417,17 @@ const CartActions = ({
       >
         {isProcessing ? (
           <>
-            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <span
+              className="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
             {isLoan ? 'Validation...' : 'Validation...'}
           </>
+        ) : isLoan ? (
+          'Valider Crédit'
         ) : (
-          isLoan ? 'Valider Crédit' : 'Valider Vente'
+          'Valider Vente'
         )}
       </Button>
     </div>
@@ -573,10 +585,13 @@ const CartSection = ({ onClose, show = true }) => {
 
     // Protection niveau 1 : Vérifier le state React
     if (isProcessingSale) {
-      console.warn('[CartSection] ⚠️ Vente déjà en cours de traitement (state), ignorée');
+      console.warn(
+        '[CartSection] ⚠️ Vente déjà en cours de traitement (state), ignorée'
+      );
       addToast({
         title: 'Vente en cours',
-        message: 'Une vente est déjà en cours de traitement. Veuillez patienter.',
+        message:
+          'Une vente est déjà en cours de traitement. Veuillez patienter.',
         type: 'warning',
         duration: TOAST_DURATION.SHORT
       });
@@ -587,7 +602,13 @@ const CartSection = ({ onClose, show = true }) => {
 
     // Protection niveau 2 : Désactiver immédiatement le bouton
     setIsProcessingSale(true);
-    
+
+    console.log('[CartSection] Début de la validation de vente...', {
+      produits: cartItems.length,
+      montantTotal: totalCost,
+      modePaiement: paymentMode
+    });
+
     const detailVenteList = cartItems.map(item => {
       const customPrice = modifiedPrices[item.id];
       const unitPrice =
@@ -607,6 +628,11 @@ const CartSection = ({ onClose, show = true }) => {
 
     try {
       const response = await venteServiceV1.createVente(saleData);
+      console.log(
+        '[CartSection] ✅ Vente créée avec succès, ID:',
+        response.data?.id
+      );
+
       if (printInvoice) {
         try {
           const invoiceItems = cartItems.map(item => ({
@@ -678,9 +704,12 @@ const CartSection = ({ onClose, show = true }) => {
         error.response?.data?.message ||
         error.message ||
         'Erreur lors de la création de la vente';
-      
-      console.error('[CartSection] ❌ Erreur lors de la validation de la vente:', errorMessage);
-      
+
+      console.error(
+        '[CartSection] ❌ Erreur lors de la validation de la vente:',
+        errorMessage
+      );
+
       addToast({
         title: 'Erreur',
         message: errorMessage,
@@ -691,7 +720,8 @@ const CartSection = ({ onClose, show = true }) => {
       // Libérer le verrou après un court délai pour éviter les clics trop rapides
       setTimeout(() => {
         setIsProcessingSale(false);
-        }, 300);
+        console.log('[CartSection] 🔓 Verrou de vente libéré');
+      }, 300);
     }
   }, [
     validateCart,
@@ -727,15 +757,15 @@ const CartSection = ({ onClose, show = true }) => {
         className={`p-0 border-0 cart-section ${
           isDark ? 'bg-dark text-white' : 'bg-white'
         }`}
-        style={{ 
-          maxHeight: '75vh', 
+        style={{
+          maxHeight: '75vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
         }}
       >
         {/* Header fixe */}
-        <div 
+        <div
           className={`p-3 border-bottom ${
             isDark ? 'bg-dark border-secondary' : 'bg-white border-200'
           }`}
@@ -759,9 +789,9 @@ const CartSection = ({ onClose, show = true }) => {
             >
               <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
               <div>
-                <strong>Attention :</strong> Certaines quantités sont invalides ou
-                vides. Tous les champs quantité doivent contenir un nombre entier
-                positif.
+                <strong>Attention :</strong> Certaines quantités sont invalides
+                ou vides. Tous les champs quantité doivent contenir un nombre
+                entier positif.
               </div>
             </div>
           )}

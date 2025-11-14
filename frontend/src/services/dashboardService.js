@@ -60,6 +60,75 @@ const dashboardService = {
       );
       throw error;
     }
+  },
+
+  /**
+   * Récupère les KPIs complémentaires (panier moyen, tickets, produits vendus, alertes stock)
+   * Endpoint backend : GET /statistiques/ventes/kpis-complementaires
+   * @param {string} period - Période : today, 7days, month, year
+   */
+  getKpisComplementaires: async (period = 'today') => {
+    try {
+      const response = await apiClient.get(
+        '/statistiques/ventes/kpis-complementaires',
+        {
+          params: { period }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        '[dashboardService] Erreur lors de la récupération des KPIs complémentaires :',
+        error.response ? error.response.data : error.message
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Récupère la répartition des ventes par mode de paiement
+   * Endpoint backend : GET /statistiques/ventes/by-payment-mode
+   * @param {string} period - Période : today, 7days, month, year
+   */
+  getPaymentModeBreakdown: async (period = 'today') => {
+    try {
+      const response = await apiClient.get(
+        '/statistiques/ventes/by-payment-mode',
+        {
+          params: { period }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        '[dashboardService] Erreur lors de la récupération de la répartition des paiements :',
+        error.response ? error.response.data : error.message
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Récupère l'évolution du CA sur les N derniers jours
+   * Endpoint backend : GET /statistiques/ventes/evolution-ca
+   * @param {number} days - Nombre de jours (ex: 7, 15, 30)
+   */
+  getSalesEvolution: async (days = 7) => {
+    try {
+      const response = await apiClient.get(
+        '/statistiques/ventes/evolution-ca',
+        {
+          params: { days }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        "[dashboardService] Erreur lors de la récupération de l'évolution des ventes :",
+        error.response ? error.response.data : error.message
+      );
+      throw error;
+    }
   }
 };
 

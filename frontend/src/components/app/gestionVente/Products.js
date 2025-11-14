@@ -30,7 +30,6 @@ import ProductGrid from './ProductGrid';
 import CartSection from './cart/CartSection';
 import paths from 'routes/paths';
 import { useStompClient } from '../../../contexts/StompContext';
-import Loading from '../../common/Loading';
 import BarcodeScanner from './barcode/BarcodeScanner';
 import { useToast } from '../../common/Toast';
 
@@ -52,14 +51,10 @@ const transformProducts = content => {
       image: product.image || product.imageUrl || null,
       prixVente: Number(product.prixVente || product.prix || 0),
       prixAchat: Number(product.prixAchat || 0),
-      stockDisponible: Number(
-        product.stockDisponible || product.stock || 0
-      ),
+      stockDisponible: Number(product.stockDisponible || product.stock || 0),
       categorieLibelle:
         product.categorieLibelle || product.categorie || 'Sans catégorie',
-      quantiteDisponible: Number(
-        product.stockDisponible || product.stock || 0
-      ),
+      quantiteDisponible: Number(product.stockDisponible || product.stock || 0),
       totalPrice: Number(product.prixVente || product.prix || 0) * 1
     }));
 };
@@ -94,7 +89,7 @@ const useProducts = (searchTerm = '') => {
         const requestId = ++requestSequenceRef.current;
         isLoadingRef.current = true;
         setLoading(true);
-        
+
         let response;
         const normalizedSearch = searchLibelle
           ? searchLibelle.trim().toLowerCase()
@@ -257,7 +252,7 @@ const useProducts = (searchTerm = '') => {
   const fetchProductsRef = useRef(fetchProducts);
   const setPageRef = useRef(setPage);
   const setProductsRef = useRef(setProducts);
-  
+
   // Mettre à jour les refs quand les fonctions changent
   useEffect(() => {
     fetchProductsRef.current = fetchProducts;
@@ -338,8 +333,7 @@ const Products = () => {
   } = useProducts(searchTerm);
 
   const trimmedSearchValue = searchTerm.trim();
-  const showSearchHelper =
-    isSearchTooShort && trimmedSearchValue.length > 0;
+  const showSearchHelper = isSearchTooShort && trimmedSearchValue.length > 0;
   const showSearchSummary =
     isSearchMode && !showSearchHelper && trimmedSearchValue.length > 0;
   const searchResultCount = showSearchSummary ? products.length : 0;
@@ -350,8 +344,7 @@ const Products = () => {
   const isInitializedRef = useRef(false);
 
   // Fonction de test pour vérifier la connexion WebSocket
-  const testWebSocketConnection = () => {
-    };
+  const testWebSocketConnection = () => {};
 
   useEffect(() => {
     // Limiter les tests de connexion WebSocket
@@ -439,7 +432,7 @@ const Products = () => {
   // Gestion de l'intersection observer pour le scroll infini
   const sentinelRef = useRef(null);
   const searchTermRef = useRef(searchTerm);
-  
+
   // Mettre à jour la ref quand searchTerm change
   useEffect(() => {
     searchTermRef.current = searchTerm;
@@ -606,7 +599,9 @@ const Products = () => {
                   {loading && trimmedSearchValue && (
                     <InputGroup.Text className="bg-transparent border-start-0">
                       <Spinner animation="border" size="sm" role="status">
-                        <span className="visually-hidden">Recherche en cours</span>
+                        <span className="visually-hidden">
+                          Recherche en cours
+                        </span>
                       </Spinner>
                     </InputGroup.Text>
                   )}
@@ -622,13 +617,15 @@ const Products = () => {
                 <div className="d-flex flex-column flex-sm-row gap-2 ms-1">
                   {showSearchHelper && (
                     <small className="text-warning">
-                      Tapez au moins {MIN_SEARCH_LENGTH} caractères pour lancer la recherche.
+                      Tapez au moins {MIN_SEARCH_LENGTH} caractères pour lancer
+                      la recherche.
                     </small>
                   )}
                   {showSearchSummary && (
                     <div className="d-flex align-items-center gap-2">
                       <Badge bg="info" pill>
-                        {searchResultCount} résultat{searchResultCount > 1 ? 's' : ''}
+                        {searchResultCount} résultat
+                        {searchResultCount > 1 ? 's' : ''}
                       </Badge>
                       <small className="text-muted">
                         {loading

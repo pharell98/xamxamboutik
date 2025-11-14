@@ -182,4 +182,44 @@ public class StatistiqueBusinessService implements IStatistique {
         logger.debug("Nombre total de produits vendus: {}", result);
         return (result != null) ? result : 0L;
     }
+
+    /**
+     * Compte le nombre de ventes entre deux dates
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
+    public long getSalesCountBetweenDates(LocalDateTime startDate, LocalDateTime endDate) {
+        String jpql = "SELECT COUNT(v) FROM Vente v WHERE v.date BETWEEN :startDate AND :endDate AND v.deleted = false";
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        query.setParameter("startDate", startDate);
+        query.setParameter("endDate", endDate);
+        Long result = query.getSingleResult();
+        logger.debug("Nombre de ventes entre {} et {}: {}", startDate, endDate, result);
+        return (result != null) ? result : 0L;
+    }
+
+    /**
+     * Compte le nombre de produits vendus entre deux dates
+     * LOGIQUE MÉTIER : Calcul pur sans exposition API
+     */
+    public long getProductsSoldBetweenDates(LocalDateTime startDate, LocalDateTime endDate) {
+        String jpql = """
+                    SELECT COALESCE(SUM(dv.quantiteVendu), 0)
+                    FROM DetailVente dv
+                    JOIN dv.vente v
+                    WHERE v.date BETWEEN :startDate AND :endDate
+                    AND v.deleted = false
+                    AND (
+                        dv.status = :statusVendu
+                        OR (dv.status = :statusEchange AND dv.montantTotal > 0)
+                    )
+                """;
+        TypedQuery<Long> query = entityManager.createQuery(jpql, Long.class);
+        query.setParameter("startDate", startDate);
+        query.setParameter("endDate", endDate);
+        query.setParameter("statusVendu", StatusDetailVente.VENDU);
+        query.setParameter("statusEchange", StatusDetailVente.RETOURNE_ECHANGE);
+        Long result = query.getSingleResult();
+        logger.debug("Nombre de produits vendus entre {} et {}: {}", startDate, endDate, result);
+        return (result != null) ? result : 0L;
+    }
 }
