@@ -27,9 +27,7 @@ const Logo = ({ at = 'auth', width = 58, className, textClass, ...rest }) => {
 
     // Si une requête est en cours, attendre son résultat
     if (settingsFetchPromise) {
-      settingsFetchPromise
-        .then(data => setSettings(data))
-        .catch(() => {});
+      settingsFetchPromise.then(data => setSettings(data)).catch(() => {});
       return;
     }
 
@@ -44,7 +42,10 @@ const Logo = ({ at = 'auth', width = 58, className, textClass, ...rest }) => {
         settingsCache = newSettings;
         return newSettings;
       } catch (error) {
-        console.error('[Logo] Erreur récupération paramètres (une seule fois):', error);
+        console.error(
+          '[Logo] Erreur récupération paramètres (une seule fois):',
+          error
+        );
         const defaultSettings = {
           shopName: 'XamXamBoutik',
           logo: logo

@@ -18,16 +18,20 @@ import { useAppContext } from 'providers/AppProvider';
 const Sales = ({ onEdit }) => {
   // IMPORTANT: Tous les hooks DOIVENT être appelés dans le même ordre à chaque render
   // Ne JAMAIS appeler de hooks conditionnellement
-  
+
   // 1. Contexts en premier
   const {
     config: { isDark },
     responsive
   } = useAppContext();
   const { addToast } = useToast();
-  
+
   // 2. Tous les useState ensemble
-  const [filters, setFilters] = useState({ period: 'daily', specificDate: '' });
+  const [filters, setFilters] = useState({
+    period: 'daily',
+    specificDate: '',
+    modePaiement: ''
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [dateRange, setDateRange] = useState({
@@ -66,13 +70,15 @@ const Sales = ({ onEdit }) => {
   const fetchSales = useCallback(
     async (pageIndex, pageSize) => {
       const page = pageIndex + 1;
+      const modePaiement = filters.modePaiement || null;
       try {
         let responseData;
         if (filters.specificDate && filters.specificDate.trim()) {
           responseData = await venteServiceV1.getSalesByDate(
             filters.specificDate,
             page,
-            pageSize
+            pageSize,
+            modePaiement
           );
         } else {
           const periodEndpoint =
@@ -86,7 +92,8 @@ const Sales = ({ onEdit }) => {
           responseData = await venteServiceV1.getSalesByPeriod(
             periodEndpoint,
             page,
-            pageSize
+            pageSize,
+            modePaiement
           );
         }
 
@@ -162,9 +169,9 @@ const Sales = ({ onEdit }) => {
         setShowActionForm,
         setSelectedSale,
         setSelectedAction,
-        isDark  // Passer isDark pour éviter d'appeler useAppContext dans getSalesColumns
+        isDark // Passer isDark pour éviter d'appeler useAppContext dans getSalesColumns
       ),
-    [onEdit, isDark]  // Les setters useState sont stables, seulement onEdit et isDark
+    [onEdit, isDark] // Les setters useState sont stables, seulement onEdit et isDark
   );
 
   const salesFilters = useMemo(() => getSalesFiltersConfig(), []);
@@ -280,7 +287,11 @@ const Sales = ({ onEdit }) => {
         <AdvanceTableProvider {...table}>
           <Row className="sales-container">
             {/* Colonne pour le tableau des ventes */}
-            <Col md={showActionForm && selectedSale && !responsive.isMobile ? 9 : 12}>
+            <Col
+              md={
+                showActionForm && selectedSale && !responsive.isMobile ? 9 : 12
+              }
+            >
               <Card
                 className={`mb-3 ${
                   isDark ? 'bg-dark text-light border-secondary' : ''
@@ -384,19 +395,30 @@ const Sales = ({ onEdit }) => {
                     style={{ zIndex: 10000 }}
                     backdrop="static"
                   >
-                    <Modal.Header 
-                      closeButton 
-                      className={isDark ? 'bg-dark text-light border-secondary' : 'bg-primary text-white border-0'}
+                    <Modal.Header
+                      closeButton
+                      className={
+                        isDark
+                          ? 'bg-dark text-light border-secondary'
+                          : 'bg-primary text-white border-0'
+                      }
                     >
                       <Modal.Title className="fs-6">
-                        {selectedAction === 'remboursementBonEtat' && 'Remboursement - Bon état'}
-                        {selectedAction === 'remboursementDefectueux' && 'Remboursement - Défectueux'}
-                        {selectedAction === 'echangeDefectueux' && 'Échange - Défectueux'}
-                        {selectedAction === 'echangeChangementPreference' && 'Échange - Préférence'}
-                        {selectedAction === 'echangeAjustementPrix' && 'Échange - Ajustement prix'}
+                        {selectedAction === 'remboursementBonEtat' &&
+                          'Remboursement - Bon état'}
+                        {selectedAction === 'remboursementDefectueux' &&
+                          'Remboursement - Défectueux'}
+                        {selectedAction === 'echangeDefectueux' &&
+                          'Échange - Défectueux'}
+                        {selectedAction === 'echangeChangementPreference' &&
+                          'Échange - Préférence'}
+                        {selectedAction === 'echangeAjustementPrix' &&
+                          'Échange - Ajustement prix'}
                       </Modal.Title>
                     </Modal.Header>
-                    <Modal.Body className={isDark ? 'bg-dark text-light' : 'p-3'}>
+                    <Modal.Body
+                      className={isDark ? 'bg-dark text-light' : 'p-3'}
+                    >
                       <SaleActionForm
                         detailVenteId={selectedSale.detailVenteId}
                         onSuccess={handleActionSuccess}

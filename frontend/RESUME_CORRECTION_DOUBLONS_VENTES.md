@@ -1,6 +1,7 @@
 # 🔒 RÉSUMÉ : Protection contre les doublons de ventes
 
 ## 🎯 Problème résolu
+
 **49 doublons de ventes** causés par des double-clics rapides sur le bouton "Valider Vente"
 
 ## ✅ Solution implémentée
@@ -38,21 +39,21 @@
 
 ## 📊 Comparaison : StompContext vs VenteService
 
-| Aspect | StompContext (WebSocket) | VenteService (API REST) |
-|--------|-------------------------|-------------------------|
-| **Problème** | Reconnexion infinie | Doublons de ventes |
-| **Solution** | Compteur d'erreurs (MAX_ERRORS=3) | Verrou global + cooldown 2s |
-| **Protection** | Arrêt après 3 erreurs | 3 niveaux de protection |
-| **Délai** | 5 secondes (reconnectDelay) | 2 secondes (VENTE_COOLDOWN) |
-| **Logs** | Détails connexion WebSocket | Détails création vente |
-| **État** | ✅ Corrigé (dev) | ✅ Corrigé (dev) |
+| Aspect         | StompContext (WebSocket)          | VenteService (API REST)     |
+| -------------- | --------------------------------- | --------------------------- |
+| **Problème**   | Reconnexion infinie               | Doublons de ventes          |
+| **Solution**   | Compteur d'erreurs (MAX_ERRORS=3) | Verrou global + cooldown 2s |
+| **Protection** | Arrêt après 3 erreurs             | 3 niveaux de protection     |
+| **Délai**      | 5 secondes (reconnectDelay)       | 2 secondes (VENTE_COOLDOWN) |
+| **Logs**       | Détails connexion WebSocket       | Détails création vente      |
+| **État**       | ✅ Corrigé (dev)                  | ✅ Corrigé (dev)            |
 
 ## 🎯 Résultats attendus
 
 ✅ **0 doublon** de ventes créées par double-clic  
 ✅ **0 perte financière** due aux doublons  
 ✅ **Expérience utilisateur** améliorée avec feedback clair  
-✅ **Traçabilité complète** des ventes  
+✅ **Traçabilité complète** des ventes
 
 ## 📝 Fichiers modifiés
 

@@ -136,7 +136,11 @@ const useInvoices = (initialFilters = {}) => {
    * Charge la page suivante
    */
   const loadMore = useCallback(() => {
-    if (!loading && hasMore && pagination.currentPage + 1 < pagination.totalPages) {
+    if (
+      !loading &&
+      hasMore &&
+      pagination.currentPage + 1 < pagination.totalPages
+    ) {
       const nextPage = pagination.currentPage + 1;
       fetchFactures(nextPage, pagination.pageSize, true);
     }

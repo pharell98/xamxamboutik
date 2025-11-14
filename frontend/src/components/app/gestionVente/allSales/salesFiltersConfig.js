@@ -18,5 +18,18 @@ export const getSalesFiltersConfig = () => [
     name: 'specificDate',
     type: 'date',
     label: 'Date spécifique'
+  },
+  {
+    name: 'modePaiement',
+    type: 'select',
+    label: 'Mode de paiement',
+    options: [
+      { value: '', label: 'Tous les modes' },
+      { value: 'espece', label: 'Espèce' },
+      { value: 'orange_money', label: 'Orange Money' },
+      { value: 'wave', label: 'Wave' },
+      { value: 'cart_bancaire', label: 'Carte bancaire' }
+    ],
+    defaultValue: ''
   }
 ];

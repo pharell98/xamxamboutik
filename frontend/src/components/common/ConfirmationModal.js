@@ -39,15 +39,10 @@ const ConfirmationModal = ({
       className="border-0"
     >
       <Modal.Header
-        className={`border-0 ${
-          isDark ? 'bg-dark text-light' : 'bg-light'
-        }`}
+        className={`border-0 ${isDark ? 'bg-dark text-light' : 'bg-light'}`}
       >
         <Modal.Title className={responsive.isMobile ? 'fs-6' : 'fs-5'}>
-          <FontAwesomeIcon
-            icon={icon}
-            className={`me-2 text-${iconColor}`}
-          />
+          <FontAwesomeIcon icon={icon} className={`me-2 text-${iconColor}`} />
           {title}
         </Modal.Title>
         <FalconCloseButton onClick={onHide} />
@@ -61,11 +56,7 @@ const ConfirmationModal = ({
         <p className="mb-0">{message}</p>
       </Modal.Body>
 
-      <Modal.Footer
-        className={`border-0 ${
-          isDark ? 'bg-dark' : 'bg-light'
-        }`}
-      >
+      <Modal.Footer className={`border-0 ${isDark ? 'bg-dark' : 'bg-light'}`}>
         <Button
           variant="secondary"
           onClick={onHide}
@@ -125,4 +116,3 @@ ConfirmationModal.propTypes = {
 };
 
 export default ConfirmationModal;
-

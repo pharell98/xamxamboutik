@@ -4,8 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.AverageBasketDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.KpisComplementairesDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.PaymentModeStatDTO;
+import sn.boutique.xamxamboutik.Web.DTO.Response.web.SalesEvolutionDTO;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -22,6 +27,9 @@ public class StatistiqueApiService {
 
     @Autowired
     private StatistiqueBusinessService statistiqueBusinessService;
+
+    @Autowired
+    private DashboardStatistiqueService dashboardStatistiqueService;
 
     /**
      * Récupère toutes les statistiques cumulatives
@@ -177,5 +185,113 @@ public class StatistiqueApiService {
         }
         
         return statistics;
+    }
+
+    /**
+     * Récupère la répartition des ventes par mode de paiement pour une période
+     * API LOGIC : Formatage de réponse uniquement
+     */
+    public List<PaymentModeStatDTO> getPaymentModeBreakdown(String period) {
+        logger.info("Récupération de la répartition des ventes par mode de paiement pour la période : {}", period);
+        
+        LocalDateTime[] dates = getPeriodDates(period);
+        LocalDateTime startDate = dates[0];
+        LocalDateTime endDate = dates[1];
+        
+        try {
+            List<PaymentModeStatDTO> breakdown = dashboardStatistiqueService.getVentesByPaymentMode(startDate, endDate);
+            logger.info("Répartition par mode de paiement récupérée avec succès : {} modes", breakdown.size());
+            return breakdown;
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération de la répartition des paiements", e);
+            throw new RuntimeException("Erreur lors du calcul de la répartition des paiements", e);
+        }
+    }
+
+    /**
+     * Récupère l'évolution des ventes sur N jours
+     * API LOGIC : Formatage de réponse uniquement
+     */
+    public List<SalesEvolutionDTO> getSalesEvolution(int days) {
+        logger.info("Récupération de l'évolution des ventes sur {} jours", days);
+        
+        try {
+            List<SalesEvolutionDTO> evolution = dashboardStatistiqueService.getSalesEvolution(days);
+            logger.info("Évolution des ventes récupérée avec succès pour {} jours", days);
+            return evolution;
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération de l'évolution des ventes", e);
+            throw new RuntimeException("Erreur lors du calcul de l'évolution des ventes", e);
+        }
+    }
+
+    /**
+     * Récupère les KPIs complémentaires pour le dashboard (évite duplication avec /caisse/etat)
+     * API LOGIC : Agrégation de KPIs qui ne sont pas dans /caisse/etat
+     */
+    public KpisComplementairesDTO getKpisComplementaires(String period) {
+        logger.info("Récupération des KPIs complémentaires pour la période : {}", period);
+        
+        try {
+            LocalDateTime[] dates = getPeriodDates(period);
+            LocalDateTime startDate = dates[0];
+            LocalDateTime endDate = dates[1];
+            
+            // Panier moyen
+            AverageBasketDTO panierMoyenDTO = dashboardStatistiqueService.getAverageBasket(startDate, endDate);
+            
+            // Produits vendus
+            long produitsVendus = statistiqueBusinessService.getProductsSoldBetweenDates(startDate, endDate);
+            
+            // Alertes stock (indépendant de la période)
+            long produitsEnRupture = dashboardStatistiqueService.countProduitsEnRupture();
+            long produitsAlerteCritique = dashboardStatistiqueService.countProduitsAlerteCritique();
+            
+            // Construction du DTO
+            KpisComplementairesDTO kpis = new KpisComplementairesDTO();
+            kpis.setPanierMoyen(panierMoyenDTO.getPanierMoyen());
+            kpis.setNombreVentes(panierMoyenDTO.getNombreVentes());
+            kpis.setProduitsVendus(produitsVendus);
+            kpis.setProduitsEnRupture(produitsEnRupture);
+            kpis.setProduitsAlerteCritique(produitsAlerteCritique);
+            
+            logger.info("KPIs complémentaires récupérés avec succès");
+            return kpis;
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des KPIs complémentaires", e);
+            throw new RuntimeException("Erreur lors du calcul des KPIs complémentaires", e);
+        }
+    }
+
+    /**
+     * Utilitaire pour convertir une période en dates de début et fin
+     */
+    private LocalDateTime[] getPeriodDates(String period) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate;
+        LocalDateTime endDate = now;
+        
+        switch (period.toLowerCase()) {
+            case "today":
+                startDate = now.toLocalDate().atStartOfDay();
+                endDate = now.toLocalDate().atTime(23, 59, 59);
+                break;
+            case "7days":
+                startDate = now.minusDays(7);
+                break;
+            case "month":
+                startDate = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+                endDate = now.toLocalDate().withDayOfMonth(now.toLocalDate().lengthOfMonth()).atTime(23, 59, 59);
+                break;
+            case "year":
+                startDate = now.toLocalDate().withDayOfYear(1).atStartOfDay();
+                endDate = now.toLocalDate().withDayOfYear(now.toLocalDate().lengthOfYear()).atTime(23, 59, 59);
+                break;
+            default:
+                startDate = now.toLocalDate().atStartOfDay();
+                endDate = now.toLocalDate().atTime(23, 59, 59);
+        }
+        
+        return new LocalDateTime[]{startDate, endDate};
     }
 }
