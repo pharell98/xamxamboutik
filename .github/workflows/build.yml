@@ -19,6 +19,8 @@ jobs:
         uses: dorny/paths-filter@v2
         id: filter
         with:
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
           filters: |
             backend:
               - 'backend/**'
