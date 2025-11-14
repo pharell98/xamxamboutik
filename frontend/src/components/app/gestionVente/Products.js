@@ -89,24 +89,23 @@ const useProducts = (searchTerm = '') => {
         setLoading(true);
         
         let response;
-        const isSearching = searchLibelle && searchLibelle.trim().length > 0;
+        const normalizedSearch = searchLibelle
+          ? searchLibelle.trim().toLowerCase()
+          : '';
+        const isSearching = normalizedSearch.length > 0;
 
         if (isSearching) {
-          // Recherche côté serveur
           response = await venteServiceV1.searchProductsByLibelle(
             searchLibelle,
             pageToLoad,
             PRODUCTS_PER_PAGE
           );
-          setIsSearchMode(true);
         } else {
-          // Liste normale des produits les plus vendus
           response = await venteServiceV1.getMostSoldProducts(
             pageToLoad,
             PRODUCTS_PER_PAGE,
             'web'
           );
-          setIsSearchMode(false);
         }
 
         if (!response.success) {
@@ -119,6 +118,19 @@ const useProducts = (searchTerm = '') => {
         const pageData = response.data || {};
         const { number, totalPages, content } = pageData;
         const currentPage = number !== undefined ? number + 1 : pageToLoad;
+
+        const activeSearch = searchTermRef.current
+          ? searchTermRef.current.trim().toLowerCase()
+          : '';
+        if (normalizedSearch !== activeSearch) {
+          console.log(
+            '[Products] Réponse ignorée (recherche dépassée):',
+            searchLibelle
+          );
+          return;
+        }
+
+        setIsSearchMode(isSearching);
 
         // Vérifier que les données sont valides
         // totalPages peut être 0 (aucun résultat), c'est valide
