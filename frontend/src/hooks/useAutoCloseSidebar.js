@@ -103,8 +103,7 @@ const useAutoCloseSidebar = () => {
         pathname.includes('/gestion-stock/allSales');
 
       if (isVentePage) {
-        console.log('🔄 Auto-close sidebar: Page de vente détectée');
-      }
+        }
     }
   }, [pathname]);
 

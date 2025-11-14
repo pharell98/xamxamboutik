@@ -81,7 +81,6 @@ const useProducts = (searchTerm = '') => {
     async (pageToLoad, append = false, searchLibelle = '') => {
       // Éviter les requêtes multiples
       if (isLoadingRef.current) {
-        console.log('[Products] Requête en cours, ignorée');
         return;
       }
 
@@ -94,7 +93,6 @@ const useProducts = (searchTerm = '') => {
 
         if (isSearching) {
           // Recherche côté serveur
-          console.log('[Products] Recherche serveur:', searchLibelle);
           response = await venteServiceV1.searchProductsByLibelle(
             searchLibelle,
             pageToLoad,
@@ -140,7 +138,6 @@ const useProducts = (searchTerm = '') => {
 
         // Si aucun résultat trouvé, traiter comme une liste vide valide
         if (totalPages === 0 || !Array.isArray(content)) {
-          console.log('[Products] Aucun résultat trouvé pour:', searchLibelle);
           if (append) {
             // Si on ajoute des pages, ne rien faire
             setHasMore(false);
@@ -190,10 +187,8 @@ const useProducts = (searchTerm = '') => {
 
   const reloadProductsAfterSale = useCallback(
     _.debounce(async () => {
-      console.log('[Products] Rechargement fluide des produits après vente...');
       // Éviter les rechargements multiples
       if (isLoadingRef.current) {
-        console.log('[Products] Rechargement ignoré - requête en cours');
         return;
       }
       try {
@@ -211,11 +206,6 @@ const useProducts = (searchTerm = '') => {
           const { content, totalPages } = response.data;
           if (content && Array.isArray(content)) {
             const validatedProducts = transformProducts(content);
-
-            console.log(
-              '[Products] Nouveaux produits chargés:',
-              validatedProducts.length
-            );
 
             // Transition fluide : remplacer les produits d'un coup
             setProducts(validatedProducts);
@@ -338,11 +328,7 @@ const Products = () => {
 
   // Fonction de test pour vérifier la connexion WebSocket
   const testWebSocketConnection = () => {
-    console.log('[Products] Test de connexion WebSocket:');
-    console.log('- Connected:', connected);
-    console.log('- VenteData length:', venteData?.length || 0);
-    console.log('- Dernier message:', venteData?.[venteData.length - 1]);
-  };
+    };
 
   useEffect(() => {
     // Limiter les tests de connexion WebSocket
@@ -486,7 +472,6 @@ const Products = () => {
         return;
       }
 
-      console.log('[Products] Message de vente reçu:', latestMessage);
       if (
         latestMessage &&
         latestMessage.type === 'SALE' &&
@@ -494,7 +479,6 @@ const Products = () => {
         latestMessage.soldItems.length > 0
       ) {
         lastProcessedMessageRef.current = latestMessage;
-        console.log('[Products] Rechargement des produits après vente...');
         // Un seul effet : rechargement complet avec transition
         setTimeout(() => {
           reloadProductsAfterSale();
@@ -516,7 +500,6 @@ const Products = () => {
       setLastSoldItems(soldItems);
 
       // Un seul effet : rechargement complet au lieu de mise à jour immédiate
-      console.log('[Products] Checkout détecté, rechargement des produits...');
       setTimeout(() => {
         reloadProductsAfterSale();
       }, 300);

@@ -88,10 +88,6 @@ const Products = ({ onEdit }) => {
           latestMessage === 'update') // Accepter aussi les strings simples
       ) {
         lastProcessedMessageRef.current = messageKey;
-        console.log(
-          '[Products] Message WebSocket reçu, rafraîchissement des données:',
-          latestMessage
-        );
         debouncedSetRefresh();
       }
     }
@@ -115,9 +111,6 @@ const Products = ({ onEdit }) => {
       const now = Date.now();
       if (now - lastEventTimeRef.current > EVENT_THROTTLE_MS) {
         lastEventTimeRef.current = now;
-        console.log(
-          '[Products] Événement stock-updated reçu, rafraîchissement des données'
-        );
         debouncedSetRefresh();
       }
     };

@@ -588,12 +588,6 @@ const CartSection = ({ onClose, show = true }) => {
     // Protection niveau 2 : Désactiver immédiatement le bouton
     setIsProcessingSale(true);
     
-    console.log('[CartSection] Début de la validation de vente...', {
-      produits: cartItems.length,
-      montantTotal: totalCost,
-      modePaiement: paymentMode
-    });
-
     const detailVenteList = cartItems.map(item => {
       const customPrice = modifiedPrices[item.id];
       const unitPrice =
@@ -613,8 +607,6 @@ const CartSection = ({ onClose, show = true }) => {
 
     try {
       const response = await venteServiceV1.createVente(saleData);
-      console.log('[CartSection] ✅ Vente créée avec succès, ID:', response.data?.id);
-
       if (printInvoice) {
         try {
           const invoiceItems = cartItems.map(item => ({
@@ -699,8 +691,7 @@ const CartSection = ({ onClose, show = true }) => {
       // Libérer le verrou après un court délai pour éviter les clics trop rapides
       setTimeout(() => {
         setIsProcessingSale(false);
-        console.log('[CartSection] 🔓 Verrou de vente libéré');
-      }, 300);
+        }, 300);
     }
   }, [
     validateCart,

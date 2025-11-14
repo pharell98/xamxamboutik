@@ -100,7 +100,6 @@ const useAdvanceTable = ({
       const fetchAsyncData = async () => {
         // Éviter les requêtes multiples simultanées
         if (isFetchingRef.current) {
-          console.log('[useAdvanceTable] Requête déjà en cours, ignorée');
           return;
         }
 

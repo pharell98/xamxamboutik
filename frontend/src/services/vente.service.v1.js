@@ -35,15 +35,8 @@ const venteServiceV1 = {
       lastVenteData = venteData;
       lastVenteTimestamp = now;
 
-      console.log('[venteServiceV1] Création de la vente...', {
-        produits: venteData.detailVenteList?.length || 0,
-        montantTotal: venteData.montantTotal,
-        modePaiement: venteData.modePaiement
-      });
-
       const response = await apiClient.post(VENTE_ENDPOINT, venteData);
       
-      console.log('[venteServiceV1] ✅ Vente créée avec succès:', response.data);
       return response.data;
     } catch (error) {
       console.error(

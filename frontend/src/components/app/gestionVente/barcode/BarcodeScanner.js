@@ -95,13 +95,6 @@ const BarcodeScanner = () => {
   // Generic scan handler
   const handleScan = useCallback(
     async code => {
-      console.log(
-        '[BarcodeScanner] Code scanné:',
-        code,
-        'Longueur:',
-        code?.length
-      );
-
       // Validation du code
       if (!code || typeof code !== 'string') {
         showToast('Erreur', 'Code invalide', 'error');

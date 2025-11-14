@@ -35,7 +35,6 @@ const useInvoices = (initialFilters = {}) => {
     async (page = 0, pageSize = 20, append = false) => {
       // Éviter les requêtes multiples
       if (isLoadingRef.current) {
-        console.log('[useInvoices] Requête en cours, ignorée');
         return;
       }
 
@@ -52,37 +51,22 @@ const useInvoices = (initialFilters = {}) => {
       try {
         let response;
 
-        console.log('🔍 Récupération des factures:', {
-          filters,
-          page,
-          pageSize,
-          append
-        });
-
         // Appel API réel
         if (filters.specificDate && filters.specificDate.trim()) {
-          console.log(
-            '📅 Récupération par date spécifique:',
-            filters.specificDate
-          );
           response = await factureService.getFacturesByDate(
             filters.specificDate,
             page,
             pageSize
           );
         } else if (filters.period === 'all') {
-          console.log('📋 Récupération de toutes les factures');
           response = await factureService.getAllFactures(page, pageSize);
         } else {
-          console.log('📊 Récupération par période:', filters.period);
           response = await factureService.getFacturesByPeriod(
             filters.period,
             page,
             pageSize
           );
         }
-
-        console.log('✅ Réponse API reçue:', response);
 
         if (response?.success && response?.data) {
           const newFactures = response.data.factures || [];

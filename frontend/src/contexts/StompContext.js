@@ -136,10 +136,8 @@ export const StompProvider = ({ children }) => {
         });
       });
       subscribeWithErrorHandling('/topic/ventes', parsed => {
-        console.log('[StompContext] Message de vente reçu:', parsed);
         setVenteData(prevData => {
           const newData = [...prevData, parsed];
-          console.log('[StompContext] VenteData mis à jour, total:', newData.length);
           return newData.slice(-5);
         });
         setData(prevData => {
@@ -154,7 +152,6 @@ export const StompProvider = ({ children }) => {
         });
       });
       subscribeWithErrorHandling('/topic/stock-updates', parsed => {
-        console.log('[StompContext] Mise à jour de stock reçue:', parsed);
         setData(prevData => {
           const newData = [...prevData, parsed];
           return newData.slice(-5);
@@ -263,7 +260,6 @@ export const StompProvider = ({ children }) => {
     };
 
     client.onConnect = frame => {
-      console.log('[StompContext] Connexion WebSocket établie');
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
@@ -271,7 +267,6 @@ export const StompProvider = ({ children }) => {
       // Ajouter un délai pour s'assurer que la connexion est stable
       setTimeout(() => {
         if (stompClientRef.current && stompClientRef.current.connected) {
-          console.log('[StompContext] Souscription aux topics...');
           const success = subscribeToTopics();
           if (success) {
             startRetrySubscriptions();
@@ -285,7 +280,6 @@ export const StompProvider = ({ children }) => {
     };
 
     client.onDisconnect = () => {
-      console.log('[StompContext] Déconnexion détectée');
       setConnected(false);
       setIsReconnecting(false);
       setIsSubscribed(false);
@@ -356,7 +350,6 @@ export const StompProvider = ({ children }) => {
         }
       });
       subscriptionsRef.current.push(subscription);
-      console.log(`[StompContext] Souscription réussie à ${topic}`);
       return true;
     } catch (error) {
       console.error(`[StompContext] Erreur lors de la souscription au topic ${topic}:`, error);

@@ -85,10 +85,6 @@ const UpdateStockForm = ({ onSuccess, onSwitchForm }) => {
         lastMessage.action === 'UPDATE' &&
         lastMessage.type === 'STOCK_UPDATE'
       ) {
-        console.log(
-          '[UpdateStockForm] Notification de mise à jour de stock reçue:',
-          lastMessage
-        );
         // Rafraîchir les données si nécessaire
         onSuccess?.();
       }

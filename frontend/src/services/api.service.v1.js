@@ -142,16 +142,9 @@ const apiServiceV1 = {
    */
   getProductByBarcode: async barcode =>
     safeApiCall(() => {
-      console.log('[apiServiceV1] Appel API pour barcode:', barcode);
-      console.log(
-        '[apiServiceV1] URL complète:',
-        `${apiClient.defaults.baseURL}/products/barcode/${barcode}`
-      );
-      console.log('[apiServiceV1] Headers:', apiClient.defaults.headers);
       return apiClient
         .get(`/products/barcode/${barcode}`)
         .then(r => {
-          console.log('[apiServiceV1] Réponse API barcode:', r.data);
           return r.data;
         })
         .catch(error => {
