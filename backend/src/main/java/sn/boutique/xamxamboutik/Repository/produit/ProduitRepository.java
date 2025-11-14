@@ -114,11 +114,16 @@ public interface ProduitRepository extends SoftDeleteRepository<Produit, Long> {
                  LEFT JOIN p.categorie c
             WHERE p.deleted = false
               AND p.stockDisponible <> 0
-              AND LOWER(p.libelle) LIKE LOWER(CONCAT('%', :libelle, '%'))
+              AND p.libelleNormalized LIKE LOWER(CONCAT('%', :libelle, '%'))
             ORDER BY p.libelle ASC
             """)
     @QueryHints({@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Page<ProductVenteProjection> searchProductsByLibelle(@Param("libelle") String libelle, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Produit p SET p.libelleNormalized = LOWER(p.libelle) WHERE p.libelle IS NOT NULL AND p.libelleNormalized IS NULL")
+    void normalizeLibelleColumn();
 
     @Modifying
     @Transactional
