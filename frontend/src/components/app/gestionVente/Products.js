@@ -74,8 +74,13 @@ const useProducts = (searchTerm = '') => {
   const [lastSoldItems, setLastSoldItems] = useState([]);
   const [isSearchMode, setIsSearchMode] = useState(false);
 
-  // Ref pour éviter les requêtes multiples
+  // Refs pour éviter les requêtes multiples et garder le terme courant
   const isLoadingRef = useRef(false);
+  const searchTermRef = useRef(searchTerm);
+
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
 
   const fetchProducts = useCallback(
     async (pageToLoad, append = false, searchLibelle = '') => {
