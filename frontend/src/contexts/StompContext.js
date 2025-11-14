@@ -9,6 +9,10 @@ import { Client } from '@stomp/stompjs';
 import PropTypes from 'prop-types';
 
 const StompContext = createContext();
+const SUPPRESSED_DEBUG_MESSAGES = [
+  'WebSocket is already in CLOSING or CLOSED state',
+  'Connection closed before CONNECT frame was received'
+];
 
 const parseMessageBody = body => {
   if (body && (body.trim().startsWith('{') || body.trim().startsWith('['))) {
@@ -34,6 +38,7 @@ export const StompProvider = ({ children }) => {
   const subscriptionsRef = useRef([]);
   const pendingSubscriptionsRef = useRef([]);
   const retryIntervalRef = useRef(null);
+  const wsCloseLoggedRef = useRef(false);
 
   useEffect(() => {
     // Nettoyer périodiquement les anciens messages pour éviter l'accumulation
@@ -77,9 +82,17 @@ export const StompProvider = ({ children }) => {
 
     const client = new Client({
       brokerURL,
-      reconnectDelay: 5000,  // 5 secondes entre tentatives
+      reconnectDelay: 5000, // 5 secondes entre tentatives
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
+      debug: str => {
+        if (SUPPRESSED_DEBUG_MESSAGES.some(msg => str.includes(msg))) {
+          return;
+        }
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[STOMP]', str);
+        }
+      },
       onWebSocketError: error => {
         errorCount++;
         
@@ -103,8 +116,9 @@ export const StompProvider = ({ children }) => {
       },
       onWebSocketClose: event => {
         // Ne log que si on n'a pas atteint MAX_ERRORS
-        if (errorCount < MAX_ERRORS) {
+        if (errorCount < MAX_ERRORS && !wsCloseLoggedRef.current) {
           console.warn('[StompContext] Connexion WebSocket fermée');
+          wsCloseLoggedRef.current = true;
           setConnected(false);
           setIsReconnecting(true);
           setIsSubscribed(false);
@@ -263,6 +277,8 @@ export const StompProvider = ({ children }) => {
       setConnected(true);
       setIsReconnecting(false);
       setIsSubscribed(false);
+      wsCloseLoggedRef.current = false;
+      errorCount = 0;
 
       // Ajouter un délai pour s'assurer que la connexion est stable
       setTimeout(() => {
