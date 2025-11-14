@@ -77,6 +77,7 @@ const useProducts = (searchTerm = '') => {
   // Refs pour éviter les requêtes multiples et garder le terme courant
   const isLoadingRef = useRef(false);
   const searchTermRef = useRef(searchTerm);
+  const requestSequenceRef = useRef(0);
 
   useEffect(() => {
     searchTermRef.current = searchTerm;
@@ -90,6 +91,7 @@ const useProducts = (searchTerm = '') => {
       }
 
       try {
+        const requestId = ++requestSequenceRef.current;
         isLoadingRef.current = true;
         setLoading(true);
         
@@ -127,7 +129,10 @@ const useProducts = (searchTerm = '') => {
         const activeSearch = searchTermRef.current
           ? searchTermRef.current.trim().toLowerCase()
           : '';
-        if (normalizedSearch !== activeSearch) {
+        if (
+          normalizedSearch !== activeSearch ||
+          requestId !== requestSequenceRef.current
+        ) {
           console.log(
             '[Products] Réponse ignorée (recherche dépassée):',
             searchLibelle
@@ -135,6 +140,7 @@ const useProducts = (searchTerm = '') => {
           return;
         }
 
+        setIsSearchMode(isSearching);
         setIsSearchMode(isSearching);
 
         // Vérifier que les données sont valides
