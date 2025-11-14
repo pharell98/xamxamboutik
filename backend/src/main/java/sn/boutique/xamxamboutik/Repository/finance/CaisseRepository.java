@@ -7,9 +7,5 @@ import sn.boutique.xamxamboutik.Repository.base.SoftDeleteRepository;
 
 @Repository
 public interface CaisseRepository extends SoftDeleteRepository<Caisse, Long> {
-    
-    /**
-     * Trouve la caisse principale (il n'y en a qu'une seule)
-     */
     Caisse findFirstByOrderByIdAsc();
 }
