@@ -1,0 +1,90 @@
+name: Build and Deploy
+on:
+  push:
+    branches: [ prod ]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  build-backend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Spring Boot image
+        run: |
+          cd backend
+          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-backend:latest --push .
+
+  build-frontend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push React image
+        run: |
+          cd frontend
+          docker buildx build --platform linux/amd64 -t sowbobo98/xamxamboutik-frontend:latest --push .
+
+  # - name: Deploy to VPS
+  #   uses: appleboy/ssh-action@v1.0.0
+  #   with:
+  #     host: ${{ secrets.VPS_HOST }}
+  #     username: ${{ secrets.VPS_USERNAME }}
+  #     key: ${{ secrets.VPS_SSH_KEY }}
+  #     script: |
+  #       cd /var/www/xamxamboutik
+  #       docker login -u sowbobo98 -p ${{ secrets.DOCKER_PASSWORD }}
+  #       docker-compose -f docker-compose-darou.yml -p darou up -d --force-recreate
+  #       docker-compose -f docker-compose-hadia.yml -p hadia up -d --force-recreate
+  #       sudo nginx -t
+  #       sudo systemctl reload nginx
