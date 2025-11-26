@@ -132,6 +132,7 @@
     "sass-loader": "^13.2.2",
     "webpack": "5.94.0",
     "webpack-cli": "^5.1.1",
-    "webpack-fix-style-only-entries": "^0.6.1"
+    "webpack-fix-style-only-entries": "^0.6.1",
+
   }
 }
