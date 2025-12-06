@@ -111,6 +111,9 @@ public class VenteService implements IVenteService {
                 
                 // Mise à jour du stock
                 produit.setStockDisponible(produit.getStockDisponible() - detailDTO.getQuantiteVendu());
+                // IMPORTANT: Sauvegarde explicite du produit pour garantir la mise à jour du stock
+                // Flush immédiat pour garantir la persistance et éviter les problèmes de concurrence
+                produitRepository.saveAndFlush(produit);
                 
                 // Création du détail de vente
                 DetailVente detailVente = new DetailVente();
